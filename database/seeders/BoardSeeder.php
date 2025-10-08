@@ -13,6 +13,8 @@ class BoardSeeder extends Seeder
      */
     public function run(): void
     {
-        Board::factory(1)->create();
+        $this->call([
+            BoardListSeeder::class,
+        ]);
     }
 }
