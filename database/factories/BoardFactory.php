@@ -19,8 +19,6 @@ class BoardFactory extends Factory
     {
         return [
             'name' => $this->faker->name(),
-            'created_at' => now(),
-            'updated_at' => now(),
         ];
     }
 }
