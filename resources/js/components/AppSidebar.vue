@@ -14,8 +14,9 @@ import {
 import { dashboard } from '@/routes';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid } from 'lucide-vue-next';
+import {BookOpen, Folder, Kanban, LayoutGrid} from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
+import boards from "@/routes/boards";
 
 const mainNavItems: NavItem[] = [
     {
@@ -23,6 +24,11 @@ const mainNavItems: NavItem[] = [
         href: dashboard(),
         icon: LayoutGrid,
     },
+    {
+        title: 'Boards',
+        href: boards.index(),
+        icon: Kanban,
+    }
 ];
 
 const footerNavItems: NavItem[] = [
