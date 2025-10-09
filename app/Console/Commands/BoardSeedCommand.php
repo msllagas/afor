@@ -20,7 +20,6 @@ class BoardSeedCommand extends Command
                             {board : The ID of the Board to seed}
                             {--class= : The seeder class to run}';
 
-
     /**
      * The console command description.
      *
@@ -36,14 +35,14 @@ class BoardSeedCommand extends Command
         $boardId = $this->argument('board');
         $board = Board::query()->find($boardId);
 
-        if (! $board) {
+        if (!$board) {
             $this->error("Board with ID {$boardId} not found.");
             return self::FAILURE;
         }
 
         $className = $this->input->getOption('class') ?? BoardSeeder::class;
 
-        if (! class_exists($className)) {
+        if (!class_exists($className)) {
             $this->error("Seeder class {$className} does not exist.");
             return self::FAILURE;
         }
@@ -51,9 +50,9 @@ class BoardSeedCommand extends Command
 
         $seeder = $this->laravel->make($className);
 
-          $seeder->setContainer($this->laravel)
-               ->setCommand($this)
-               ->__invoke();
+        $seeder->setContainer($this->laravel)
+            ->setCommand($this)
+            ->__invoke();
 
         $this->info("✅ Board seeded successfully.");
 
