@@ -13,14 +13,14 @@ import {Label} from "@/components/ui/label"
 import InputError from "@/components/InputError.vue"
 
 import {cn} from "@/lib/utils"
-import boards from "@/routes/boards"
+import boardsRoutes from "@/routes/boards"
 
 import BoardController from "@/actions/App/Http/Controllers/BoardController"
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Boards',
-        href: boards.index().url
+        href: boardsRoutes.index().url
     },
 ];
 
@@ -34,7 +34,7 @@ const props = defineProps<{
 }>();
 
 onMounted(() => {
-    router.visit(boards.index().url, {
+    router.visit(boardsRoutes.index().url, {
         only: ['boards'],
         preserveScroll: true,
         preserveState: true,
@@ -53,7 +53,7 @@ onMounted(() => {
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 <template v-for="board in props.boards" :key="board.id">
-                    <Link :href="boards.show(board.id).url">
+                    <Link :href="boardsRoutes.show(board.id).url">
                         <Card
                             :class="cn('w-full overflow-hidden rounded-2xl shadow-lg pt-0 gap-2 pb-2', $attrs.class ?? '')"
                         >
