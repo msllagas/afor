@@ -63,8 +63,9 @@ function onDragEnd(boardList: BoardList) {
 <template>
     <Head :title="board.name"/>
     <div class="relative bg-gradient-to-r from-pink-500 via-fuchsia-500 to-rose-400 h-screen overflow-y-auto">
-        <ol class="h-full p-2 flex overflow-hidden absolute scrollbar-color-white scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20">
-            <template v-if="board?.board_lists.length > 0" v-for="boardList in board.board_lists" :key="boardList.id">
+        <ol v-if="board?.board_lists.length > 0"
+            class="h-full p-2 flex overflow-hidden absolute scrollbar-color-white scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20">
+            <template v-for="boardList in board.board_lists" :key="boardList.id">
                 <li class="h-full w-[320px] p-2">
                     <Card :class="cn('w-full p-2 pt-1 gap-0 bg-gray-950', $attrs.class ?? '')">
                         <CardHeader class="relative flex items-center justify-between p-2 pt-1">
@@ -89,7 +90,7 @@ function onDragEnd(boardList: BoardList) {
                                     name: !drag ? 'flip-list' : null
                                 }"
                                 >
-                                    <template #item="{ element }" :key="element.id">
+                                    <template #item="{ element }">
                                         <li class="bg-[#242528] text-white p-2 mb-2 rounded-lg shadow"
                                             :class="{ 'cursor-pointer': !drag }"
                                             @click="() => console.log(boardList.cards)"
