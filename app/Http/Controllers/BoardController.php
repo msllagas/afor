@@ -16,8 +16,9 @@ class BoardController extends Controller
      */
     public function index(): Response
     {
-        // todo: should be boards by user, not all boards.
-        $boards = Board::query()->get();
+        $boards = Board::query()
+            ->where('user_id', auth()->id())
+            ->get();
 
         return Inertia::render('boards/Index', [
             'boards' => $boards
@@ -37,7 +38,10 @@ class BoardController extends Controller
      */
     public function store(StoreBoardsRequest $request): RedirectResponse
     {
-        $board = Board::query()->create($request->validated());
+        $board = Board::query()->create([
+            ...$request->validated(),
+            'user_id' => auth()->id(),
+        ]);
 
         \Artisan::call('board:seed', ['board' => $board->id]);
 

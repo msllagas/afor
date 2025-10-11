@@ -21,6 +21,8 @@ return new class extends Migration
 
             $table->timestamps();
             $table->softDeletes();
+
+            $table->index(['board_list_id', 'order']);
         });
     }
 
