@@ -16,11 +16,11 @@ Route::get('dashboard', function () {
 Route::resource('boards', BoardController::class)
     ->middleware(['auth', 'verified']);
 
-Route::patch('board-lists/{boardList}/cards/reorder', [CardController::class, 'reorder'])
+Route::patch('board-lists/{board_list}/cards/reorder', [CardController::class, 'reorder'])
     ->name('board-lists.cards.reorder')
     ->middleware(['auth', 'verified']);
 
-Route::resource('board-lists.cards', CardController::class);
+Route::resource('board-lists.cards', CardController::class)->middleware(['auth', 'verified']);
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
