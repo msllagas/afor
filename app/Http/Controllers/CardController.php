@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreCardRequest;
 use App\Models\BoardList;
 use App\Models\Card;
 use Illuminate\Http\JsonResponse;
@@ -29,9 +30,19 @@ class CardController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreCardRequest $request, BoardList $boardList): RedirectResponse
     {
-        //
+        $nextOrder = $boardList->cards()->max('order') + 1;
+
+        Card::query()->create(array_merge(
+            $request->validated(),
+            [
+                'board_list_id' => $boardList->id,
+                'order' => $nextOrder,
+            ],
+        ));
+
+        return back();
     }
 
     /**
