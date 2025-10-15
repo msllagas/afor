@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreCardRequest;
+use App\Http\Requests\UpdateCardRequest;
 use App\Models\BoardList;
 use App\Models\Card;
 use Illuminate\Http\JsonResponse;
@@ -65,9 +66,10 @@ class CardController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Card $card)
+    public function update(UpdateCardRequest $request, BoardList $boardList, Card $card)
     {
-        //
+        $card->update($request->validated());
+        return back();
     }
 
     /**

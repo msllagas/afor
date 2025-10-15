@@ -14,6 +14,7 @@ interface Card {
     name: string;
     description?: string;
     order: number;
+    board_list_id: string;
 }
 
 interface BoardList {
@@ -28,7 +29,7 @@ interface Board {
     board_lists: BoardList[];
 }
 
-defineProps<{
+const props = defineProps<{
     board: Board;
 }>();
 
@@ -48,24 +49,8 @@ const dragOptions = computed(() => ({
     scrollSpeed: 20,
 }))
 
-function onDragEnd(boardList: BoardList) {
+function onDragEnd() {
     drag.value = false
-
-    const changedCards: { id: string; order: number }[] = []
-
-    boardList.cards.forEach((card, index) => {
-        const newOrder = index + 1
-        if (card.order !== newOrder) {
-            card.order = newOrder
-            changedCards.push({id: card.id, order: newOrder})
-        }
-    })
-
-    if (changedCards.length === 0) return
-
-    router.patch(cards.reorder(boardList.id).url, {
-        cards: changedCards
-    })
 }
 
 const itemRef = useTemplateRef<HTMLInputElement[]>('items')
@@ -96,6 +81,47 @@ async function createCard(index: number) {
         objDiv.scrollIntoView({behavior: 'smooth'})
     }
 }
+
+function onChange(boardListId: string, event: any) {
+    if (event.moved) {
+        handleCardMove(boardListId)
+    }
+
+    if (event.added) {
+        handleCardMoveToBoardList(boardListId, event.added)
+    }
+}
+
+function handleCardMove(boardListId: string) {
+    const boardList = props.board.board_lists.find(list => list.id === boardListId);
+    if (!boardList) return;
+
+    boardList.cards.forEach((card, index) => {
+        card.order = index;
+    });
+
+    router.patch(cards.reorder(boardListId).url, {
+        cards: boardList.cards.map(c => ({
+            id: c.id,
+            order: c.order,
+        })),
+    });
+}
+
+function handleCardMoveToBoardList(boardListId: string, added: any) {
+    if (!added?.element) return
+
+    const card = added.element as Card
+
+    router.patch(cards.update({
+        board_list: card.board_list_id,
+        card: card.id,
+    }).url, {
+        board_list_id: boardListId,
+        order: added.newIndex,
+    })
+}
+
 </script>
 
 <template>
@@ -126,8 +152,10 @@ async function createCard(index: number) {
                                 v-model="boardList.cards"
                                 item-key="id"
                                 @start="onDragStart"
-                                @end="onDragEnd(boardList)"
+                                @end="onDragEnd"
+                                @change="onChange(boardList.id, $event)"
                                 v-bind="dragOptions"
+                                group="boardCard"
                                 :component-data="{
                                     tag: 'ol',
                                     type: 'transition-group',
