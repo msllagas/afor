@@ -32,7 +32,8 @@ class CardController extends Controller
      */
     public function store(StoreCardRequest $request, BoardList $boardList): RedirectResponse
     {
-        $nextOrder = $boardList->cards()->max('order') + 1;
+        $nextOrder = $boardList->cards()->max('order');
+        $nextOrder = is_null($nextOrder) ? 0 : $nextOrder + 1;
 
         Card::query()->create(array_merge(
             $request->validated(),

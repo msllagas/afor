@@ -14,15 +14,15 @@ test('users can reorder cards in board list', function () {
     $this->actingAs($user);
 
     $boardList = BoardList::factory()->create();
-    $card1 = Card::factory()->create(['board_list_id' => $boardList->id, 'order' => 1]);
-    $card2 = Card::factory()->create(['board_list_id' => $boardList->id, 'order' => 2]);
-    $card3 = Card::factory()->create(['board_list_id' => $boardList->id, 'order' => 3]);
+    $card1 = Card::factory()->create(['board_list_id' => $boardList->id, 'order' => 0]);
+    $card2 = Card::factory()->create(['board_list_id' => $boardList->id, 'order' => 1]);
+    $card3 = Card::factory()->create(['board_list_id' => $boardList->id, 'order' => 2]);
 
     $payload = [
         'cards' => [
-            ['id' => $card1->id, 'order' => 2],
-            ['id' => $card2->id, 'order' => 3],
-            ['id' => $card3->id, 'order' => 1],
+            ['id' => $card1->id, 'order' => 1],
+            ['id' => $card2->id, 'order' => 2],
+            ['id' => $card3->id, 'order' => 0],
         ],
     ];
 
@@ -32,17 +32,17 @@ test('users can reorder cards in board list', function () {
 
     assertDatabaseHas('cards', [
         'id' => $card1->id,
-        'order' => 2,
+        'order' => 1,
     ]);
 
     assertDatabaseHas('cards', [
         'id' => $card2->id,
-        'order' => 3,
+        'order' => 2,
     ]);
 
     assertDatabaseHas('cards', [
         'id' => $card3->id,
-        'order' => 1,
+        'order' => 0,
     ]);
 });
 
