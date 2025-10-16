@@ -24,6 +24,7 @@ class UpdateCardRequest extends FormRequest
     {
         return [
             'name' => 'sometimes|string|max:255',
+            'description' => 'sometimes|string|max:65535',
             'board_list_id' => 'sometimes|exists:board_lists,id',
             'order' => 'sometimes|integer',
         ];
