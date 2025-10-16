@@ -9,6 +9,8 @@ use App\Models\Card;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class CardController extends Controller
 {
@@ -58,9 +60,16 @@ class CardController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Card $card)
+    public function edit(BoardList $boardList, Card $card): Response
     {
-        //
+        $board = $boardList->board;
+        $board->load('boardLists.cards');
+
+        return Inertia::render('boards/Show', [
+            'board' => $boardList->board,
+            'card' => $card,
+        ]);
+
     }
 
     /**
