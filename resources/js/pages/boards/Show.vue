@@ -283,20 +283,17 @@ onMounted(() => {
         </ol>
     </div>
     <Dialog v-model:open="isDialogOpen" @update:open="(value:boolean) => onDialogClose(value)">
-        <DialogContent v-if="isFetching"
-                       class="[&>button:first-of-type]:hidden ">
-            <DialogTitle hidden>Loading</DialogTitle>
-            <DialogDescription hidden>
-                Loading...
-            </DialogDescription>
-        </DialogContent>
-        <DialogContent class="sm:max-w-[600px] max-h-[90dvh] grid-rows-[auto_minmax(0,1fr)_auto]" v-else-if="!isFetching && card">
+        <DialogContent class="sm:max-w-[600px] max-h-[90dvh] grid-rows-[auto_minmax(0,1fr)_auto]"
+                       :class="{'[&>button:first-of-type]:hidden': isFetching}"
+        >
             <DialogHeader>
                 <DialogTitle></DialogTitle>
                 <DialogDescription>
                 </DialogDescription>
             </DialogHeader>
-            <div class="overflow-y-auto">
+            <div v-if="isFetching" class="[&>button:first-of-type]:hidden">
+            </div>
+            <div class="overflow-y-auto" v-else-if="!isFetching && card">
                 <Form
                     class="space-y-6"
                 >
