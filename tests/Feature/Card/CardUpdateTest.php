@@ -7,7 +7,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use function Pest\Laravel\assertDatabaseHas;
 use function Pest\Laravel\patch;
-use function PHPUnit\Framework\assertCount;
+use function Pest\Laravel\patchJson;
 
 uses(RefreshDatabase::class);
 
@@ -52,4 +52,59 @@ test('users can move a card to another board list on the same board', function (
     expect($boardList1->cards()->count())->toBe(3)
         ->and($boardList2->cards()->count())->toBe(1);
 
+});
+
+test('users can update a card', function () {
+    $user = User::factory()->create();
+    $board = Board::factory()->for($user)->create();
+
+    $this->actingAs($user);
+
+    $boardList = BoardList::factory()->for($board)->create();
+    $card = Card::factory()->create(['board_list_id' => $boardList->id]);
+
+    $payload = [
+        'name' => 'Updated card name',
+        'description' => 'Updated card description',
+    ];
+
+    $response = patchJson(route('board-lists.cards.update', [
+        'board_list' => $boardList,
+        'card' => $card,
+    ]), $payload);
+
+    $this->assertDatabaseHas('cards', [
+        'id' => $card->id,
+        'board_list_id' => $boardList->id,
+        'name' => 'Updated card name',
+        'description' => 'Updated card description',
+    ]);
+});
+
+test('users cannot update a card they do not own', function () {
+    $user = User::factory()->create();
+    $otherUser = User::factory()->create();
+    $otherUserBoard = Board::factory()->for($otherUser)->create();
+
+    $this->actingAs($user);
+
+    $otherUserBoardList = BoardList::factory()->for($otherUserBoard)->create();
+
+    $anotherUserBoardListCard = Card::factory()->for($otherUserBoardList)->create();
+
+    $payload = [
+        'name' => 'Updated Board Name',
+        'description' => 'Updated description',
+    ];
+
+    // Update card owned by the other user
+    $response = patchJson(route('board-lists.cards.update', [
+        'board_list' => $otherUserBoard->boardLists()->first()->id,
+        'card' => $anotherUserBoardListCard,
+    ]), $payload);
+
+    $response->assertForbidden()
+        ->assertJson([
+       'message' => 'You do not own this card.',
+    ]);
 });
