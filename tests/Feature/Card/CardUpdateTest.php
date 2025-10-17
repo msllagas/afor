@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Board;
 use App\Models\BoardList;
 use App\Models\Card;
 use App\Models\User;
@@ -10,17 +11,24 @@ use function PHPUnit\Framework\assertCount;
 
 uses(RefreshDatabase::class);
 
-test('users can move a card to another board list', function () {
+test('users can move a card to another board list on the same board', function () {
     $user = User::factory()->create();
+    $board = Board::factory()->for($user)->create();
     $this->actingAs($user);
 
+    Artisan::call('board:seed', [
+        'board' => $board->id,
+    ]);
+
+    $boardLists = $board->boardLists()->take(2)->get();
+
     // First Board List with 2 cards
-    $boardList1 = BoardList::factory()->create();
+    $boardList1 = $boardLists[0];
     $boardList1Card1 = Card::factory()->create(['board_list_id' => $boardList1->id, 'order' => 0]);
     $boardList1Card2 = Card::factory()->create(['board_list_id' => $boardList1->id, 'order' => 1]);
 
     // Second Board List with 2 cards
-    $boardList2 = BoardList::factory()->create();
+    $boardList2 = $boardLists[1];
     $boardList2Card1 = Card::factory()->create(['board_list_id' => $boardList2->id, 'order' => 0]);
     $boardList2Card2 = Card::factory()->create(['board_list_id' => $boardList2->id, 'order' => 1]);
 
@@ -41,7 +49,7 @@ test('users can move a card to another board list', function () {
         'order' => 2,
     ]);
 
-    assertCount(3, $boardList1->cards);
-    assertCount(1, $boardList2->cards);
+    expect($boardList1->cards()->count())->toBe(3)
+        ->and($boardList2->cards()->count())->toBe(1);
 
 });
