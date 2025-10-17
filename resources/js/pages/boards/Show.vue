@@ -13,6 +13,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog"
 import {Input} from "@/components/ui/input"
+import {Textarea, } from '@/components/ui/textarea'
 import cardRoutes from "@/routes/board-lists/cards"
 import boardRoutes from "@/routes/boards"
 import CardController from "@/actions/App/Http/Controllers/CardController"
@@ -303,9 +304,10 @@ onMounted(() => {
                             <div>
                                 <h2 class="sr-only">{{ card.name }}</h2>
                                 <Textarea
+                                    un-styled
                                     id="name"
                                     name="name"
-                                    :value="card.name"
+                                    :model-value="card.name"
                                     class="w-full text-2xl font-semibold leading-tight resize-none overflow-hidden border-none focus:ring-0 focus:outline-none p-0"
                                     rows="1"
                                     @input="autoResize($event)"
@@ -318,10 +320,11 @@ onMounted(() => {
                     <div class="space-y-4 py-2">
                         <h3 class="text-sm font-medium">Description</h3>
                         <Textarea
+                            un-styled
                             id="description"
                             name="description"
-                            :value="card.description"
-                            class="w-full text-sm resize-none border border-gray-300 rounded-md p-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                            :model-value="card.description"
+                            class="w-full text-sm resize-none border border-gray-300 rounded-md p-2  focus:ring-1 "
                             rows="1"
                             @input="autoResize($event)"
                             @focus="autoResize($event)"
