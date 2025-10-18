@@ -18,6 +18,8 @@ return new class extends Migration {
                 ->constrained()
                 ->cascadeOnDelete();
 
+            $table->boolean('is_archived')->default(false);
+
             $table->timestamps();
             $table->softDeletes();
         });
