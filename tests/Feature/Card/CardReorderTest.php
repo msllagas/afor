@@ -7,8 +7,6 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use function Pest\Laravel\assertDatabaseHas;
 use function Pest\Laravel\patch;
 
-uses(RefreshDatabase::class);
-
 test('users can reorder cards in board list', function () {
     $user = User::factory()->create();
     $this->actingAs($user);

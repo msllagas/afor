@@ -9,8 +9,6 @@ use function Pest\Laravel\assertDatabaseHas;
 use function Pest\Laravel\patch;
 use function Pest\Laravel\patchJson;
 
-uses(RefreshDatabase::class);
-
 test('users can move a card to another board list on the same board', function () {
     $user = User::factory()->create();
     $board = Board::factory()->for($user)->create();
