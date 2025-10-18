@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Database\Factories\BoardListFactory;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -21,6 +23,12 @@ class BoardList extends Model
     use HasUuids, HasFactory, SoftDeletes;
 
     protected $guarded = ['id'];
+
+    #[Scope]
+    public function active(Builder $query): Builder
+    {
+        return $query->where('is_archived', false);
+    }
 
     public function board(): BelongsTo
     {
