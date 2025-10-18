@@ -57,7 +57,12 @@ class BoardController extends Controller
      */
     public function show(Board $board): Response
     {
-        $board->load('boardLists.cards');
+        $board->load([
+            'boardLists' => function ($query) {
+                $query->with('cards')
+                ->active();
+            }
+        ]);
 
         return Inertia::render('boards/Show', [
             'board' => $board,
