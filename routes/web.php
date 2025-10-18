@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\BoardController;
+use App\Http\Controllers\BoardListController;
 use App\Http\Controllers\CardController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -21,6 +22,7 @@ Route::patch('board-lists/{board_list}/cards/reorder', [CardController::class, '
     ->middleware(['auth', 'verified']);
 
 Route::scopeBindings()->group(function () {
+    Route::resource('boards.board-lists', BoardListController::class)->middleware(['auth', 'verified']);
     Route::resource('board-lists.cards', CardController::class)->middleware(['auth', 'verified']);
 });
 
