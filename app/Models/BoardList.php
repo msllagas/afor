@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Collection;
 /**
  * @property-read Board $board
  * @property-read Collection<int, Card> $cards
+ * @property-read bool $is_archived
  */
 class BoardList extends Model
 {
