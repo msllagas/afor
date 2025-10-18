@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreBoardListRequest;
 use App\Http\Requests\UpdateBoardListRequest;
 use App\Models\Board;
 use App\Models\BoardList;
@@ -29,9 +30,16 @@ class BoardListController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreBoardListRequest $request, Board $board): RedirectResponse
     {
-        //
+        BoardList::query()->create(array_merge(
+            $request->validated(),
+            [
+                'board_id' => $board->id
+            ]
+        ));
+
+        return back();
     }
 
     /**
