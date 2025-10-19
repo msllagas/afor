@@ -53,9 +53,21 @@ class CardController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Card $card)
+    public function show(BoardList $boardList, Card $card): Response
     {
-        //
+        $board = $boardList->board;
+
+        $board->load([
+            'boardLists' => function ($query) {
+                $query->with('cards')
+                    ->active();
+            },
+        ]);
+
+        return Inertia::render('boards/Show', [
+            'board' => $board,
+            'selectedCard' => $card,
+        ]);
     }
 
     /**
@@ -68,7 +80,7 @@ class CardController extends Controller
 
         return Inertia::render('boards/Show', [
             'board' => $boardList->board,
-            'card' => $card,
+            'selectedCard' => $card,
         ]);
 
     }
