@@ -66,6 +66,7 @@ class BoardController extends Controller
 
         return Inertia::render('boards/Show', [
             'board' => $board,
+            'selectedCard' => null,
         ]);
     }
 
