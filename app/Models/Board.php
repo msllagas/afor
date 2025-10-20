@@ -21,11 +21,6 @@ class Board extends Model
 
     protected $guarded = ['id'];
 
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
-    }
-
     public function boardLists(): HasMany
     {
         return $this->hasMany(BoardList::class);
