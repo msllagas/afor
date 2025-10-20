@@ -27,7 +27,7 @@ class WorkspaceFactory extends Factory
     public function forUser(User $user = null): static
     {
         return $this->state(fn(array $attributes) => [
-            'name' => $user?->name . "'s Workspace" ?? 'Guest Workspace',
+            'name' => $user?->name . " Workspace" ?? 'Guest Workspace',
             'user_id' => $user?->id ?? User::factory(),
         ]);
     }
