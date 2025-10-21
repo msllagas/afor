@@ -14,7 +14,13 @@ Route::get('dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
+Route::post('workspaces/{workspace}/boards', [BoardController::class, 'store'])
+    ->name('workspaces.boards.store')
+    ->scopeBindings()
+    ->middleware(['auth', 'verified']);
+
 Route::resource('boards', BoardController::class)
+    ->only(['index', 'show'])
     ->middleware(['auth', 'verified']);
 
 Route::patch('board-lists/{board_list}/cards/reorder', [CardController::class, 'reorder'])
