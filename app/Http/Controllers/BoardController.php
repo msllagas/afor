@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreBoardsRequest;
 use App\Http\Requests\UpdateBoardsRequest;
 use App\Models\Board;
+use App\Models\Workspace;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -17,11 +18,16 @@ class BoardController extends Controller
     public function index(): Response
     {
         $boards = Board::query()
+            ->get();
+
+        $workspaces = Workspace::query()
+            ->select('id', 'name')
+            ->with('boards')
             ->where('user_id', auth()->id())
             ->get();
 
         return Inertia::render('boards/Index', [
-            'boards' => $boards
+            'workspaces' => $workspaces
         ]);
     }
 
@@ -36,11 +42,11 @@ class BoardController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreBoardsRequest $request): RedirectResponse
+    public function store(StoreBoardsRequest $request, Workspace $workspace): RedirectResponse
     {
         $board = Board::query()->create([
             ...$request->validated(),
-            'user_id' => auth()->id(),
+            'workspace_id' => $workspace->id
         ]);
 
         \Artisan::call('board:seed', ['board' => $board->id]);
@@ -60,7 +66,7 @@ class BoardController extends Controller
         $board->load([
             'boardLists' => function ($query) {
                 $query->with('cards')
-                ->active();
+                    ->active();
             }
         ]);
 
