@@ -21,6 +21,11 @@ class Board extends Model
 
     protected $guarded = ['id'];
 
+    public function workspace(): BelongsTo
+    {
+        return $this->belongsTo(Workspace::class);
+    }
+
     public function boardLists(): HasMany
     {
         return $this->hasMany(BoardList::class);

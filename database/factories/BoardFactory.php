@@ -19,7 +19,7 @@ class BoardFactory extends Factory
     {
         return [
             'name' => $this->faker->name(),
-            'user_id' => UserFactory::new(),
+            'workspace_id' => WorkspaceFactory::new(),
         ];
     }
 }
