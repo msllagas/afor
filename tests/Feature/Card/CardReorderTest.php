@@ -1,8 +1,10 @@
 <?php
 
+use App\Models\Board;
 use App\Models\BoardList;
 use App\Models\Card;
 use App\Models\User;
+use App\Models\Workspace;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use function Pest\Laravel\assertDatabaseHas;
 use function Pest\Laravel\patch;
@@ -11,7 +13,10 @@ test('users can reorder cards in board list', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
 
-    $boardList = BoardList::factory()->create();
+    $workspace = Workspace::factory()->for($user)->create();
+    $board = Board::factory()->for($workspace)->create();
+
+    $boardList = BoardList::factory()->for($board)->create();
     $card1 = Card::factory()->create(['board_list_id' => $boardList->id, 'order' => 0]);
     $card2 = Card::factory()->create(['board_list_id' => $boardList->id, 'order' => 1]);
     $card3 = Card::factory()->create(['board_list_id' => $boardList->id, 'order' => 2]);

@@ -4,6 +4,7 @@ use App\Models\Board;
 use App\Models\BoardList;
 use App\Models\Card;
 use App\Models\User;
+use App\Models\Workspace;
 use function Pest\Laravel\assertDatabaseHas;
 use function Pest\Laravel\post;
 
@@ -12,11 +13,10 @@ test('users can create cards in board lists', function () {
 
     $this->actingAs($user);
 
-    $board = Board::factory()->create([
-        'name' => 'Test Board',
-        'user_id' => $user->id,
-    ]);
+    $workspace = Workspace::factory()->for($user)->create();
+    $board = Board::factory()->for($workspace)->create();
 
+    //  Artisan call to seed the board with board lists
     Artisan::call('board:seed',
         [
             'board' => $board->id,
@@ -42,7 +42,9 @@ test('adding a new card assigns next order number', function () {
 
     $this->actingAs($user);
 
-    $boardList = BoardList::factory()->create();
+    $workspace = Workspace::factory()->create();
+    $board = Board::factory()->for($workspace)->create();
+    $boardList = BoardList::factory()->for($board)->create();
 
     Card::factory()->create(['board_list_id' => $boardList->id, 'order' => 1]);
     Card::factory()->create(['board_list_id' => $boardList->id, 'order' => 2]);

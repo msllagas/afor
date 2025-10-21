@@ -4,6 +4,7 @@ use App\Models\Board;
 use App\Models\BoardList;
 use App\Models\Card;
 use App\Models\User;
+use App\Models\Workspace;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use function Pest\Laravel\assertDatabaseHas;
 use function Pest\Laravel\patch;
@@ -11,9 +12,12 @@ use function Pest\Laravel\patchJson;
 
 test('users can move a card to another board list on the same board', function () {
     $user = User::factory()->create();
-    $board = Board::factory()->for($user)->create();
     $this->actingAs($user);
 
+    $workspace = Workspace::factory()->for($user)->create();
+    $board = Board::factory()->for($workspace)->create();
+
+    //  Artisan call to seed the board with board lists
     Artisan::call('board:seed', [
         'board' => $board->id,
     ]);
@@ -54,10 +58,11 @@ test('users can move a card to another board list on the same board', function (
 
 test('users can update a card', function () {
     $user = User::factory()->create();
-    $board = Board::factory()->for($user)->create();
 
     $this->actingAs($user);
 
+    $workspace = Workspace::factory()->for($user)->create();
+    $board = Board::factory()->for($workspace)->create();
     $boardList = BoardList::factory()->for($board)->create();
     $card = Card::factory()->create(['board_list_id' => $boardList->id]);
 
@@ -81,10 +86,11 @@ test('users can update a card', function () {
 
 test('users cannot update a card they do not own', function () {
     $user = User::factory()->create();
-    $otherUser = User::factory()->create();
-    $otherUserBoard = Board::factory()->for($otherUser)->create();
-
     $this->actingAs($user);
+
+    $otherUser = User::factory()->create();
+    $otherUserWorkspace = Workspace::factory()->for($otherUser)->create();
+    $otherUserBoard = Board::factory()->for($otherUserWorkspace)->create();
 
     $otherUserBoardList = BoardList::factory()->for($otherUserBoard)->create();
 
