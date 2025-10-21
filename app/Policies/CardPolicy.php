@@ -37,7 +37,7 @@ class CardPolicy
      */
     public function update(User $user, Card $card): Response
     {
-        return $card->boardList->board->user_id === $user->id
+        return $card->boardList->board->workspace->user_id === $user->id
             ? Response::allow()
             : Response::deny('You do not own this card.');
     }
