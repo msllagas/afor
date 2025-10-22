@@ -20,6 +20,7 @@ class BoardListFactory extends Factory
         return [
             'name' => fake()->name(),
             'board_id' => BoardFactory::new(),
+            'order' => 0,
             'is_archived' => false,
             'created_at' => now(),
             'updated_at' => now(),

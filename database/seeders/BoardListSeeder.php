@@ -28,10 +28,11 @@ class BoardListSeeder extends Seeder
             'In Progress',
             'Done',
         ];
-        foreach ($presetBoards as $boardName) {
+        foreach ($presetBoards as $index => $boardName) {
             BoardList::query()->create([
                 'name' => $boardName,
                 'board_id' => $boardId,
+                'order' => $index
             ]);
         }
     }
