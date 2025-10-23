@@ -32,10 +32,13 @@ class BoardListController extends Controller
      */
     public function store(StoreBoardListRequest $request, Board $board): RedirectResponse
     {
+        $nextOrder = $board->boardLists()->max('order');
+        $nextOrder = is_null($nextOrder) ? 0 : $nextOrder + 1;
         BoardList::query()->create(array_merge(
             $request->validated(),
             [
-                'board_id' => $board->id
+                'board_id' => $board->id,
+                'order' => $nextOrder,
             ]
         ));
 
