@@ -9,6 +9,7 @@ export interface Card {
 export interface BoardList {
     id: string;
     name: string;
+    order: number;
     cards: Card[];
 }
 
