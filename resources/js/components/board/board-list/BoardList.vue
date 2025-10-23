@@ -14,6 +14,7 @@ import type { Card as CardType, BoardList as BoardListType } from '@/types'
 
 const props = defineProps<{
     boardList: BoardListType;
+    isMovingBoardList: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -28,7 +29,7 @@ const dragOptions = computed(() => ({
     group: {
         name: 'boardCard',
         pull: true,
-        put: true,
+        put: !props.isMovingBoardList,
     },
     ghostClass: 'ghost',
     dragClass: 'drag',
@@ -107,7 +108,7 @@ function scrollToCard() {
         class="flex relative flex-col space-between whitespace-normal scroll-m-2 bg-gray-950 pb-2 rounded-2xl shadow-lg w-[272px] max-h-full"
     >
         <CardHeader
-            class="flex justify-between relative grow-0 flex-wrap items-start p-2 whitespace-normal">
+            class="flex justify-between relative grow-0 flex-wrap items-start p-2 whitespace-normal handle cursor-grab">
             <div class="relative basis-[min-content] grow-1 shrink-1 min-h-[20px]">
                 <h2 class="text-sm font-semibold">
                     <Button class="hover:!bg-transparent" size="sm" variant="ghost">
@@ -198,5 +199,9 @@ function scrollToCard() {
 
 .drag {
     transform: rotate(5deg);
+}
+
+.handle, .handle * {
+    cursor: grab;
 }
 </style>
