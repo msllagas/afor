@@ -28,6 +28,7 @@ class Board extends Model
 
     public function boardLists(): HasMany
     {
-        return $this->hasMany(BoardList::class);
+        return $this->hasMany(BoardList::class)
+            ->orderBy('order');
     }
 }
