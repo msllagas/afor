@@ -23,6 +23,10 @@ Route::resource('boards', BoardController::class)
     ->only(['index', 'show'])
     ->middleware(['auth', 'verified']);
 
+Route::patch('boards/{board}/board-lists/reorder', [BoardListController::class, 'reorder'])
+    ->name('boards.board-lists.reorder')
+    ->middleware(['auth', 'verified']);
+
 Route::patch('board-lists/{board_list}/cards/reorder', [CardController::class, 'reorder'])
     ->name('board-lists.cards.reorder')
     ->middleware(['auth', 'verified']);
