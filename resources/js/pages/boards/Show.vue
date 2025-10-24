@@ -7,10 +7,12 @@ import { Input } from '@/components/ui/input'
 import BoardList from '@/components/board/board-list/BoardList.vue'
 import CardDialog from '@/components/board/board-list/card/CardDialog.vue'
 import boardRoutes from '@/routes/boards'
+import boardListRoutes from '@/routes/boards/board-lists'
 import cardRoutes from '@/routes/board-lists/cards'
 import BoardListController from '@/actions/App/Http/Controllers/BoardListController'
 import type { Board, Card } from '@/types'
 import draggable from 'vuedraggable'
+import { reorderDraggable } from "@/lib/utils";
 
 const props = defineProps<{
     board: Board;
@@ -75,6 +77,23 @@ function onDialogClose(value: boolean) {
     }
 }
 
+function onChange(boardId: string, event: any) {
+    if (event.moved) {
+
+        const changedBoardLists = reorderDraggable(props.board.board_lists, event.moved.oldIndex, event.moved.newIndex);
+
+        router.patch(boardListRoutes.reorder(boardId).url, {
+            boardLists: changedBoardLists.map(b => ({
+                id: b.id,
+                order: b.order,
+            })),
+        }, {
+            replace: true,
+        });
+    }
+
+}
+
 provide('boardId', props.board.id)
 
 onMounted(() => {
@@ -91,30 +110,31 @@ onMounted(() => {
         class="relative bg-gradient-to-r from-pink-500 via-fuchsia-500 to-rose-400 h-screen overflow-y-auto select-none">
         <ol v-if="board?.board_lists?.length > 0"
             class="h-full p-2 flex overflow-hidden absolute pb-32 gap-2">
-                    <draggable
-                        :component-data="{
+            <draggable
+                :component-data="{
                                     tag: 'li',
                                     type: 'transition-group',
                                     name: !drag ? 'flip-list' : null
                                 }"
-                        :list="board.board_lists"
-                        item-key="id"
-                        v-bind="dragOptions"
-                        @end="drag = false"
-                        @start="drag = true"
-                        class="flex gap-2"
-                        handle=".handle"
-                    >
-                        <template #item="{ element }">
-                            <li>
-                                <BoardList :key="element.id"
-                                           :board-list="element"
-                                           @on-card-click="onCardClick"
-                                           :is-moving-board-list="drag"
-                                />
-                            </li>
-                        </template>
-                    </draggable>
+                :list="board.board_lists"
+                class="flex gap-2"
+                handle=".handle"
+                item-key="id"
+                v-bind="dragOptions"
+                @change="onChange(board.id, $event)"
+                @end="drag = false"
+                @start="drag = true"
+            >
+                <template #item="{ element }">
+                    <li>
+                        <BoardList :key="element.id"
+                                   :board-list="element"
+                                   :is-moving-board-list="drag"
+                                   @on-card-click="onCardClick"
+                        />
+                    </li>
+                </template>
+            </draggable>
             <li v-if="isAddingNewBoardList" class="h-full whitespace-nowrap block shrink-0 self-start rounded-lg">
                 <div class="w-[272px] bg-black rounded-lg p-2">
                     <Form
