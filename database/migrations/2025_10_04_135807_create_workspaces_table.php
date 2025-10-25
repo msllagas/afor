@@ -17,7 +17,10 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->string('name');
 
-            $table->foreignIdFor(User::class)->constrained()->cascadeOnDelete();
+            $table->foreignIdFor(User::class)
+                ->comment('Owner of the workspace')
+                ->constrained()
+                ->cascadeOnDelete();
 
             $table->timestamps();
             $table->softDeletes();
