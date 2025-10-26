@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
@@ -12,11 +12,20 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
-import { type NavItem } from '@/types';
-import { Link } from '@inertiajs/vue3';
-import {BookOpen, Folder, Kanban, LayoutGrid} from 'lucide-vue-next';
+import { type NavItem, Workspace } from '@/types';
+import { Link, usePage } from '@inertiajs/vue3';
+import {
+    BookOpen,
+    Folder,
+    Kanban,
+    LayoutGrid,
+    SquareTerminal
+} from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 import boards from "@/routes/boards";
+import NavWorkspace from "@/components/NavWorkspace.vue";
+import workspacesRoutes from "@/routes/workspaces";
+import type { PageProps as InertiaPageProps } from '@inertiajs/core'
 
 const mainNavItems: NavItem[] = [
     {
@@ -31,18 +40,33 @@ const mainNavItems: NavItem[] = [
     }
 ];
 
-const footerNavItems: NavItem[] = [
-    {
-        title: 'Github Repo',
-        href: 'https://github.com/laravel/vue-starter-kit',
-        icon: Folder,
-    },
-    {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#vue',
-        icon: BookOpen,
-    },
-];
+interface PageProps extends InertiaPageProps {
+    ownedWorkspaces: Workspace[]
+}
+
+const page = usePage<PageProps>()
+
+
+const ownedWorkspaces = page.props?.ownedWorkspaces.map(workspace => ({
+    title: workspace.name,
+    url: "#",
+    icon: SquareTerminal,
+    isActive: true,
+    items: [
+        {
+            title: "Boards",
+            url: workspacesRoutes.home(workspace.id).url,
+        },
+        {
+            title: "Members",
+            url: "#",
+        },
+        {
+            title: "Settings",
+            url: "#",
+        },
+    ]
+}))
 </script>
 
 <template>
@@ -50,9 +74,9 @@ const footerNavItems: NavItem[] = [
         <SidebarHeader>
             <SidebarMenu>
                 <SidebarMenuItem>
-                    <SidebarMenuButton size="lg" as-child>
+                    <SidebarMenuButton as-child size="lg">
                         <Link :href="dashboard()">
-                            <AppLogo />
+                            <AppLogo/>
                         </Link>
                     </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -60,13 +84,13 @@ const footerNavItems: NavItem[] = [
         </SidebarHeader>
 
         <SidebarContent>
-            <NavMain :items="mainNavItems" />
+            <NavMain :items="mainNavItems"/>
+            <NavWorkspace :items="ownedWorkspaces"/>
         </SidebarContent>
 
         <SidebarFooter>
-            <NavFooter :items="footerNavItems" />
-            <NavUser />
+            <NavUser/>
         </SidebarFooter>
     </Sidebar>
-    <slot />
+    <slot/>
 </template>
