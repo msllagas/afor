@@ -14,8 +14,6 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('workspace_user', function (Blueprint $table) {
-            $table->uuid('id')->primary();
-
             $table->foreignIdFor(Workspace::class)->constrained()->cascadeOnDelete();
             $table->foreignIdFor(User::class)
                 ->comment('User who is a member of the workspace')
