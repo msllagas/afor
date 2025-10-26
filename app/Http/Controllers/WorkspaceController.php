@@ -82,7 +82,7 @@ class WorkspaceController extends Controller
 
         $workspace->load('boards');
 
-        return Inertia::render('workspaces/Index', [
+        return Inertia::render('workspaces/Home', [
             'workspace' => $workspace,
         ]);
     }

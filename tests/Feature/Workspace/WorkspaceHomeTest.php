@@ -14,7 +14,7 @@ test('workspace owner can access their workspace home', function () {
 
     $response->assertOk()
      ->assertInertia(fn (Assert $page) => $page
-            ->component('workspaces/Index')
+            ->component('workspaces/Home')
         );
 });
 
@@ -32,7 +32,7 @@ test('workspace members can access their workspace home', function () {
 
     $response->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('workspaces/Index')
+            ->component('workspaces/Home')
         );
 });
 
