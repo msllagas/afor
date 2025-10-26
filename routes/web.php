@@ -44,6 +44,6 @@ Route::scopeBindings()->group(function () {
     Route::resource('board-lists.cards', CardController::class)->middleware(['auth', 'verified']);
 });
 
-require __DIR__ . '/invite.php';
+//require __DIR__ . '/invite.php';
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';
