@@ -77,4 +77,16 @@ class BoardListController extends Controller
     {
         //
     }
+
+    public function reorder(Request $request, Board $board): RedirectResponse
+    {
+        $boardLists = $request->input('boardLists', []);
+
+        foreach ($boardLists as $boardList) {
+            BoardList::query()->where('id', $boardList['id'])
+                ->where('board_id', $board->id)
+                ->update(['order' => $boardList['order']]);
+        }
+        return back();
+    }
 }
