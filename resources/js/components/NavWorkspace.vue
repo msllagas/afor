@@ -17,7 +17,7 @@ import {
     SidebarMenuSubItem,
 } from "@/components/ui/sidebar"
 import { urlIsActive } from "@/lib/utils";
-import { usePage } from "@inertiajs/vue3";
+import { Link, usePage } from "@inertiajs/vue3";
 
 defineProps<{
     items: {
@@ -60,9 +60,9 @@ const page = usePage();
                                 <SidebarMenuSubButton as-child
                                                       :is-active="urlIsActive(subItem.url, page.url)"
                                 >
-                                    <a :href="subItem.url">
+                                    <Link :href="subItem.url">
                                         <span>{{ subItem.title }}</span>
-                                    </a>
+                                    </Link>
                                 </SidebarMenuSubButton>
                             </SidebarMenuSubItem>
                         </SidebarMenuSub>
