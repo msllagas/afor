@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
 import {
@@ -15,8 +14,6 @@ import { dashboard } from '@/routes';
 import { type NavItem, Workspace } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
 import {
-    BookOpen,
-    Folder,
     Kanban,
     LayoutGrid,
     SquareTerminal
