@@ -56,7 +56,7 @@ const ownedWorkspaces = page.props?.ownedWorkspaces.map(workspace => ({
         },
         {
             title: "Members",
-            url: "#",
+            url: workspacesRoutes.members(workspace.id).url,
         },
         {
             title: "Settings",

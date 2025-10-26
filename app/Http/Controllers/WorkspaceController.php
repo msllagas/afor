@@ -86,4 +86,33 @@ class WorkspaceController extends Controller
             'workspace' => $workspace,
         ]);
     }
+
+    public function members(Workspace $workspace)
+    {
+        $user = auth()->user();
+
+        $isOwner = $workspace->user_id === $user->id;
+
+        $isMember = $workspace->users()
+            ->where('user_id', $user->id)
+            ->exists();
+
+        if (!$isOwner && !$isMember) {
+            return redirect()->route('dashboard');
+        }
+
+        $owner = $workspace->user()
+            ->select(['id', 'name'])
+            ->first();
+
+        $members = $workspace->users()
+            ->select('users.id', 'users.name')
+            ->get();
+
+        return Inertia::render('workspaces/Member', [
+            'workspace' => $workspace,
+            'owner' => $owner,
+            'members' => $members,
+        ]);
+    }
 }

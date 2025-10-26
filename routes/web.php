@@ -20,7 +20,9 @@ Route::get('workspaces/{workspace}/home', [WorkspaceController::class, 'home'])
     ->name('workspaces.home')
     ->middleware(['auth', 'verified']);
 
-
+Route::get('workspaces/{workspace}/members', [WorkspaceController::class, 'members'])
+    ->name('workspaces.members')
+    ->middleware(['auth', 'verified']);
 
 Route::post('workspaces/{workspace}/boards', [BoardController::class, 'store'])
     ->name('workspaces.boards.store')
@@ -44,6 +46,6 @@ Route::scopeBindings()->group(function () {
     Route::resource('board-lists.cards', CardController::class)->middleware(['auth', 'verified']);
 });
 
-//require __DIR__ . '/invite.php';
+require __DIR__ . '/invite.php';
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';
