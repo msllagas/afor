@@ -17,17 +17,20 @@ class BoardController extends Controller
      */
     public function index(): Response
     {
-        $boards = Board::query()
+        $user = auth()->user();
+        $ownedWorkspaces = $user->ownedWorkspaces()
+            ->select('id', 'name')
+            ->with('boards:id,name,workspace_id')
             ->get();
 
-        $workspaces = Workspace::query()
-            ->select('id', 'name')
-            ->with('boards')
-            ->where('user_id', auth()->id())
+        $sharedWorkspaces = $user->sharedWorkspaces()
+            ->select('workspaces.id', 'workspaces.name')
+            ->with('boards:id,name,workspace_id')
             ->get();
 
         return Inertia::render('boards/Index', [
-            'workspaces' => $workspaces
+            'ownedWorkspaces' => $ownedWorkspaces,
+            'sharedWorkspaces' => $sharedWorkspaces,
         ]);
     }
 
