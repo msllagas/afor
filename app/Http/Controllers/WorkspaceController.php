@@ -113,6 +113,7 @@ class WorkspaceController extends Controller
             'workspace' => $workspace,
             'owner' => $owner,
             'members' => $members,
+            'inviteLink' => Inertia::defer(fn() => app(WorkspaceService::class)->generateInvitationLink($workspace, auth()->user()))
         ]);
     }
 }

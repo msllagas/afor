@@ -1,4 +1,5 @@
 <?php
+
 use App\Models\User;
 use App\Models\Workspace;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -13,8 +14,17 @@ test('workspace owner can access their workspace members', function () {
         ]));
 
     $response->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
+        ->assertInertia(fn(Assert $page) => $page
             ->component('workspaces/Member')
+            ->has('workspace')
+            ->has('owner', fn(Assert $page) => $page
+                ->where('id', $user->id)
+                ->where('name', $user->name
+                ))
+            ->has('members')
+            ->loadDeferredProps(fn(Assert $reload) => $reload
+                ->has('inviteLink')
+            )
         );
 });
 
@@ -31,8 +41,20 @@ test('workspace members can access their workspace members', function () {
         ]));
 
     $response->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
+        ->assertInertia(fn(Assert $page) => $page
             ->component('workspaces/Member')
+            ->has('workspace')
+            ->has('owner', fn(Assert $page) => $page
+                ->where('id', $owner->id)
+                ->where('name', $owner->name
+                ))
+            ->has('members', fn(Assert $page) => $page
+                ->where('0.id', $member->id)
+                ->where('0.name', $member->name
+                ))
+            ->loadDeferredProps(fn(Assert $reload) => $reload
+                ->has('inviteLink')
+            )
         );
 });
 
