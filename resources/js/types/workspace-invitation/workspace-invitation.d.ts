@@ -6,7 +6,8 @@ export interface Inviter {
 }
 
 export interface Invitation {
-    id: string,
+    token: string,
+    invited_by: string,
     workspace: Workspace,
     inviter: Inviter,
 }
