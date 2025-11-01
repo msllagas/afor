@@ -15,6 +15,10 @@ class Workspace extends Model
     /** @use HasFactory<WorkspaceFactory> */
     use HasFactory, HasUuids;
 
+    protected $fillable = [
+        'name',
+    ];
+
     // Owner of the workspace
     public function user(): BelongsTo
     {
