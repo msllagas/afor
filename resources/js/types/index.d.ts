@@ -1,6 +1,7 @@
 import { InertiaLinkProps } from '@inertiajs/vue3';
 import type { LucideIcon } from 'lucide-vue-next';
 export * from './workspace/workspace'
+export * from './workspace-invitation/workspace-invitation'
 
 export interface Auth {
     user: User;
