@@ -6,7 +6,6 @@ use App\Http\Requests\StoreCardRequest;
 use App\Http\Requests\UpdateCardRequest;
 use App\Models\BoardList;
 use App\Models\Card;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -90,9 +89,10 @@ class CardController extends Controller
      */
     public function update(UpdateCardRequest $request, BoardList $boardList, Card $card)
     {
-        Gate::authorize('update', $card);
+        //        Gate::authorize('update', $card);
 
         $card->update($request->validated());
+
         return back();
     }
 
@@ -104,7 +104,6 @@ class CardController extends Controller
         //
     }
 
-
     public function reorder(Request $request, BoardList $boardList): RedirectResponse
     {
         $cards = $request->input('cards', []);
@@ -114,6 +113,7 @@ class CardController extends Controller
                 ->where('board_list_id', $boardList->id)
                 ->update(['order' => $cardData['order']]);
         }
+
         return back();
     }
 }

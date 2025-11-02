@@ -35,11 +35,12 @@ class CardPolicy
     /**
      * Determine whether the user can update the model.
      */
-    public function update(User $user, Card $card): Response
+    public function update(User $user, Card $card): bool
     {
-        return $card->boardList->board->workspace->user_id === $user->id
-            ? Response::allow()
-            : Response::deny('You do not own this card.');
+        return false;
+        /* return $card->boardList->board->workspace->user_id === $user->id
+             ? Response::allow()
+             : Response::deny('You do not own this card.');*/
     }
 
     /**
