@@ -2,20 +2,21 @@
 
 namespace App\Models;
 
- use Database\Factories\UserFactory;
- use Illuminate\Contracts\Auth\MustVerifyEmail;
- use Illuminate\Database\Eloquent\Concerns\HasUuids;
- use Illuminate\Database\Eloquent\Factories\HasFactory;
- use Illuminate\Database\Eloquent\Relations\BelongsToMany;
- use Illuminate\Database\Eloquent\Relations\HasMany;
- use Illuminate\Foundation\Auth\User as Authenticatable;
+use Database\Factories\UserFactory;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
-    use HasUuids, HasFactory, Notifiable, TwoFactorAuthenticatable;
+    use HasFactory, HasUuids, Notifiable, TwoFactorAuthenticatable;
 
     /**
      * The attributes that are mass assignable.
@@ -62,5 +63,12 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->belongsToMany(Workspace::class, 'workspace_user')
             ->as('sharedWorkspaces')
             ->withTimestamps();
+    }
+
+    public function workspaces(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->ownedWorkspaces->merge($this->sharedWorkspaces)
+        );
     }
 }
