@@ -38,13 +38,12 @@ const mainNavItems: NavItem[] = [
 ];
 
 interface PageProps extends InertiaPageProps {
-    ownedWorkspaces: Workspace[]
+    workspaces: Workspace[]
 }
 
 const page = usePage<PageProps>()
 
-
-const ownedWorkspaces = page.props?.ownedWorkspaces.map(workspace => ({
+const workspaces = page.props?.workspaces.map(workspace => ({
     title: workspace.name,
     url: "#",
     icon: SquareTerminal,
@@ -57,10 +56,6 @@ const ownedWorkspaces = page.props?.ownedWorkspaces.map(workspace => ({
         {
             title: "Members",
             url: workspacesRoutes.members(workspace.id).url,
-        },
-        {
-            title: "Settings",
-            url: "#",
         },
     ]
 }))
@@ -82,7 +77,7 @@ const ownedWorkspaces = page.props?.ownedWorkspaces.map(workspace => ({
 
         <SidebarContent>
             <NavMain :items="mainNavItems"/>
-            <NavWorkspace :items="ownedWorkspaces"/>
+            <NavWorkspace :items="workspaces"/>
         </SidebarContent>
 
         <SidebarFooter>
