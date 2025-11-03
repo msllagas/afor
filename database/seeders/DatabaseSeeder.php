@@ -16,11 +16,17 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-        $user = User::factory()->withoutTwoFactor()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        $mandy = User::factory()->withoutTwoFactor()->create([
+            'name' => 'Mandy The Creator',
+            'email' => 'mandy.afor@example.com',
         ]);
 
-        Workspace::factory()->forUser($user)->create();
+        $angel = User::factory()->withoutTwoFactor()->create([
+            'name' => 'Angel The Girlfriend',
+            'email' => 'angel.afor@example.com',
+        ]);
+
+        Workspace::factory()->forUser($mandy)->create();
+        Workspace::factory()->forUser($angel)->create();
     }
 }
