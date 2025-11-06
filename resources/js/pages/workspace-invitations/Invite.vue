@@ -16,6 +16,13 @@ function acceptInvitation() {
         token: props.invitation.token
     }))
 }
+
+function handleLogin() {
+    console.log('handle login here')
+}
+function handleRegister() {
+    console.log('handle register here')
+}
 </script>
 
 <template>
@@ -23,10 +30,20 @@ function acceptInvitation() {
         <h1><strong>{{ invitation.inviter.name }}</strong> is inviting you to <strong>{{
                 invitation.workspace.name
             }}</strong></h1>
-        <Button @click="acceptInvitation">
-            Accept Invitation
-        </Button>
 
+        <div class="flex items-center gap-4">
+            <Button v-if="$page.props.auth.user" @click="acceptInvitation">
+                Accept Invitation
+            </Button>
+            <template v-else>
+                <Button class="cursor-pointer" variant="ghost" @click="handleLogin">
+                    Login
+                </Button>
+                <Button class="cursor-pointer" variant="outline" @click="handleRegister">
+                    Register
+                </Button>
+            </template>
+        </div>
     </div>
 </template>
 
