@@ -2,70 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\StoreWorkspaceRequest;
-use App\Http\Requests\UpdateWorkspaceRequest;
 use App\Models\Workspace;
 use App\Services\WorkspaceService;
 use Inertia\Inertia;
 
 class WorkspaceController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        //
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(StoreWorkspaceRequest $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(Workspace $workspace)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Workspace $workspace)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(UpdateWorkspaceRequest $request, Workspace $workspace)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Workspace $workspace)
-    {
-        //
-    }
-
     public function home(Workspace $workspace)
     {
         $user = auth()->user();
@@ -76,7 +18,7 @@ class WorkspaceController extends Controller
             ->where('user_id', $user->id)
             ->exists();
 
-        if (!$isOwner && !$isMember) {
+        if (! $isOwner && ! $isMember) {
             return redirect()->route('dashboard');
         }
 
@@ -97,7 +39,7 @@ class WorkspaceController extends Controller
             ->where('user_id', $user->id)
             ->exists();
 
-        if (!$isOwner && !$isMember) {
+        if (! $isOwner && ! $isMember) {
             return redirect()->route('dashboard');
         }
 
@@ -113,7 +55,7 @@ class WorkspaceController extends Controller
             'workspace' => $workspace,
             'owner' => $owner,
             'members' => $members,
-            'inviteLink' => Inertia::defer(fn() => app(WorkspaceService::class)->generateInvitationLink($workspace, auth()->user()))
+            'inviteLink' => Inertia::defer(fn () => app(WorkspaceService::class)->generateInvitationLink($workspace, auth()->user())),
         ]);
     }
 }
