@@ -36,7 +36,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <Head title="Workspaces"/>
+    <Head :title="workspace.name + ' - Boards'"/>
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="px-10">
