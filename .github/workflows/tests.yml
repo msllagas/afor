@@ -14,17 +14,6 @@ jobs:
   ci:
     runs-on: ubuntu-latest
 
-    services:
-      mariadb:
-        image: mariadb:10.6.8
-        env:
-          MARIADB_DATABASE: afor_test
-          MARIADB_ALLOW_EMPTY_PASSWORD: yes
-          MARIADB_USER: root # Aligned with .env.example file
-        ports:
-          - 3306:3306
-        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4

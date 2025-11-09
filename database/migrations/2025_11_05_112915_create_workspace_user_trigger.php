@@ -9,6 +9,9 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
         DB::unprepared('
         CREATE TRIGGER prevent_owner_in_pivot BEFORE INSERT ON workspace_user
         FOR EACH ROW
@@ -25,6 +28,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::unprepared('DROP TRIGGER IF EXISTS prevent_owner_in_pivot');
+        if (DB::getDriverName() === 'mysql') {
+            DB::unprepared('DROP TRIGGER IF EXISTS prevent_owner_in_pivot');
+        }
     }
 };
