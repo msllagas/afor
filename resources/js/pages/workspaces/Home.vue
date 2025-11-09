@@ -12,18 +12,23 @@ import { cn } from "@/lib/utils"
 import type { BreadcrumbItem, Workspace } from "@/types"
 import workspaces from "@/routes/workspaces"
 import boardsRoutes from "@/routes/boards"
+import workspaceRoutes from "@/routes/workspaces"
 import BoardController from "@/actions/App/Http/Controllers/BoardController";
-
-const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'Boards',
-        href: boardsRoutes.index().url
-    },
-];
 
 const props = defineProps<{
     workspace: Workspace,
 }>()
+
+const breadcrumbs: BreadcrumbItem[] = [
+    {
+        title: 'Workspace',
+        href: workspaceRoutes.home(props.workspace.id).url,
+    },
+    {
+        title: 'Boards',
+        href: workspaceRoutes.members(props.workspace.id).url,
+    },
+];
 
 onMounted(() => {
     router.visit(workspaces.home(props.workspace.id).url, {

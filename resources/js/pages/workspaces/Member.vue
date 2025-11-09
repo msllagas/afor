@@ -2,16 +2,9 @@
 import { Head } from "@inertiajs/vue3";
 import AppLayout from "@/layouts/AppLayout.vue";
 import type { BreadcrumbItem, User, Workspace } from "@/types";
-import boardsRoutes from "@/routes/boards";
+import workspaceRoutes from "@/routes/workspaces";
 import { Link } from 'lucide-vue-next'
 import { Button } from "@/components/ui/button";
-
-const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'Workspace Members',
-        href: boardsRoutes.index().url
-    },
-];
 
 const props = defineProps<{
     workspace: Workspace,
@@ -20,6 +13,16 @@ const props = defineProps<{
     inviteLink: string,
 }>();
 
+const breadcrumbs: BreadcrumbItem[] = [
+    {
+        title: 'Workspace',
+        href: workspaceRoutes.home(props.workspace.id).url,
+    },
+    {
+        title: 'Members',
+        href: workspaceRoutes.members(props.workspace.id).url,
+    },
+];
 function copyInviteLink() {
     navigator.clipboard.writeText(props?.inviteLink);
 }
