@@ -22,5 +22,6 @@ export interface Board {
 export interface Workspace {
     id: string;
     name: string;
+    description?: string;
     boards: Board[];
 }

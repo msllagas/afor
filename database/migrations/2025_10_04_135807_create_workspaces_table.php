@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\Board;
 use App\Models\User;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -16,6 +15,7 @@ return new class extends Migration
         Schema::create('workspaces', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('name');
+            $table->longText('description')->nullable();
 
             $table->foreignIdFor(User::class)
                 ->comment('Owner of the workspace')

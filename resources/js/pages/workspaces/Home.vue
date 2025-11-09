@@ -48,7 +48,7 @@ onMounted(() => {
             <div class="mt-10">
                 <div class="space-y-2 pb-10">
                     <h1 class="text-lg font-medium">{{ workspace.name }}</h1>
-                    <p class="text-sm text-gray-300">The description of this workspace</p>
+                    <p class="text-sm text-gray-300">{{ workspace.description}}</p>
                 </div>
                 <hr class="my-5">
                 <div>
