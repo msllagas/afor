@@ -15,7 +15,7 @@ return new class extends Migration
         Schema::create('cards', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('name');
-            $table->text('description')->nullable();
+            $table->longText('description')->nullable();
             $table->integer('order')->default(0);
             $table->foreignIdFor(BoardList::class)->constrained()->cascadeOnDelete();
 
