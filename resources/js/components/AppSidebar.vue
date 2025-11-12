@@ -1,10 +1,8 @@
 <script lang="ts" setup>
 import NavMain from '@/components/NavMain.vue';
-import NavUser from '@/components/NavUser.vue';
 import {
     Sidebar,
     SidebarContent,
-    SidebarFooter,
     SidebarHeader,
     SidebarMenu,
     SidebarMenuButton,
@@ -79,10 +77,6 @@ const workspaces = page.props?.workspaces.map(workspace => ({
             <NavMain :items="mainNavItems"/>
             <NavWorkspace :items="workspaces"/>
         </SidebarContent>
-
-        <SidebarFooter>
-            <NavUser/>
-        </SidebarFooter>
     </Sidebar>
     <slot/>
 </template>
