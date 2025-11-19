@@ -1,0 +1,60 @@
+@reference './app.css';
+
+.tiptap-active {
+    @apply text-pink-500
+}
+
+.tiptap:focus-visible {
+    @apply outline-none shadow-none border-transparent;
+}
+
+.tiptap h1, .tiptap h2, .tiptap h3, .tiptap h4 {
+    @apply font-bold;
+}
+
+.tiptap h1 {
+    @apply text-3xl font-bold leading-9;
+}
+
+.tiptap h2 {
+    @apply text-2xl font-semibold leading-8;
+}
+
+.tiptap h3 {
+    @apply text-xl font-semibold leading-7;
+}
+
+.tiptap h4 {
+    @apply text-lg font-medium leading-6;
+}
+
+.tiptap ul:not([data-type="taskList"]) {
+    @apply list-disc
+}
+
+.tiptap ul:not([data-type="taskList"]) ul {
+    list-style: circle;
+}
+
+.tiptap ul:not([data-type="taskList"]) ul ul {
+    list-style: square;
+}
+
+.tiptap ul:last-child {
+    @apply mb-0
+}
+
+.tiptap ul ul,
+.tiptap ol ol {
+    @apply mt-0 mb-0
+}
+
+.tiptap ol,
+.tiptap ul {
+    padding-left: 1.5em;
+}
+
+.tiptap p {
+    @apply text-sm
+}
+
