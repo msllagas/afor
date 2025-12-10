@@ -148,7 +148,7 @@ onMounted(() => {
                             :disabled="processing"
                             data-test="update-profile-button"
                         >
-                            Add Card
+                            Add list
                         </Button
                         >
                     </Form>

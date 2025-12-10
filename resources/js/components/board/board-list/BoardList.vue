@@ -162,7 +162,7 @@ function scrollToCard() {
                             class="cursor-pointer"
                             data-test="update-profile-button"
                         >
-                            Add Card
+                            Add card
                         </Button>
                         <Button class="cursor-pointer" size="sm" variant="ghost" @click="isAddingCard = false">
                             <X/>
