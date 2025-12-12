@@ -1,7 +1,7 @@
 <script lang="ts" setup>
-import { computed, onMounted, provide, ref } from 'vue'
+import { computed, nextTick, onMounted, provide, ref, useTemplateRef } from 'vue'
 import { Form, Head, router } from '@inertiajs/vue3'
-import { Plus } from 'lucide-vue-next'
+import { Plus, X } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import BoardList from '@/components/board/board-list/BoardList.vue'
@@ -24,6 +24,7 @@ const isFetching = ref(false)
 const isAddingNewBoardList = ref(false);
 const headerTitle = ref(props.board.name)
 const drag = ref(false);
+const input = useTemplateRef('add-new-list-input')
 
 const dragOptions = computed(() => ({
     animation: 200,
@@ -94,6 +95,12 @@ function onChange(boardId: string, event: any) {
 
 }
 
+async function onAddNewBoardList() {
+    isAddingNewBoardList.value = true
+    await nextTick()
+    input.value?.focus()
+}
+
 provide('boardId', props.board.id)
 
 onMounted(() => {
@@ -143,14 +150,20 @@ onMounted(() => {
                         reset-on-success
                         v-bind="BoardListController.store.form(board.id)"
                     >
-                        <Input id="name" class="w-full p-2 mb-2 rounded-lg shadow" name="name"/>
-                        <Button
-                            :disabled="processing"
-                            data-test="update-profile-button"
-                        >
-                            Add list
-                        </Button
-                        >
+                        <Input id="name" class="w-full p-2 mb-2 rounded-lg shadow" name="name" ref="add-new-list-input"/>
+                        <div class="flex gap-2 items-center">
+                            <Button
+                                :disabled="processing"
+                                class="cursor-pointer"
+                                data-test="update-profile-button"
+                            >
+                                Add list
+                            </Button>
+                            <Button class="cursor-pointer" size="sm" variant="ghost"
+                                    @click="isAddingNewBoardList = false">
+                                <X/>
+                            </Button>
+                        </div>
                     </Form>
                 </div>
             </li>
@@ -158,7 +171,7 @@ onMounted(() => {
                 <div class="w-[272px]">
                     <Button
                         class="w-full cursor-pointer font-bold bg-[#ffffff4d] !justify-start text-white hover:bg-[#ffffff33]! h-[40px] rounded-lg"
-                        @click="isAddingNewBoardList = !isAddingNewBoardList"
+                        @click="onAddNewBoardList"
                     >
                         <Plus/>
                         Add another list
