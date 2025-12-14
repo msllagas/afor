@@ -115,70 +115,78 @@ onMounted(() => {
     <Head :title="headerTitle"/>
     <div
         class="relative bg-gradient-to-r from-pink-500 via-fuchsia-500 to-rose-400 h-screen overflow-y-auto select-none">
-        <ol v-if="board?.board_lists?.length > 0"
-            class="h-full p-2 flex overflow-hidden absolute pb-32 gap-2">
-            <draggable
-                :component-data="{
+        <div class="p-4 bg-[rgba(0,0,0,0.3)] shadow-[0 4px 30px rgba(0, 0, 0, 0.1)] backdrop-blur-xs">
+            <div>
+                <h1 class="text-lg font-medium">{{ board.name }}</h1>
+            </div>
+        </div>
+        <div class="mt-2">
+            <ol v-if="board?.board_lists?.length > 0"
+                class="flex absolute pb-32 gap-2">
+                <draggable
+                    :component-data="{
                                     tag: 'li',
                                     type: 'transition-group',
                                     name: !drag ? 'flip-list' : null
                                 }"
-                :list="board.board_lists"
-                class="flex gap-2"
-                handle=".handle"
-                item-key="id"
-                v-bind="dragOptions"
-                @change="onChange(board.id, $event)"
-                @end="drag = false"
-                @start="drag = true"
-            >
-                <template #item="{ element }">
-                    <li>
-                        <BoardList :key="element.id"
-                                   :board-list="element"
-                                   :is-moving-board-list="drag"
-                                   @on-card-click="onCardClick"
-                        />
-                    </li>
-                </template>
-            </draggable>
-            <li v-if="isAddingNewBoardList" class="h-full whitespace-nowrap block shrink-0 self-start rounded-lg">
-                <div class="w-[272px] bg-black rounded-lg p-2">
-                    <Form
-                        v-slot="{ processing }"
-                        class="space-y-6"
-                        reset-on-success
-                        v-bind="BoardListController.store.form(board.id)"
-                    >
-                        <Input id="name" class="w-full p-2 mb-2 rounded-lg shadow" name="name" ref="add-new-list-input"/>
-                        <div class="flex gap-2 items-center">
-                            <Button
-                                :disabled="processing"
-                                class="cursor-pointer"
-                                data-test="update-profile-button"
-                            >
-                                Add list
-                            </Button>
-                            <Button class="cursor-pointer" size="sm" variant="ghost"
-                                    @click="isAddingNewBoardList = false">
-                                <X/>
-                            </Button>
-                        </div>
-                    </Form>
-                </div>
-            </li>
-            <li v-else class="h-full whitespace-nowrap block shrink-0 self-start">
-                <div class="w-[272px]">
-                    <Button
-                        class="w-full cursor-pointer font-bold bg-[#ffffff4d] !justify-start text-white hover:bg-[#ffffff33]! h-[40px] rounded-lg"
-                        @click="onAddNewBoardList"
-                    >
-                        <Plus/>
-                        Add another list
-                    </Button>
-                </div>
-            </li>
-        </ol>
+                    :list="board.board_lists"
+                    class="flex gap-2"
+                    handle=".handle"
+                    item-key="id"
+                    v-bind="dragOptions"
+                    @change="onChange(board.id, $event)"
+                    @end="drag = false"
+                    @start="drag = true"
+                >
+                    <template #item="{ element }">
+                        <li class="px-2">
+                            <BoardList :key="element.id"
+                                       :board-list="element"
+                                       :is-moving-board-list="drag"
+                                       @on-card-click="onCardClick"
+                            />
+                        </li>
+                    </template>
+                </draggable>
+                <li v-if="isAddingNewBoardList" class="h-full whitespace-nowrap block shrink-0 self-start rounded-lg">
+                    <div class="w-[272px] bg-black rounded-lg p-2">
+                        <Form
+                            v-slot="{ processing }"
+                            class="space-y-6"
+                            reset-on-success
+                            v-bind="BoardListController.store.form(board.id)"
+                        >
+                            <Input id="name" ref="add-new-list-input" class="w-full p-2 mb-2 rounded-lg shadow"
+                                   name="name"/>
+                            <div class="flex gap-2 items-center">
+                                <Button
+                                    :disabled="processing"
+                                    class="cursor-pointer"
+                                    data-test="update-profile-button"
+                                >
+                                    Add list
+                                </Button>
+                                <Button class="cursor-pointer" size="sm" variant="ghost"
+                                        @click="isAddingNewBoardList = false">
+                                    <X/>
+                                </Button>
+                            </div>
+                        </Form>
+                    </div>
+                </li>
+                <li v-else class="h-full whitespace-nowrap block shrink-0 self-start">
+                    <div class="w-[272px]">
+                        <Button
+                            class="w-full cursor-pointer font-bold bg-[#ffffff4d] !justify-start text-white hover:bg-[#ffffff33]! h-[40px] rounded-lg"
+                            @click="onAddNewBoardList"
+                        >
+                            <Plus/>
+                            Add another list
+                        </Button>
+                    </div>
+                </li>
+            </ol>
+        </div>
     </div>
     <CardDialog :is-fetching="isFetching"
                 :model-value="isDialogOpen"
