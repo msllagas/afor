@@ -2,7 +2,7 @@
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import boardsRoutes from '@/routes/boards';
-import type { Board } from '@/types/workspace/workspace';
+import { Board } from '@/types';
 import { Link } from '@inertiajs/vue3';
 
 defineProps<{
