@@ -48,7 +48,11 @@ test('users cannot accept their own invitation', function () {
         'token' => $token,
     ]));
 
-})->skip(message: 'implement this test once the accept invitation route has implemented the logic');
+    // Just redirect to workspace home
+    $response->assertRedirect(route('workspaces.home', [
+        'workspace' => $workspace,
+    ]));
+});
 
 test('users who already joined the workspace are redirected', function () {
     $user = User::factory()->create();
@@ -66,7 +70,12 @@ test('users who already joined the workspace are redirected', function () {
         'workspace' => $workspace,
         'token' => $token,
     ]));
-})->skip(message: 'implement this test once the accept invitation route has implemented the logic');
+
+    // Just redirect to workspace home
+    $response->assertRedirect(route('workspaces.home', [
+        'workspace' => $workspace,
+    ]));
+});
 
 test('users are redirected when the invitation does not exist', function () {
     $user = User::factory()->create();

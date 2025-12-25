@@ -37,24 +37,19 @@ class WorkspaceInvitationController extends Controller
             ->where('token', $token)
             ->exists();
 
+        $authUser = auth()->user();
+
         if (! $invitationExists) {
             dd('do something when invitation does not exists');
         }
 
-        $userIsAlreadyMember = $workspace->user_id === auth()->id();
-
-        if ($userIsAlreadyMember) {
-            dd('Owners cannot accept their own workspace invitation 😑');
-        }
-
         $userExistInWorkspace = $workspace->users()
-            ->where('user_id', auth()->id());
+            ->where('user_id', $authUser->id);
 
-        if ($userExistInWorkspace->exists()) {
-            dd('do something when user already exists in workspace');
+        // Only attach user if it does not exist yet in workspace
+        if (! $userExistInWorkspace->exists()) {
+            $workspace->users()->attach($authUser->id);
         }
-
-        $workspace->users()->attach(auth()->id());
 
         $workspace->load('boards');
 
