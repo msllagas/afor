@@ -26,7 +26,7 @@ defineProps<{
                 "
             >
                 <CardContent class="relative flex h-32 items-center justify-center overflow-hidden">
-                    <span class="relative text-sm font-semibold text-white drop-shadow-md"> Create new board </span>
+                    <span class="relative"> Create new board </span>
                 </CardContent>
             </Card>
         </PopoverTrigger>

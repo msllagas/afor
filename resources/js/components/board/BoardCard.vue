@@ -20,7 +20,7 @@ defineProps<{
                 <div class="absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/20"></div>
             </CardContent>
             <CardFooter class="m-0.5 px-6">
-                <span class="relative text-sm font-semibold drop-shadow-md">
+                <span class="relative">
                     {{ board.name }}
                 </span>
             </CardFooter>
