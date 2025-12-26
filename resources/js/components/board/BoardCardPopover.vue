@@ -20,7 +20,7 @@ defineProps<{
             <Card
                 :class="
                     cn(
-                        'w-full gap-2 overflow-hidden rounded-2xl bg-sidebar pt-0 pb-2 shadow-lg hover:bg-sidebar-accent',
+                        'w-full gap-2 overflow-hidden rounded-2xl bg-sidebar pt-0 pb-2 shadow-lg hover:bg-sidebar-accent hover:text-white',
                         $attrs.class ?? '',
                     )
                 "
