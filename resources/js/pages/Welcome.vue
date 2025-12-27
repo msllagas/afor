@@ -19,13 +19,14 @@ import { Head, Link } from '@inertiajs/vue3';
                         <h1 class="text-xl font-semibold text-pink-500">Afor</h1>
                     </div>
                     <div>
-                        <Link
-                            v-if="$page.props.auth.user"
-                            :href="dashboard()"
-                            class="inline-block rounded-sm border border-[#19140035] px-5 py-1.5 text-sm leading-normal text-[#1b1b18] hover:border-[#1915014a] dark:border-[#3E3E3A] dark:text-[#EDEDEC] dark:hover:border-[#62605b]"
-                        >
-                            Dashboard
-                        </Link>
+                        <Button as-child v-if="$page.props.auth.user">
+                            <Link
+                                :href="dashboard()"
+                                class="inline-block rounded-sm border border-[#19140035] px-5 py-1.5 text-sm leading-normal text-[#1b1b18] hover:border-[#1915014a] dark:border-[#3E3E3A] dark:text-[#EDEDEC] dark:hover:border-[#62605b]"
+                            >
+                                Dashboard
+                            </Link>
+                        </Button>
                         <template v-else>
                             <Link
                                 :href="login()"
@@ -33,12 +34,14 @@ import { Head, Link } from '@inertiajs/vue3';
                             >
                                 Log in
                             </Link>
-                            <Link
-                                :href="register()"
-                                class="inline-block rounded-sm border border-[#19140035] px-5 py-1.5 text-sm leading-normal text-[#1b1b18] hover:border-[#1915014a] dark:border-[#3E3E3A] dark:text-[#EDEDEC] dark:hover:border-[#62605b]"
-                            >
-                                Register
-                            </Link>
+                            <Button as-child>
+                                <Link
+                                    :href="register()"
+                                    class="inline-block rounded-sm border border-[#19140035] px-5 py-1.5 text-sm leading-normal text-[#1b1b18] hover:border-[#1915014a] dark:border-[#3E3E3A] dark:text-[#EDEDEC] dark:hover:border-[#62605b]"
+                                >
+                                    Register
+                                </Link>
+                            </Button>
                         </template>
                     </div>
                 </div>
