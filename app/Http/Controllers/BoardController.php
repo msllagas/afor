@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\BoardAddedToWorkspace;
 use App\Http\Requests\StoreBoardsRequest;
 use App\Http\Requests\UpdateBoardsRequest;
 use App\Models\Board;
@@ -49,12 +50,14 @@ class BoardController extends Controller
     {
         $board = Board::query()->create([
             ...$request->validated(),
-            'workspace_id' => $workspace->id
+            'workspace_id' => $workspace->id,
         ]);
 
         \Artisan::call('board:seed', ['board' => $board->id]);
 
         $board->load('boardLists.cards');
+
+        BoardAddedToWorkspace::dispatch($board, $workspace->id);
 
         return to_route('boards.show', [
             'board' => $board,
@@ -70,7 +73,7 @@ class BoardController extends Controller
             'boardLists' => function ($query) {
                 $query->with('cards')
                     ->active();
-            }
+            },
         ]);
 
         return Inertia::render('boards/Show', [

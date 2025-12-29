@@ -4,12 +4,18 @@ import BoardCardPopover from '@/components/board/BoardCardPopover.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { default as workspaceRoutes, default as workspaces } from '@/routes/workspaces';
 import type { BreadcrumbItem, Workspace } from '@/types';
+import { Board } from '@/types';
 import { Head, router } from '@inertiajs/vue3';
-import { onMounted } from 'vue';
+import { useEcho } from '@laravel/echo-vue';
+import { onMounted, ref, watch } from 'vue';
 
 const props = defineProps<{
     workspace: Workspace;
 }>();
+
+type BoardData = {
+    board: Board;
+};
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -22,12 +28,26 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
+const boards = ref<Board[]>([]);
+
 onMounted(() => {
     router.visit(workspaces.home(props.workspace.id).url, {
         only: ['workspace'],
         preserveScroll: true,
         preserveState: true,
     });
+});
+
+watch(
+    () => props.workspace.boards,
+    (newBoards) => {
+        boards.value = [...newBoards];
+    },
+    { immediate: true },
+);
+
+useEcho<BoardData>(`workspace.${props.workspace.id}`, 'BoardAddedToWorkspace', (e) => {
+    boards.value.push(e.board);
 });
 </script>
 
@@ -48,7 +68,7 @@ onMounted(() => {
                     </div>
 
                     <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                        <template v-for="board in workspace.boards" :key="board.id">
+                        <template v-for="board in boards" :key="board.id">
                             <BoardCard :board="board" />
                         </template>
                         <BoardCardPopover :workspace-id="workspace.id" />
