@@ -1,30 +1,30 @@
 <script lang="ts" setup>
-import { computed, nextTick, onMounted, provide, ref, useTemplateRef } from 'vue'
-import { Form, Head, router } from '@inertiajs/vue3'
-import { Plus, X } from 'lucide-vue-next'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import BoardList from '@/components/board/board-list/BoardList.vue'
-import CardDialog from '@/components/board/board-list/card/CardDialog.vue'
-import boardRoutes from '@/routes/boards'
-import boardListRoutes from '@/routes/boards/board-lists'
-import cardRoutes from '@/routes/board-lists/cards'
-import BoardListController from '@/actions/App/Http/Controllers/BoardListController'
-import type { Board, Card } from '@/types'
-import draggable from 'vuedraggable'
-import { reorderDraggable } from "@/lib/utils";
+import BoardListController from '@/actions/App/Http/Controllers/BoardListController';
+import BoardList from '@/components/board/board-list/BoardList.vue';
+import CardDialog from '@/components/board/board-list/card/CardDialog.vue';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { reorderDraggable } from '@/lib/utils';
+import cardRoutes from '@/routes/board-lists/cards';
+import boardRoutes from '@/routes/boards';
+import boardListRoutes from '@/routes/boards/board-lists';
+import type { Board, Card } from '@/types';
+import { Form, Head, router } from '@inertiajs/vue3';
+import { Plus, X } from 'lucide-vue-next';
+import { computed, nextTick, onMounted, provide, ref, useTemplateRef } from 'vue';
+import draggable from 'vuedraggable';
 
 const props = defineProps<{
     board: Board;
     selectedCard?: Card;
 }>();
 
-const isDialogOpen = ref(false)
-const isFetching = ref(false)
+const isDialogOpen = ref(false);
+const isFetching = ref(false);
 const isAddingNewBoardList = ref(false);
-const headerTitle = ref(props.board.name)
+const headerTitle = ref(props.board.name);
 const drag = ref(false);
-const input = useTemplateRef('add-new-list-input')
+const input = useTemplateRef('add-new-list-input');
 
 const dragOptions = computed(() => ({
     animation: 200,
@@ -39,19 +39,19 @@ const dragOptions = computed(() => ({
     disabled: false,
     scrollSensitivity: 100,
     scrollSpeed: 20,
-}))
+}));
 
 function onCardClick(boardListId: string, card: Card) {
-    isFetching.value = true
-    isDialogOpen.value = true
+    isFetching.value = true;
+    isDialogOpen.value = true;
 
     const url = cardRoutes.show({
         board_list: boardListId,
         card: card.id,
-    }).url
-    headerTitle.value = card.name
+    }).url;
+    headerTitle.value = card.name;
 
-    window.history.pushState({}, '', url)
+    window.history.pushState({}, '', url);
 
     router.visit(url, {
         only: ['selectedCard'],
@@ -59,76 +59,77 @@ function onCardClick(boardListId: string, card: Card) {
         preserveState: true,
         replace: true,
         onSuccess: () => {
-            isFetching.value = false
+            isFetching.value = false;
         },
-    })
+    });
 }
 
 function onDialogClose(value: boolean) {
     if (!value) {
-        headerTitle.value = props.board.name
-        isDialogOpen.value = false
+        headerTitle.value = props.board.name;
+        isDialogOpen.value = false;
 
-        window.history.pushState({}, '', boardRoutes.show(props.board.id).url)
+        window.history.pushState({}, '', boardRoutes.show(props.board.id).url);
         router.visit(boardRoutes.show(props.board.id).url, {
             only: ['board', 'selectedCard'],
             preserveScroll: true,
             preserveState: true,
-        })
+        });
     }
 }
 
 function onChange(boardId: string, event: any) {
     if (event.moved) {
-
         const changedBoardLists = reorderDraggable(props.board.board_lists, event.moved.oldIndex, event.moved.newIndex);
 
-        router.patch(boardListRoutes.reorder(boardId).url, {
-            boardLists: changedBoardLists.map(b => ({
-                id: b.id,
-                order: b.order,
-            })),
-        }, {
-            replace: true,
-        });
+        router.patch(
+            boardListRoutes.reorder(boardId).url,
+            {
+                boardLists: changedBoardLists.map((b) => ({
+                    id: b.id,
+                    order: b.order,
+                })),
+            },
+            {
+                replace: true,
+            },
+        );
     }
-
 }
 
 async function onAddNewBoardList() {
-    isAddingNewBoardList.value = true
-    await nextTick()
-    input.value?.focus()
+    isAddingNewBoardList.value = true;
+    await nextTick();
+    input.value?.focus();
 }
 
-provide('boardId', props.board.id)
+provide('boardId', props.board.id);
 
 onMounted(() => {
     if (props.selectedCard) {
-        isDialogOpen.value = true
+        isDialogOpen.value = true;
     }
 });
-
 </script>
 
 <template>
-    <Head :title="headerTitle"/>
+    <Head :title="headerTitle" />
     <div
-        class="relative bg-gradient-to-r from-pink-500 via-fuchsia-500 to-rose-400 h-screen overflow-y-auto select-none">
-        <div class="p-4 bg-[rgba(0,0,0,0.3)] shadow-[0 4px 30px rgba(0, 0, 0, 0.1)] backdrop-blur-xs">
+        class="relative h-screen overflow-y-auto bg-gradient-to-r from-pink-500 via-fuchsia-500 to-rose-400 select-none"
+    >
+        <div class="shadow-[0 4px 30px rgba(0, 0, 0, 0.1)] bg-[rgba(0,0,0,0.3)] p-4 backdrop-blur-xs">
             <div>
                 <h1 class="text-lg font-medium">{{ board.name }}</h1>
             </div>
         </div>
         <div class="mt-2">
-            <ol v-if="board?.board_lists?.length > 0"
-                class="flex absolute pb-32 gap-2">
+            <ol v-if="board?.board_lists?.length > 0" class="absolute flex gap-2 pb-32">
                 <draggable
                     :component-data="{
-                                    tag: 'li',
-                                    type: 'transition-group',
-                                    name: !drag ? 'flip-list' : null
-                                }"
+                        tag: 'li',
+                        type: 'transition-group',
+                        name: !drag ? 'flip-list' : null,
+                    }"
                     :list="board.board_lists"
                     class="flex gap-2"
                     handle=".handle"
@@ -140,47 +141,52 @@ onMounted(() => {
                 >
                     <template #item="{ element }">
                         <li class="px-2">
-                            <BoardList :key="element.id"
-                                       :board-list="element"
-                                       :is-moving-board-list="drag"
-                                       @on-card-click="onCardClick"
+                            <BoardList
+                                :key="element.id"
+                                :board-list="element"
+                                :is-moving-board-list="drag"
+                                @on-card-click="onCardClick"
                             />
                         </li>
                     </template>
                 </draggable>
-                <li v-if="isAddingNewBoardList" class="h-full whitespace-nowrap block shrink-0 self-start rounded-lg">
-                    <div class="w-[272px] bg-black rounded-lg p-2">
+                <li v-if="isAddingNewBoardList" class="block h-full shrink-0 self-start rounded-lg whitespace-nowrap">
+                    <div class="w-[272px] rounded-lg bg-black p-2">
                         <Form
                             v-slot="{ processing }"
                             class="space-y-6"
                             reset-on-success
                             v-bind="BoardListController.store.form(board.id)"
                         >
-                            <Input id="name" ref="add-new-list-input" class="w-full p-2 mb-2 rounded-lg shadow"
-                                   name="name"/>
-                            <div class="flex gap-2 items-center">
-                                <Button
-                                    :disabled="processing"
-                                    class="cursor-pointer"
-                                    data-test="update-profile-button"
-                                >
+                            <Input
+                                id="name"
+                                ref="add-new-list-input"
+                                class="mb-2 w-full rounded-lg p-2 shadow"
+                                name="name"
+                            />
+                            <div class="flex items-center gap-2">
+                                <Button :disabled="processing" class="cursor-pointer" data-test="update-profile-button">
                                     Add list
                                 </Button>
-                                <Button class="cursor-pointer" size="sm" variant="ghost"
-                                        @click="isAddingNewBoardList = false">
-                                    <X/>
+                                <Button
+                                    class="cursor-pointer"
+                                    size="sm"
+                                    variant="ghost"
+                                    @click="isAddingNewBoardList = false"
+                                >
+                                    <X />
                                 </Button>
                             </div>
                         </Form>
                     </div>
                 </li>
-                <li v-else class="h-full whitespace-nowrap block shrink-0 self-start">
+                <li v-else class="block h-full shrink-0 self-start whitespace-nowrap">
                     <div class="w-[272px]">
                         <Button
-                            class="w-full cursor-pointer font-bold bg-[#ffffff4d] !justify-start text-white hover:bg-[#ffffff33]! h-[40px] rounded-lg"
+                            class="h-[40px] w-full cursor-pointer !justify-start rounded-lg bg-[#ffffff4d] font-bold text-white hover:bg-[#ffffff33]!"
                             @click="onAddNewBoardList"
                         >
-                            <Plus/>
+                            <Plus />
                             Add another list
                         </Button>
                     </div>
@@ -188,12 +194,12 @@ onMounted(() => {
             </ol>
         </div>
     </div>
-    <CardDialog :is-fetching="isFetching"
-                :model-value="isDialogOpen"
-                :selected-card="selectedCard"
-                @update-open="onDialogClose"
+    <CardDialog
+        :is-fetching="isFetching"
+        :model-value="isDialogOpen"
+        :selected-card="selectedCard"
+        @update-open="onDialogClose"
     />
 </template>
 
-<style scoped>
-</style>
+<style scoped></style>
