@@ -115,7 +115,7 @@ onMounted(() => {
 <template>
     <Head :title="headerTitle" />
     <div
-        class="relative h-screen overflow-y-auto bg-gradient-to-r from-pink-500 via-fuchsia-500 to-rose-400 select-none"
+        class="relative h-screen max-h-screen overflow-y-auto bg-gradient-to-r from-pink-500 via-fuchsia-500 to-rose-400 select-none"
     >
         <div class="shadow-[0 4px 30px rgba(0, 0, 0, 0.1)] bg-[rgba(0,0,0,0.3)] p-4 backdrop-blur-xs">
             <div>
@@ -123,7 +123,10 @@ onMounted(() => {
             </div>
         </div>
         <div class="mt-2">
-            <ol v-if="board?.board_lists?.length > 0" class="absolute flex gap-2 pb-32">
+            <ol
+                v-if="board?.board_lists?.length > 0"
+                class="absolute flex h-full max-h-[calc(100vh-128px)] gap-2 overflow-x-hidden overflow-y-hidden px-2"
+            >
                 <draggable
                     :component-data="{
                         tag: 'li',
@@ -140,7 +143,7 @@ onMounted(() => {
                     @start="drag = true"
                 >
                     <template #item="{ element }">
-                        <li class="px-2">
+                        <li>
                             <BoardList
                                 :key="element.id"
                                 :board-list="element"
