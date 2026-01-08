@@ -1,7 +1,5 @@
 <script lang="ts" setup>
-import { inject } from 'vue'
-import { Ellipsis } from 'lucide-vue-next'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -10,30 +8,31 @@ import {
     DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+} from '@/components/ui/dropdown-menu';
+import { Ellipsis } from 'lucide-vue-next';
+import { inject } from 'vue';
 
 defineProps<{
     boardListId: string;
 }>();
 
 const emit = defineEmits<{
-    archiveList: [boardId: string, boardListId: string]
-}>()
+    archiveList: [boardId: string, boardListId: string];
+}>();
 
 const boardId = inject<string>('boardId', '');
-
 </script>
 
 <template>
     <DropdownMenu>
         <DropdownMenuTrigger as-child>
             <Button size="sm" variant="ghost">
-                <Ellipsis/>
+                <Ellipsis />
             </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent class="w-56">
             <DropdownMenuLabel>List Actions</DropdownMenuLabel>
-            <DropdownMenuSeparator/>
+            <DropdownMenuSeparator />
             <DropdownMenuGroup>
                 <DropdownMenuItem>
                     <span>Add Card</span>
@@ -42,13 +41,13 @@ const boardId = inject<string>('boardId', '');
                     <span>Copy List</span>
                 </DropdownMenuItem>
             </DropdownMenuGroup>
-            <DropdownMenuSeparator/>
+            <DropdownMenuSeparator />
             <DropdownMenuGroup>
                 <DropdownMenuItem>
                     <span>Change list color</span>
                 </DropdownMenuItem>
             </DropdownMenuGroup>
-            <DropdownMenuSeparator/>
+            <DropdownMenuSeparator />
             <DropdownMenuItem @click="emit('archiveList', boardId, boardListId)">
                 <span>Archive this list</span>
             </DropdownMenuItem>
@@ -56,6 +55,4 @@ const boardId = inject<string>('boardId', '');
     </DropdownMenu>
 </template>
 
-<style scoped>
-
-</style>
+<style scoped></style>
