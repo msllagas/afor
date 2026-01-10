@@ -17,6 +17,7 @@ import draggable from 'vuedraggable';
 const props = defineProps<{
     board: Board;
     selectedCard?: Card;
+    colors: Array<string>;
 }>();
 
 const isDialogOpen = ref(false);
@@ -148,6 +149,7 @@ onMounted(() => {
                                 :key="element.id"
                                 :board-list="element"
                                 :is-moving-board-list="drag"
+                                :colors="colors"
                                 @on-card-click="onCardClick"
                             />
                         </li>

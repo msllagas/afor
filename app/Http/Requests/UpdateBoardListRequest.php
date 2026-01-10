@@ -2,8 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\BoardListColor;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rules\Enum;
 
 class UpdateBoardListRequest extends FormRequest
 {
@@ -24,6 +26,7 @@ class UpdateBoardListRequest extends FormRequest
     {
         return [
             'is_archived' => 'sometimes|boolean',
+            'color' => ['sometimes', 'hex_color', new Enum(BoardListColor::class)],
         ];
     }
 }

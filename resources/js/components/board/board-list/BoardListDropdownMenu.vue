@@ -6,18 +6,25 @@ import {
     DropdownMenuGroup,
     DropdownMenuItem,
     DropdownMenuLabel,
+    DropdownMenuPortal,
     DropdownMenuSeparator,
+    DropdownMenuSub,
+    DropdownMenuSubContent,
+    DropdownMenuSubTrigger,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+
 import { Ellipsis } from 'lucide-vue-next';
 import { inject } from 'vue';
 
 defineProps<{
     boardListId: string;
+    colors: Array<string>;
 }>();
 
 const emit = defineEmits<{
     archiveList: [boardId: string, boardListId: string];
+    colorSelected: [color: string];
 }>();
 
 const boardId = inject<string>('boardId', '');
@@ -43,9 +50,22 @@ const boardId = inject<string>('boardId', '');
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-                <DropdownMenuItem>
-                    <span>Change list color</span>
-                </DropdownMenuItem>
+                <DropdownMenuSub>
+                    <DropdownMenuSubTrigger>
+                        <span>Change list color</span>
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuPortal>
+                        <DropdownMenuSubContent class="grid grid-cols-2 gap-1 space-y-1">
+                            <DropdownMenuItem
+                                v-for="color in colors"
+                                :key="color"
+                                class="h-8"
+                                :style="{ backgroundColor: color }"
+                                @click="emit('colorSelected', color)"
+                            />
+                        </DropdownMenuSubContent>
+                    </DropdownMenuPortal>
+                </DropdownMenuSub>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem @click="emit('archiveList', boardId, boardListId)">

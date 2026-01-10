@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\BoardListColor;
 use App\Events\BoardAddedToWorkspace;
 use App\Http\Requests\StoreBoardsRequest;
 use App\Http\Requests\UpdateBoardsRequest;
@@ -79,6 +80,7 @@ class BoardController extends Controller
         return Inertia::render('boards/Show', [
             'board' => $board,
             'selectedCard' => null,
+            'colors' => BoardListColor::cases(),
         ]);
     }
 

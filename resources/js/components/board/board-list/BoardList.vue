@@ -15,6 +15,7 @@ import draggable from 'vuedraggable';
 const props = defineProps<{
     boardList: BoardListType;
     isMovingBoardList: boolean;
+    colors: Array<string>;
 }>();
 
 const emit = defineEmits<{
@@ -23,6 +24,7 @@ const emit = defineEmits<{
 
 const drag = ref(false);
 const isAddingCard = ref(false);
+const selectedColor = ref('');
 const addCardInput = useTemplateRef('add-card-input');
 const dragOptions = computed(() => ({
     animation: 200,
@@ -38,6 +40,10 @@ const dragOptions = computed(() => ({
     scrollSensitivity: 100,
     scrollSpeed: 20,
 }));
+
+const boardListColor = computed(() => {
+    return selectedColor.value ? selectedColor.value : props.boardList.color;
+});
 
 function onChange(boardListId: string, event: any) {
     if (event.moved) {
@@ -97,6 +103,20 @@ function onArchiveList(boardId: string, boardListId: string) {
     );
 }
 
+function onColorSelection(color: string) {
+    selectedColor.value = color;
+
+    router.patch(
+        boardListRoutes.update({
+            board: props.boardList.board_id,
+            board_list: props.boardList.id,
+        }).url,
+        {
+            color,
+        },
+    );
+}
+
 async function onAddCard() {
     isAddingCard.value = true;
     await nextTick();
@@ -115,10 +135,11 @@ function scrollToCard() {
 
 <template>
     <Card
-        class="space-between relative flex max-h-full w-[272px] scroll-m-2 flex-col rounded-2xl bg-gray-950 pb-2 whitespace-normal shadow-lg"
+        class="space-between relative flex max-h-full w-[272px] scroll-m-2 flex-col rounded-2xl pb-2 whitespace-normal shadow-lg"
+        :style="{ backgroundColor: boardListColor }"
     >
         <CardHeader
-            class="handle relative flex grow-0 cursor-grab flex-wrap items-start justify-between p-2 whitespace-normal"
+            class="handle relative flex grow-0 cursor-grab flex-wrap items-start justify-between px-2 pt-2 whitespace-normal"
         >
             <div class="relative min-h-[20px] shrink-1 grow-1 basis-[min-content]">
                 <h2 class="text-sm font-semibold">
@@ -127,7 +148,12 @@ function scrollToCard() {
                     </Button>
                 </h2>
             </div>
-            <BoardListDropdownMenu :board-list-id="boardList.id" @archive-list="onArchiveList" />
+            <BoardListDropdownMenu
+                :board-list-id="boardList.id"
+                :colors="colors"
+                @archive-list="onArchiveList"
+                @color-selected="onColorSelection"
+            />
         </CardHeader>
         <CardContent class="h-full overflow-x-hidden overflow-y-auto p-2 pb-0">
             <draggable
@@ -193,10 +219,18 @@ function scrollToCard() {
 
 <style scoped>
 .ghost {
-    background: violet !important;
+    background: v-bind('boardListColor') !important;
+    position: relative;
     border-radius: 8px;
-    opacity: 1 !important;
-    transition: all 0.15s ease;
+}
+
+.ghost::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: inherit;
+    pointer-events: none;
 }
 
 .ghost > div {

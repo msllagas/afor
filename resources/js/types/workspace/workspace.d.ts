@@ -10,7 +10,9 @@ export interface BoardList {
     id: string;
     name: string;
     order: number;
+    board_id: string;
     cards: Card[];
+    color?: string;
 }
 
 export interface Board {
