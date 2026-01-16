@@ -9,7 +9,7 @@ import boardListRoutes from '@/routes/boards/board-lists';
 import type { BoardList as BoardListType, Card as CardType } from '@/types';
 import { Form, router } from '@inertiajs/vue3';
 import { Plus, X } from 'lucide-vue-next';
-import { computed, nextTick, ref, useTemplateRef } from 'vue';
+import { computed, nextTick, onMounted, ref, useTemplateRef } from 'vue';
 import draggable from 'vuedraggable';
 
 const props = defineProps<{
@@ -24,7 +24,7 @@ const emit = defineEmits<{
 
 const drag = ref(false);
 const isAddingCard = ref(false);
-const selectedColor = ref('');
+const selectedColor = ref<string | null>('');
 const addCardInput = useTemplateRef('add-card-input');
 const dragOptions = computed(() => ({
     animation: 200,
@@ -40,10 +40,6 @@ const dragOptions = computed(() => ({
     scrollSensitivity: 100,
     scrollSpeed: 20,
 }));
-
-const boardListColor = computed(() => {
-    return selectedColor.value ? selectedColor.value : props.boardList.color;
-});
 
 function onChange(boardListId: string, event: any) {
     if (event.moved) {
@@ -103,18 +99,21 @@ function onArchiveList(boardId: string, boardListId: string) {
     );
 }
 
-function onColorSelection(color: string) {
-    selectedColor.value = color;
+function onColorSelection(color: string | null) {
+    // do nothing if it's the same color has been picked, preventing spam.
+    if (props.boardList.color !== color && selectedColor.value !== color) {
+        selectedColor.value = color;
 
-    router.patch(
-        boardListRoutes.update({
-            board: props.boardList.board_id,
-            board_list: props.boardList.id,
-        }).url,
-        {
-            color,
-        },
-    );
+        router.patch(
+            boardListRoutes.update({
+                board: props.boardList.board_id,
+                board_list: props.boardList.id,
+            }).url,
+            {
+                color,
+            },
+        );
+    }
 }
 
 async function onAddCard() {
@@ -131,12 +130,16 @@ function scrollToCard() {
         objDiv.scrollIntoView({ behavior: 'smooth' });
     }
 }
+
+onMounted(() => {
+    selectedColor.value = props.boardList.color ?? null;
+});
 </script>
 
 <template>
     <Card
+        :style="{ backgroundColor: selectedColor }"
         class="space-between relative flex max-h-full w-[272px] scroll-m-2 flex-col rounded-2xl pb-2 whitespace-normal shadow-lg"
-        :style="{ backgroundColor: boardListColor }"
     >
         <CardHeader
             class="handle relative flex grow-0 cursor-grab flex-wrap items-start justify-between px-2 pt-2 whitespace-normal"
@@ -219,7 +222,7 @@ function scrollToCard() {
 
 <style scoped>
 .ghost {
-    background: v-bind('boardListColor') !important;
+    background: v-bind('selectedColor') !important;
     position: relative;
     border-radius: 8px;
 }

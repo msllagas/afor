@@ -24,7 +24,7 @@ defineProps<{
 
 const emit = defineEmits<{
     archiveList: [boardId: string, boardListId: string];
-    colorSelected: [color: string];
+    colorSelected: [color: string | null];
 }>();
 
 const boardId = inject<string>('boardId', '');
@@ -63,6 +63,9 @@ const boardId = inject<string>('boardId', '');
                                 :style="{ backgroundColor: color }"
                                 @click="emit('colorSelected', color)"
                             />
+                            <DropdownMenuItem class="col-span-2 block text-center" @click="emit('colorSelected', null)">
+                                Reset
+                            </DropdownMenuItem>
                         </DropdownMenuSubContent>
                     </DropdownMenuPortal>
                 </DropdownMenuSub>
