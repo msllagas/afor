@@ -20,6 +20,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     onCardClick: [boardListId: string, card: CardType];
+    onListArchive: [boardListId: string];
 }>();
 
 const drag = ref(false);
@@ -88,15 +89,7 @@ function handleCardMoveToBoardList(boardListId: string, added: any) {
 }
 
 function onArchiveList() {
-    router.patch(
-        boardListRoutes.update({
-            board: props.boardList.board_id,
-            board_list: props.boardList.id,
-        }).url,
-        {
-            is_archived: true,
-        },
-    );
+    emit('onListArchive', props.boardList.id);
 }
 
 function onColorSelection(color: string | null) {

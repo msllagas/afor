@@ -25,6 +25,7 @@ const isFetching = ref(false);
 const isAddingNewBoardList = ref(false);
 const headerTitle = ref(props.board.name);
 const drag = ref(false);
+const boardLists = ref([...props.board.board_lists]);
 const input = useTemplateRef('add-new-list-input');
 
 const dragOptions = computed(() => ({
@@ -103,6 +104,21 @@ async function onAddNewBoardList() {
     await nextTick();
     input.value?.focus();
 }
+function handleArchive(boardListId: string) {
+    boardLists.value = boardLists.value.filter((list) => {
+        return list.id !== boardListId;
+    });
+
+    router.patch(
+        boardListRoutes.update({
+            board: props.board.id,
+            board_list: boardListId,
+        }).url,
+        {
+            is_archived: true,
+        },
+    );
+}
 
 onMounted(() => {
     if (props.selectedCard) {
@@ -132,7 +148,7 @@ onMounted(() => {
                         type: 'transition-group',
                         name: !drag ? 'flip-list' : null,
                     }"
-                    :list="board.board_lists"
+                    :list="boardLists"
                     class="flex gap-2"
                     handle=".handle"
                     item-key="id"
@@ -149,6 +165,7 @@ onMounted(() => {
                                 :is-moving-board-list="drag"
                                 :colors="colors"
                                 @on-card-click="onCardClick"
+                                @on-list-archive="handleArchive"
                             />
                         </li>
                     </template>
