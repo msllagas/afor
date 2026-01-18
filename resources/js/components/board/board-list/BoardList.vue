@@ -87,11 +87,11 @@ function handleCardMoveToBoardList(boardListId: string, added: any) {
     );
 }
 
-function onArchiveList(boardId: string, boardListId: string) {
+function onArchiveList() {
     router.patch(
         boardListRoutes.update({
-            board: boardId,
-            board_list: boardListId,
+            board: props.boardList.board_id,
+            board_list: props.boardList.id,
         }).url,
         {
             is_archived: true,

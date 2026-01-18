@@ -15,7 +15,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 import { Ellipsis } from 'lucide-vue-next';
-import { inject } from 'vue';
 
 defineProps<{
     boardListId: string;
@@ -23,11 +22,9 @@ defineProps<{
 }>();
 
 const emit = defineEmits<{
-    archiveList: [boardId: string, boardListId: string];
+    archiveList: [];
     colorSelected: [color: string | null];
 }>();
-
-const boardId = inject<string>('boardId', '');
 </script>
 
 <template>
@@ -71,7 +68,7 @@ const boardId = inject<string>('boardId', '');
                 </DropdownMenuSub>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem @click="emit('archiveList', boardId, boardListId)">
+            <DropdownMenuItem @click="emit('archiveList')">
                 <span>Archive this list</span>
             </DropdownMenuItem>
         </DropdownMenuContent>
