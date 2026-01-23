@@ -27,18 +27,27 @@ function handleRegister() {
 </script>
 
 <template>
-    <div class="space-y-6 py-10 text-center">
-        <div class="text-gray-900 md:text-xl lg:text-2xl dark:text-white">
-            <strong>{{ invitation.inviter.name }}</strong> is inviting you to
-            <strong>{{ invitation.workspace.name }}</strong>
+    <div class="space-y-8 py-12 text-center">
+        <div class="mx-auto max-w-xl text-lg font-medium text-gray-700 md:text-xl lg:text-2xl dark:text-gray-300">
+            <span class="font-semibold text-gray-900 dark:text-white">
+                {{ invitation.inviter.name }}
+            </span>
+            <span class="mx-1">invited you to</span>
+            <span class="font-bold text-primary">
+                {{ invitation.workspace.name }}
+            </span>
         </div>
-        <div>
-            <Button v-if="$page.props.auth.user" class="cursor-pointer" @click="acceptInvitation">
+
+        <div class="flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <Button v-if="$page.props.auth.user" class="px-8 font-semibold" size="lg" @click="acceptInvitation">
                 Accept Invitation
             </Button>
+
             <template v-else>
-                <Button class="cursor-pointer" variant="ghost" @click="handleLogin"> Login </Button>
-                <Button class="cursor-pointer" variant="outline" @click="handleRegister"> Register </Button>
+                <Button class="px-8 font-medium" size="lg" variant="ghost" @click="handleLogin">Log in</Button>
+                <Button class="px-8 font-semibold" size="lg" variant="outline" @click="handleRegister">
+                    Create Account
+                </Button>
             </template>
         </div>
     </div>
