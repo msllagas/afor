@@ -6,7 +6,10 @@ use Inertia\Testing\AssertableInertia as Assert;
 
 test('workspace owner can access their workspace home', function () {
     $user = User::factory()->create();
+    $member = User::factory()->create();
+
     $workspace = Workspace::factory()->for($user)->create();
+    $workspace->users()->attach($member->id);
 
     $response = $this->actingAs($user)
         ->get(route('workspaces.home', [
@@ -22,6 +25,10 @@ test('workspace owner can access their workspace home', function () {
                 ->where('description', $workspace->description)
                 ->etc()
             )
+            ->has('members', fn (Assert $page) => $page
+                ->where('0.id', $member->id)
+                ->where('0.name', $member->name
+                ))
         );
 });
 
@@ -46,6 +53,10 @@ test('workspace members can access their workspace home', function () {
                 ->where('description', $workspace->description)
                 ->etc()
             )
+            ->has('members', fn (Assert $page) => $page
+                ->where('0.id', $member->id)
+                ->where('0.name', $member->name
+                ))
         );
 });
 

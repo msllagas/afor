@@ -18,6 +18,10 @@ class WorkspaceController extends Controller
             ->where('user_id', $user->id)
             ->exists();
 
+        $members = $workspace->users()
+            ->select('users.id', 'users.name')
+            ->get();
+
         if (! $isOwner && ! $isMember) {
             return redirect()->route('dashboard');
         }
@@ -26,6 +30,7 @@ class WorkspaceController extends Controller
 
         return Inertia::render('workspaces/Home', [
             'workspace' => $workspace,
+            'members' => $members,
         ]);
     }
 

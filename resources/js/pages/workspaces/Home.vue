@@ -1,9 +1,11 @@
 <script lang="ts" setup>
 import BoardCard from '@/components/board/BoardCard.vue';
 import BoardCardPopover from '@/components/board/BoardCardPopover.vue';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { default as workspaceRoutes, default as workspaces } from '@/routes/workspaces';
-import type { BreadcrumbItem, Workspace } from '@/types';
+import type { BreadcrumbItem, User, Workspace } from '@/types';
 import { Board } from '@/types';
 import { Head, router } from '@inertiajs/vue3';
 import { useEcho } from '@laravel/echo-vue';
@@ -11,6 +13,7 @@ import { onMounted, ref, watch } from 'vue';
 
 const props = defineProps<{
     workspace: Workspace;
+    members: User[];
 }>();
 
 type BoardData = {
@@ -29,6 +32,8 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 const boards = ref<Board[]>([]);
+const AVATAR_CAP = 5;
+const DUMMY_AVATAR_LINK = 'https://randomuser.me/api/portraits/lego/2.jpg'; // todo: for deletion once user avatars are implemented
 
 onMounted(() => {
     router.visit(workspaces.home(props.workspace.id).url, {
@@ -55,27 +60,67 @@ useEcho<BoardData>(`workspace.${props.workspace.id}`, 'BoardAddedToWorkspace', (
     <Head :title="workspace.name + ' - Boards'" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="px-10">
-            <div class="mt-10">
-                <div class="space-y-2 pb-10">
-                    <h1 class="text-lg font-medium">{{ workspace.name }}</h1>
-                    <p class="text-sm">{{ workspace.description }}</p>
+        <section class="px-6 sm:px-10">
+            <header class="mt-10 grid grid-cols-1 gap-6 pb-8 sm:grid-cols-[auto_1fr_25%] sm:items-center">
+                <div class="shrink-0">
+                    <Avatar class="h-16 w-16 rounded-2xl border bg-muted sm:h-20 sm:w-20">
+                        <AvatarImage
+                            :alt="workspace.name"
+                            class="object-cover"
+                            src="https://randomuser.me/api/portraits/lego/6.jpg"
+                        />
+                        <AvatarFallback class="text-sm font-medium">
+                            {{ workspace.name.charAt(0) }}
+                        </AvatarFallback>
+                    </Avatar>
                 </div>
-                <hr class="my-5" />
-                <div>
-                    <div class="mb-5">
-                        <h3 class="font-medium">All boards in this Workspace</h3>
-                    </div>
+                <div class="space-y-2">
+                    <h1 class="text-xl font-semibold tracking-tight">
+                        {{ workspace.name }}
+                    </h1>
+                    <p class="text-sm text-muted-foreground">
+                        {{ workspace.description }}
+                    </p>
+                </div>
 
-                    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                        <template v-for="board in boards" :key="board.id">
-                            <BoardCard :board="board" />
+                <div class="flex justify-start sm:justify-end">
+                    <div class="flex -space-x-2">
+                        <template v-for="member in members.slice(0, AVATAR_CAP)" :key="member.id">
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger as-child>
+                                        <Avatar>
+                                            <AvatarImage :src="DUMMY_AVATAR_LINK" :alt="member.name" />
+                                            <AvatarFallback class="text-xs font-medium">
+                                                {{ member.name.charAt(0) }}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="bottom">
+                                        <p>{{ member.name }}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
                         </template>
-                        <BoardCardPopover :workspace-id="workspace.id" />
+                        <Avatar v-if="members.length > AVATAR_CAP">
+                            <AvatarFallback class="text-xs font-medium text-muted-foreground">
+                                +{{ members.length - AVATAR_CAP }}
+                            </AvatarFallback>
+                        </Avatar>
                     </div>
                 </div>
-            </div>
-        </div>
+            </header>
+            <hr class="my-8" />
+            <section>
+                <div class="mb-5 flex items-center justify-between">
+                    <h3 class="text-sm font-medium tracking-wide text-muted-foreground uppercase">Boards</h3>
+                </div>
+                <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                    <BoardCard v-for="board in boards" :key="board.id" :board="board" />
+                    <BoardCardPopover :workspace-id="workspace.id" />
+                </div>
+            </section>
+        </section>
     </AppLayout>
 </template>
 
