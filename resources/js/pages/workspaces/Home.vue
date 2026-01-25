@@ -63,16 +63,18 @@ useEcho<BoardData>(`workspace.${props.workspace.id}`, 'BoardAddedToWorkspace', (
         <section class="px-6 sm:px-10">
             <header class="mt-10 grid grid-cols-1 gap-6 pb-8 sm:grid-cols-[auto_1fr_25%] sm:items-center">
                 <div class="shrink-0">
-                    <Avatar class="h-16 w-16 rounded-2xl border bg-muted sm:h-20 sm:w-20">
-                        <AvatarImage
+                    <div
+                        class="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border bg-muted sm:h-20 sm:w-20"
+                    >
+                        <img
                             :alt="workspace.name"
-                            class="object-cover"
                             src="https://randomuser.me/api/portraits/lego/6.jpg"
+                            class="h-full w-full object-cover"
                         />
-                        <AvatarFallback class="text-sm font-medium">
+                        <!--                        <span v-else class="text-lg font-semibold text-muted-foreground">
                             {{ workspace.name.charAt(0) }}
-                        </AvatarFallback>
-                    </Avatar>
+                        </span>-->
+                    </div>
                 </div>
                 <div class="space-y-2">
                     <h1 class="text-xl font-semibold tracking-tight">
@@ -90,7 +92,7 @@ useEcho<BoardData>(`workspace.${props.workspace.id}`, 'BoardAddedToWorkspace', (
                                 <Tooltip>
                                     <TooltipTrigger as-child>
                                         <Avatar>
-                                            <AvatarImage :src="DUMMY_AVATAR_LINK" :alt="member.name" />
+                                            <AvatarImage :alt="member.name" :src="DUMMY_AVATAR_LINK" />
                                             <AvatarFallback class="text-xs font-medium">
                                                 {{ member.name.charAt(0) }}
                                             </AvatarFallback>
