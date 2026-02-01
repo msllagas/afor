@@ -66,11 +66,7 @@ useEcho<BoardData>(`workspace.${props.workspace.id}`, 'BoardAddedToWorkspace', (
                     <div
                         class="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border bg-muted sm:h-20 sm:w-20"
                     >
-                        <img
-                            :alt="workspace.name"
-                            src="https://randomuser.me/api/portraits/lego/6.jpg"
-                            class="h-full w-full object-cover"
-                        />
+                        <img :alt="workspace.name" :src="DUMMY_AVATAR_LINK" class="h-full w-full object-cover" />
                         <!--                        <span v-else class="text-lg font-semibold text-muted-foreground">
                             {{ workspace.name.charAt(0) }}
                         </span>-->
@@ -113,15 +109,15 @@ useEcho<BoardData>(`workspace.${props.workspace.id}`, 'BoardAddedToWorkspace', (
                 </div>
             </header>
             <hr class="my-8" />
-            <section>
-                <div class="mb-5 flex items-center justify-between">
-                    <h3 class="text-sm font-medium tracking-wide text-muted-foreground uppercase">Boards</h3>
-                </div>
-                <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                    <BoardCard v-for="board in boards" :key="board.id" :board="board" />
-                    <BoardCardPopover :workspace-id="workspace.id" />
-                </div>
-            </section>
+        </section>
+        <section class="px-6 sm:px-10">
+            <div class="mb-5 flex items-center justify-between">
+                <h3 class="text-sm font-medium tracking-wide text-muted-foreground uppercase">Boards</h3>
+            </div>
+            <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                <BoardCard v-for="board in boards" :key="board.id" :board="board" />
+                <BoardCardPopover :workspace-id="workspace.id" />
+            </div>
         </section>
     </AppLayout>
 </template>
