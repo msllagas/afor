@@ -2,6 +2,7 @@
 import BoardCard from '@/components/board/BoardCard.vue';
 import BoardCardPopover from '@/components/board/BoardCardPopover.vue';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { default as workspaceRoutes, default as workspaces } from '@/routes/workspaces';
@@ -9,11 +10,13 @@ import type { BreadcrumbItem, User, Workspace } from '@/types';
 import { Board } from '@/types';
 import { Head, router } from '@inertiajs/vue3';
 import { useEcho } from '@laravel/echo-vue';
+import { Link } from 'lucide-vue-next';
 import { onMounted, ref, watch } from 'vue';
 
 const props = defineProps<{
     workspace: Workspace;
     members: User[];
+    inviteLink: string;
 }>();
 
 type BoardData = {
@@ -34,6 +37,10 @@ const breadcrumbs: BreadcrumbItem[] = [
 const boards = ref<Board[]>([]);
 const AVATAR_CAP = 5;
 const DUMMY_AVATAR_LINK = 'https://randomuser.me/api/portraits/lego/2.jpg'; // todo: for deletion once user avatars are implemented
+
+function copyInviteLink() {
+    navigator.clipboard.writeText(props?.inviteLink);
+}
 
 onMounted(() => {
     router.visit(workspaces.home(props.workspace.id).url, {
@@ -81,15 +88,21 @@ useEcho<BoardData>(`workspace.${props.workspace.id}`, 'BoardAddedToWorkspace', (
                     </p>
                 </div>
 
-                <div class="flex justify-start sm:justify-end">
+                <div class="flex items-center justify-start gap-3 sm:justify-end">
                     <div class="flex -space-x-2">
                         <template v-for="member in members.slice(0, AVATAR_CAP)" :key="member.id">
                             <TooltipProvider>
                                 <Tooltip>
                                     <TooltipTrigger as-child>
-                                        <Avatar>
-                                            <AvatarImage :alt="member.name" :src="DUMMY_AVATAR_LINK" />
-                                            <AvatarFallback class="text-xs font-medium">
+                                        <Avatar
+                                            class="h-8 w-8 border-2 border-background shadow-sm transition-transform hover:z-10 hover:scale-105"
+                                        >
+                                            <AvatarImage
+                                                :alt="member.name"
+                                                :src="DUMMY_AVATAR_LINK"
+                                                class="object-cover"
+                                            />
+                                            <AvatarFallback class="bg-muted text-xs font-medium">
                                                 {{ member.name.charAt(0) }}
                                             </AvatarFallback>
                                         </Avatar>
@@ -106,6 +119,10 @@ useEcho<BoardData>(`workspace.${props.workspace.id}`, 'BoardAddedToWorkspace', (
                             </AvatarFallback>
                         </Avatar>
                     </div>
+                    <Button size="sm" @click="copyInviteLink">
+                        <Link />
+                        Invite with link
+                    </Button>
                 </div>
             </header>
             <hr class="my-8" />
