@@ -11,7 +11,7 @@ import boardListRoutes from '@/routes/boards/board-lists';
 import type { Board, Card } from '@/types';
 import { Form, Head, router } from '@inertiajs/vue3';
 import { Plus, X } from 'lucide-vue-next';
-import { computed, nextTick, onMounted, ref, useTemplateRef } from 'vue';
+import { computed, nextTick, onMounted, ref, useTemplateRef, watch } from 'vue';
 import draggable from 'vuedraggable';
 
 const props = defineProps<{
@@ -119,6 +119,11 @@ function handleArchive(boardListId: string) {
         },
     );
 }
+
+watch(
+    () => props.board,
+    (newBoard) => (boardLists.value = [...newBoard.board_lists]),
+);
 
 onMounted(() => {
     if (props.selectedCard) {
