@@ -37,9 +37,12 @@ const breadcrumbs: BreadcrumbItem[] = [
 const boards = ref<Board[]>([]);
 const AVATAR_CAP = 5;
 const DUMMY_AVATAR_LINK = 'https://randomuser.me/api/portraits/lego/2.jpg'; // todo: for deletion once user avatars are implemented
+const copied = ref(false);
 
 function copyInviteLink() {
     navigator.clipboard.writeText(props?.inviteLink);
+    copied.value = true;
+    setTimeout(() => (copied.value = false), 2500);
 }
 
 onMounted(() => {
@@ -67,75 +70,108 @@ useEcho<BoardData>(`workspace.${props.workspace.id}`, 'BoardAddedToWorkspace', (
     <Head :title="workspace.name + ' - Boards'" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <section class="px-6 sm:px-10">
-            <header class="mt-10 grid grid-cols-1 gap-6 pb-8 sm:grid-cols-[auto_1fr_25%] sm:items-center">
-                <div class="shrink-0">
-                    <div
-                        class="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border bg-muted sm:h-20 sm:w-20"
-                    >
-                        <img :alt="workspace.name" :src="DUMMY_AVATAR_LINK" class="h-full w-full object-cover" />
-                        <!--                        <span v-else class="text-lg font-semibold text-muted-foreground">
-                            {{ workspace.name.charAt(0) }}
-                        </span>-->
-                    </div>
-                </div>
-                <div class="space-y-2">
-                    <h1 class="text-xl font-semibold tracking-tight">
-                        {{ workspace.name }}
-                    </h1>
-                    <p class="text-sm text-muted-foreground">
-                        {{ workspace.description }}
-                    </p>
-                </div>
+        <div class="px-6 sm:px-10">
+            <section>
+                <header class="mt-10">
+                    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-5">
+                        <div class="shrink-0">
+                            <div class="relative h-16 w-16 sm:h-20 sm:w-20">
+                                <div
+                                    class="h-full w-full overflow-hidden rounded-2xl border border-border/50 shadow-md"
+                                >
+                                    <img
+                                        :alt="workspace.name"
+                                        :src="DUMMY_AVATAR_LINK"
+                                        class="h-full w-full object-cover"
+                                    />
+                                </div>
+                            </div>
+                        </div>
 
-                <div class="flex items-center justify-start gap-3 sm:justify-end">
-                    <div class="flex -space-x-2">
-                        <template v-for="member in members.slice(0, AVATAR_CAP)" :key="member.id">
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger as-child>
-                                        <Avatar
-                                            class="h-8 w-8 border-2 border-background shadow-sm transition-transform hover:z-10 hover:scale-105"
-                                        >
-                                            <AvatarImage
-                                                :alt="member.name"
-                                                :src="DUMMY_AVATAR_LINK"
-                                                class="object-cover"
-                                            />
-                                            <AvatarFallback class="bg-muted text-xs font-medium">
-                                                {{ member.name.charAt(0) }}
-                                            </AvatarFallback>
-                                        </Avatar>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="bottom">
-                                        <p>{{ member.name }}</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                        </template>
-                        <Avatar v-if="members.length > AVATAR_CAP">
-                            <AvatarFallback class="text-xs font-medium text-muted-foreground">
-                                +{{ members.length - AVATAR_CAP }}
-                            </AvatarFallback>
-                        </Avatar>
+                        <div class="min-w-0 space-y-1">
+                            <h1 class="truncate text-xl font-semibold tracking-tight">{{ workspace.name }}</h1>
+                            <p class="line-clamp-2 text-sm text-muted-foreground">{{ workspace.description }}</p>
+                        </div>
                     </div>
-                    <Button size="sm" @click="copyInviteLink">
-                        <Link />
-                        Invite with link
-                    </Button>
+
+                    <div class="mt-5 flex flex-wrap items-center justify-between gap-3">
+                        <div class="flex items-center gap-3">
+                            <div class="flex -space-x-2">
+                                <template v-for="member in members.slice(0, AVATAR_CAP)" :key="member.id">
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger as-child>
+                                                <Avatar
+                                                    class="h-8 w-8 border-2 border-background shadow-sm transition-all duration-200 hover:z-10 hover:-translate-y-0.5 hover:scale-110 hover:shadow-md"
+                                                >
+                                                    <AvatarImage
+                                                        :alt="member.name"
+                                                        :src="DUMMY_AVATAR_LINK"
+                                                        class="object-cover"
+                                                    />
+                                                    <AvatarFallback class="bg-muted text-xs font-medium">
+                                                        {{ member.name.charAt(0) }}
+                                                    </AvatarFallback>
+                                                </Avatar>
+                                            </TooltipTrigger>
+                                            <TooltipContent side="bottom">
+                                                <p>{{ member.name }}</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                </template>
+                                <Avatar
+                                    v-if="members.length > AVATAR_CAP"
+                                    class="h-8 w-8 border-2 border-background shadow-sm"
+                                >
+                                    <AvatarFallback class="bg-muted text-xs font-medium text-muted-foreground">
+                                        +{{ members.length - AVATAR_CAP }}
+                                    </AvatarFallback>
+                                </Avatar>
+                            </div>
+                            <span class="text-xs text-muted-foreground">
+                                {{ members.length }} member{{ members.length === 1 ? '' : 's' }}
+                            </span>
+                        </div>
+
+                        <div class="flex flex-col items-end gap-1">
+                            <Transition
+                                enter-active-class="transition-all duration-300"
+                                enter-from-class="opacity-0 -translate-y-1"
+                                enter-to-class="opacity-100 translate-y-0"
+                                leave-active-class="transition-all duration-200"
+                                leave-from-class="opacity-100 translate-y-0"
+                                leave-to-class="opacity-0 -translate-y-1"
+                            >
+                                <p v-if="copied" class="text-xs font-medium text-emerald-500">
+                                    ✓ Link copied to clipboard!
+                                </p>
+                            </Transition>
+
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                class="cursor-pointer gap-2 shadow-sm"
+                                @click="copyInviteLink"
+                            >
+                                <Link class="h-3.5 w-3.5" />
+                                Invite with link
+                            </Button>
+                        </div>
+                    </div>
+                </header>
+            </section>
+            <hr class="my-6 border-border/50" />
+            <section>
+                <div class="mb-5 flex items-center justify-between">
+                    <h3 class="text-sm font-medium tracking-wide text-muted-foreground uppercase">Boards</h3>
                 </div>
-            </header>
-            <hr class="my-8" />
-        </section>
-        <section class="px-6 sm:px-10">
-            <div class="mb-5 flex items-center justify-between">
-                <h3 class="text-sm font-medium tracking-wide text-muted-foreground uppercase">Boards</h3>
-            </div>
-            <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                <BoardCard v-for="board in boards" :key="board.id" :board="board" />
-                <BoardCardPopover :workspace-id="workspace.id" />
-            </div>
-        </section>
+                <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                    <BoardCard v-for="board in boards" :key="board.id" :board="board" />
+                    <BoardCardPopover :workspace-id="workspace.id" />
+                </div>
+            </section>
+        </div>
     </AppLayout>
 </template>
 

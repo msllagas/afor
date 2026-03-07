@@ -137,9 +137,11 @@ onMounted(() => {
     <div
         class="relative h-screen max-h-screen overflow-y-auto bg-gradient-to-r from-pink-500 via-fuchsia-500 to-rose-400 select-none"
     >
-        <div class="shadow-[0 4px 30px rgba(0, 0, 0, 0.1)] bg-[rgba(0,0,0,0.3)] p-4 backdrop-blur-xs">
+        <div
+            class="sticky top-0 right-0 left-0 z-10 w-screen bg-[rgba(0,0,0,0.3)] p-4 shadow-[0_4px_30px_rgba(0,0,0,0.1)] backdrop-blur-sm"
+        >
             <div>
-                <h1 class="text-lg font-medium">{{ board.name }}</h1>
+                <h1 class="text-lg font-semibold tracking-tight">{{ board.name }}</h1>
             </div>
         </div>
         <div class="mt-2">

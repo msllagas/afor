@@ -39,7 +39,7 @@ const features = [
             <nav class="mx-auto h-full max-w-6xl px-4 sm:px-6 lg:px-8">
                 <div class="flex h-full items-center justify-between">
                     <div>
-                        <h1 class="text-xl font-semibold text-pink-500">Afor</h1>
+                        <h1 class="text-xl font-semibold text-primary">Afor</h1>
                     </div>
                     <div>
                         <Button v-if="$page.props.auth.user" as-child>
