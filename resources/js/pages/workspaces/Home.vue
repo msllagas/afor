@@ -75,19 +75,16 @@ useEcho<BoardData>(`workspace.${props.workspace.id}`, 'BoardAddedToWorkspace', (
                 <header class="mt-10">
                     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-5">
                         <div class="shrink-0">
-                            <div class="relative h-16 w-16 sm:h-20 sm:w-20">
-                                <div
-                                    class="h-full w-full overflow-hidden rounded-2xl border border-border/50 shadow-md"
-                                >
-                                    <img
-                                        :alt="workspace.name"
-                                        :src="DUMMY_AVATAR_LINK"
-                                        class="h-full w-full object-cover"
-                                    />
-                                </div>
+                            <div
+                                class="h-16 w-16 overflow-hidden rounded-2xl border border-border/50 shadow-md sm:h-20 sm:w-20"
+                            >
+                                <img
+                                    :alt="workspace.name"
+                                    :src="DUMMY_AVATAR_LINK"
+                                    class="h-full w-full object-cover"
+                                />
                             </div>
                         </div>
-
                         <div class="min-w-0 space-y-1">
                             <h1 class="truncate text-xl font-semibold tracking-tight">{{ workspace.name }}</h1>
                             <p class="line-clamp-2 text-sm text-muted-foreground">{{ workspace.description }}</p>
@@ -134,16 +131,19 @@ useEcho<BoardData>(`workspace.${props.workspace.id}`, 'BoardAddedToWorkspace', (
                             </span>
                         </div>
 
-                        <div class="flex flex-col items-end gap-1">
+                        <div class="relative flex flex-col items-end gap-1">
                             <Transition
                                 enter-active-class="transition-all duration-300"
-                                enter-from-class="opacity-0 -translate-y-1"
+                                enter-from-class="opacity-0 translate-y-1"
                                 enter-to-class="opacity-100 translate-y-0"
                                 leave-active-class="transition-all duration-200"
                                 leave-from-class="opacity-100 translate-y-0"
-                                leave-to-class="opacity-0 -translate-y-1"
+                                leave-to-class="opacity-0 translate-y-1"
                             >
-                                <p v-if="copied" class="text-xs font-medium text-emerald-500">
+                                <p
+                                    v-if="copied"
+                                    class="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-medium whitespace-nowrap text-emerald-500"
+                                >
                                     ✓ Link copied to clipboard!
                                 </p>
                             </Transition>
@@ -161,12 +161,15 @@ useEcho<BoardData>(`workspace.${props.workspace.id}`, 'BoardAddedToWorkspace', (
                     </div>
                 </header>
             </section>
-            <hr class="my-6 border-border/50" />
             <section>
-                <div class="mb-5 flex items-center justify-between">
-                    <h3 class="text-sm font-medium tracking-wide text-muted-foreground uppercase">Boards</h3>
+                <div class="my-8 flex items-center gap-3">
+                    <h3 class="text-base font-semibold tracking-tight">Boards</h3>
+                    <span class="rounded-md bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary tabular-nums">
+                        {{ boards.length }}
+                    </span>
+                    <div class="h-px flex-1 bg-border/50" />
                 </div>
-                <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                     <BoardCard v-for="board in boards" :key="board.id" :board="board" />
                     <BoardCardPopover :workspace-id="workspace.id" />
                 </div>
