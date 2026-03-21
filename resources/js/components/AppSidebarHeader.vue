@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import Breadcrumbs from '@/components/Breadcrumbs.vue';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
@@ -8,6 +8,7 @@ import UserMenuContent from '@/components/UserMenuContent.vue';
 import { useInitials } from '@/composables/useInitials';
 import type { BreadcrumbItemType } from '@/types';
 import { usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
 
 withDefaults(
     defineProps<{
@@ -19,9 +20,10 @@ withDefaults(
 );
 
 const page = usePage();
-const user = page.props.auth.user;
+const user = computed(() => page.props.auth.user);
 const { isMobile, state } = useSidebar();
 const { getInitials } = useInitials();
+const showAvatar = computed(() => !!user.value.avatar);
 </script>
 
 <template>
@@ -38,8 +40,8 @@ const { getInitials } = useInitials();
         <DropdownMenu>
             <DropdownMenuTrigger as-child>
                 <Button as-child class="cursor-pointer" size="icon" variant="ghost">
-                    <Avatar class="h-8 w-8 overflow-hidden rounded-lg">
-                        <!--                        <AvatarImage v-if="showAvatar" :src="user.avatar!" :alt="user.name" />-->
+                    <Avatar :key="user.avatar ?? 'fallback'" class="h-8 w-8 overflow-hidden rounded-lg">
+                        <AvatarImage v-if="showAvatar" :src="user.avatar!" :alt="user.name" />
                         <AvatarFallback class="rounded-lg text-black dark:text-white">
                             {{ getInitials(user.name) }}
                         </AvatarFallback>

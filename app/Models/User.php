@@ -9,8 +9,10 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 
 class User extends Authenticatable implements MustVerifyEmail
@@ -69,6 +71,22 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return Attribute::make(
             get: fn () => $this->ownedWorkspaces->merge($this->sharedWorkspaces)
+        );
+    }
+
+    public function avatarFile(): MorphOne
+    {
+        return $this->morphOne(File::class, 'fileable')
+            ->where('collection', 'avatar')
+            ->latestOfMany();
+    }
+
+    public function avatar(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->avatarFile
+                ? Storage::url($this->avatarFile->path)
+                : null
         );
     }
 }
