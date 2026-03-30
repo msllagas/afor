@@ -8,7 +8,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { default as workspaceRoutes, default as workspaces } from '@/routes/workspaces';
 import type { BreadcrumbItem, User, Workspace } from '@/types';
 import { Board } from '@/types';
-import { Head, router } from '@inertiajs/vue3';
+import { Head, router, usePage } from '@inertiajs/vue3';
 import { useEcho } from '@laravel/echo-vue';
 import { Link } from 'lucide-vue-next';
 import { onMounted, ref, watch } from 'vue';
@@ -34,6 +34,8 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
+const page = usePage();
+const user = page.props.auth.user;
 const boards = ref<Board[]>([]);
 const AVATAR_CAP = 5;
 const DUMMY_AVATAR_LINK = 'https://randomuser.me/api/portraits/lego/2.jpg'; // todo: for deletion once user avatars are implemented
@@ -112,7 +114,7 @@ useEcho<BoardData>(`workspace.${props.workspace.id}`, 'BoardAddedToWorkspace', (
                                                 </Avatar>
                                             </TooltipTrigger>
                                             <TooltipContent side="bottom">
-                                                <p>{{ member.name }}</p>
+                                                <p>{{ user.email === member.email ? 'You' : member.email }}</p>
                                             </TooltipContent>
                                         </Tooltip>
                                     </TooltipProvider>
