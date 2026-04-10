@@ -73,7 +73,7 @@ class ProfileController extends Controller
         $user = $request->user();
         $avatar = $request->file('avatar');
 
-        $path = $avatar->store('avatars', 'public');
+        $path = $avatar->store('avatars');
 
         $oldAvatarFile = $user->avatarFile()->first();
         if ($oldAvatarFile) {
@@ -87,7 +87,7 @@ class ProfileController extends Controller
             'fileable_id' => $user->id,
             'fileable_type' => User::class,
             'collection' => 'avatar',
-            'disk' => 'public',
+            'disk' => config('filesystems.default'),
             'path' => $path,
             'original_filename' => $avatar->getClientOriginalName(),
             'mime_type' => $avatar->getMimeType(),
