@@ -5,6 +5,7 @@ use App\Models\BoardList;
 use App\Models\Card;
 use App\Models\User;
 use App\Models\Workspace;
+
 use function Pest\Laravel\assertDatabaseHas;
 use function Pest\Laravel\post;
 
@@ -16,12 +17,7 @@ test('users can create cards in board lists', function () {
     $workspace = Workspace::factory()->for($user)->create();
     $board = Board::factory()->for($workspace)->create();
 
-    //  Artisan call to seed the board with board lists
-    Artisan::call('board:seed',
-        [
-            'board' => $board->id,
-        ]
-    );
+    BoardList::factory()->for($board)->create();
 
     $boardList = $board->boardLists()->firstOrFail();
 

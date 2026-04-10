@@ -17,20 +17,13 @@ test('users can move a card to another board list on the same board', function (
     $workspace = Workspace::factory()->for($user)->create();
     $board = Board::factory()->for($workspace)->create();
 
-    //  Artisan call to seed the board with board lists
-    Artisan::call('board:seed', [
-        'board' => $board->id,
-    ]);
-
-    $boardLists = $board->boardLists()->take(2)->get();
-
     // First Board List with 2 cards
-    $boardList1 = $boardLists[0];
+    $boardList1 = BoardList::factory()->for($board)->create();
     $boardList1Card1 = Card::factory()->create(['board_list_id' => $boardList1->id, 'order' => 0]);
     $boardList1Card2 = Card::factory()->create(['board_list_id' => $boardList1->id, 'order' => 1]);
 
     // Second Board List with 2 cards
-    $boardList2 = $boardLists[1];
+    $boardList2 = BoardList::factory()->for($board)->create();
     $boardList2Card1 = Card::factory()->create(['board_list_id' => $boardList2->id, 'order' => 0]);
     $boardList2Card2 = Card::factory()->create(['board_list_id' => $boardList2->id, 'order' => 1]);
 
@@ -40,7 +33,7 @@ test('users can move a card to another board list on the same board', function (
         'order' => 2,
     ];
 
-    $response = patch(route('board-lists.cards.update', [
+    patch(route('board-lists.cards.update', [
         'board_list' => $boardList2,
         'card' => $boardList2Card1,
     ]), $payload);
