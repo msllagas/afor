@@ -114,7 +114,7 @@ useEcho<BoardData>(`workspace.${props.workspace.id}`, 'BoardAddedToWorkspace', (
                                                 </Avatar>
                                             </TooltipTrigger>
                                             <TooltipContent side="bottom">
-                                                <p>{{ user.email === member.email ? 'You' : member.email }}</p>
+                                                <p>{{ user.id === member.id ? 'You' : member.name }}</p>
                                             </TooltipContent>
                                         </Tooltip>
                                     </TooltipProvider>
