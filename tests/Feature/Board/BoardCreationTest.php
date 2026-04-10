@@ -54,3 +54,22 @@ test('users are redirected to boards.show after creating board', function () {
         'board' => $board,
     ]));
 });
+
+test('board creation automatically creates board lists', function () {
+    $user = User::factory()->create();
+    $workspace = Workspace::factory()->forUser($user)->create();
+
+    $this->actingAs($user)
+        ->post(route('workspaces.boards.store', [
+            'workspace' => $workspace,
+        ]), [
+            'name' => 'Test Board',
+        ]);
+
+    $this->assertDatabaseHas('boards', [
+        'name' => 'Test Board',
+    ]);
+
+    // Automatically seed 3 board lists - To Do, In Progress, Done
+    $this->assertDatabaseCount('board_lists', 3);
+});
