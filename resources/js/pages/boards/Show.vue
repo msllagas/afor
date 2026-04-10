@@ -4,7 +4,6 @@ import BoardList from '@/components/board/board-list/BoardList.vue';
 import CardDialog from '@/components/board/board-list/card/CardDialog.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { reorderDraggable } from '@/lib/utils';
 import cardRoutes from '@/routes/board-lists/cards';
 import boardRoutes from '@/routes/boards';
 import boardListRoutes from '@/routes/boards/board-lists';
@@ -82,15 +81,18 @@ function onDialogClose(value: boolean) {
 
 function onChange(boardId: string, event: any) {
     if (event.moved) {
-        const changedBoardLists = reorderDraggable(props.board.board_lists, event.moved.oldIndex, event.moved.newIndex);
+        const { oldIndex, newIndex } = event.moved;
+        const start = Math.min(oldIndex, newIndex);
+        const end = Math.max(oldIndex, newIndex);
+
+        // vue-draggable already reordered the array
+        // so just reassign orders for the affected slice only
+        const changed = boardLists.value.slice(start, end + 1).map((list, i) => ({ id: list.id, order: start + i }));
 
         router.patch(
             boardListRoutes.reorder(boardId).url,
             {
-                boardLists: changedBoardLists.map((b) => ({
-                    id: b.id,
-                    order: b.order,
-                })),
+                boardLists: changed,
             },
             {
                 replace: true,
