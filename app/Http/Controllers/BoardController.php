@@ -3,11 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Enums\BoardListColor;
-use App\Events\BoardAddedToWorkspace;
 use App\Http\Requests\StoreBoardsRequest;
 use App\Http\Requests\UpdateBoardsRequest;
 use App\Models\Board;
 use App\Models\Workspace;
+use App\Services\BoardService;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -49,16 +49,7 @@ class BoardController extends Controller
      */
     public function store(StoreBoardsRequest $request, Workspace $workspace): RedirectResponse
     {
-        $board = Board::query()->create([
-            ...$request->validated(),
-            'workspace_id' => $workspace->id,
-        ]);
-
-        \Artisan::call('board:seed', ['board' => $board->id]);
-
-        $board->load('boardLists.cards');
-
-        BoardAddedToWorkspace::dispatch($board, $workspace->id);
+        $board = app(BoardService::class)->create($request->validated(), $workspace);
 
         return to_route('boards.show', [
             'board' => $board,
