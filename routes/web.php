@@ -11,41 +11,82 @@ Route::get('/', function () {
     return Inertia::render('Welcome');
 })->name('home');
 
-Route::get('dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::middleware(['auth', 'verified'])->group(function () {
 
+    /*
+    |--------------------------------------------------------------------------
+    | Dashboard
+    |--------------------------------------------------------------------------
+    */
+    Route::get('dashboard', fn () => Inertia::render('Dashboard'))
+        ->name('dashboard');
 
-Route::get('workspaces/{workspace}/home', [WorkspaceController::class, 'home'])
-    ->name('workspaces.home')
-    ->middleware(['auth', 'verified']);
+    /*
+    |--------------------------------------------------------------------------
+    | Workspaces
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('workspaces')
+        ->name('workspaces.')
+        ->group(function () {
 
-Route::get('workspaces/{workspace}/members', [WorkspaceController::class, 'members'])
-    ->name('workspaces.members')
-    ->middleware(['auth', 'verified']);
+            Route::get('/{workspace}/home', [WorkspaceController::class, 'home'])
+                ->name('home');
 
-Route::post('workspaces/{workspace}/boards', [BoardController::class, 'store'])
-    ->name('workspaces.boards.store')
-    ->scopeBindings()
-    ->middleware(['auth', 'verified']);
+            Route::get('/{workspace}/members', [WorkspaceController::class, 'members'])
+                ->name('members');
 
-Route::resource('boards', BoardController::class)
-    ->only(['index', 'show'])
-    ->middleware(['auth', 'verified']);
+            Route::post('/{workspace}/boards', [BoardController::class, 'store'])
+                ->name('boards.store');
 
-Route::patch('boards/{board}/board-lists/reorder', [BoardListController::class, 'reorder'])
-    ->name('boards.board-lists.reorder')
-    ->middleware(['auth', 'verified']);
+        });
 
-Route::patch('board-lists/{board_list}/cards/reorder', [CardController::class, 'reorder'])
-    ->name('board-lists.cards.reorder')
-    ->middleware(['auth', 'verified']);
+    /*
+    |--------------------------------------------------------------------------
+    | Boards
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('boards')
+        ->name('boards.')
+        ->group(function () {
 
-Route::scopeBindings()->group(function () {
-    Route::resource('boards.board-lists', BoardListController::class)->middleware(['auth', 'verified']);
-    Route::resource('board-lists.cards', CardController::class)->middleware(['auth', 'verified']);
+            Route::get('/', [BoardController::class, 'index'])
+                ->name('index');
+
+            Route::get('/{board}', [BoardController::class, 'show'])
+                ->name('show');
+
+            Route::patch('/{board}/board-lists/reorder', [BoardListController::class, 'reorder'])
+                ->name('board-lists.reorder');
+        });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Board Lists
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('board-lists')
+        ->name('board-lists.')
+        ->group(function () {
+
+            Route::patch('/{board_list}/cards/reorder', [CardController::class, 'reorder'])
+                ->name('cards.reorder');
+        });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Nested Resources
+    |--------------------------------------------------------------------------
+    */
+    Route::scopeBindings()->group(function () {
+
+        Route::resource('boards.board-lists', BoardListController::class);
+
+        Route::resource('board-lists.cards', CardController::class);
+    });
+
 });
 
-require __DIR__ . '/invite.php';
-require __DIR__ . '/settings.php';
-require __DIR__ . '/auth.php';
+require __DIR__.'/invite.php';
+require __DIR__.'/settings.php';
+require __DIR__.'/auth.php';
