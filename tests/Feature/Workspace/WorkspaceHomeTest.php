@@ -27,8 +27,9 @@ test('workspace owner can access their workspace home', function () {
             )
             ->has('members', fn (Assert $page) => $page
                 ->where('0.id', $member->id)
-                ->where('0.name', $member->name
-                ))
+                ->where('0.name', $member->name)
+                ->where('0.avatar', $member->avatar)
+            )
             ->loadDeferredProps(fn (Assert $reload) => $reload
                 ->has('inviteLink')
             )
@@ -58,8 +59,9 @@ test('workspace members can access their workspace home', function () {
             )
             ->has('members', fn (Assert $page) => $page
                 ->where('0.id', $member->id)
-                ->where('0.name', $member->name
-                ))
+                ->where('0.name', $member->name)
+                ->where('0.avatar', $member->avatar)
+            )
         );
 });
 

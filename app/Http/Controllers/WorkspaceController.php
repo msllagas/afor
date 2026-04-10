@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\UserResource;
+use App\Http\Resources\WorkspaceMemberResource;
 use App\Models\Workspace;
 use App\Services\WorkspaceService;
 use Inertia\Inertia;
@@ -18,20 +20,24 @@ class WorkspaceController extends Controller
             ->where('user_id', $user->id)
             ->exists();
 
-        $members = $workspace->users()
-            ->select('users.id', 'users.name')
-            ->get();
-
         if (! $isOwner && ! $isMember) {
             return redirect()->route('dashboard');
         }
+
+        $members = UserResource::collection(
+            $workspace->users()
+                ->with('avatarFile')
+                ->select('users.id', 'users.name', 'users.email')
+                ->get()
+        )->resolve();
 
         $workspace->load('boards');
 
         return Inertia::render('workspaces/Home', [
             'workspace' => $workspace,
             'members' => $members,
-            'inviteLink' => Inertia::defer(fn () => app(WorkspaceService::class)->generateInvitationLink($workspace, auth()->user())),
+            'inviteLink' => Inertia::defer(fn () => app(WorkspaceService::class)->generateInvitationLink($workspace,
+                auth()->user())),
         ]);
     }
 
@@ -49,19 +55,23 @@ class WorkspaceController extends Controller
             return redirect()->route('dashboard');
         }
 
-        $owner = $workspace->user()
-            ->select(['id', 'name'])
-            ->first();
+        $owner = (new WorkspaceMemberResource(
+            $workspace->user()->select(['id', 'name'])->first()->load('avatarFile')
+        ))->resolve();
 
-        $members = $workspace->users()
-            ->select('users.id', 'users.name')
-            ->get();
+        $members = WorkspaceMemberResource::collection(
+            $workspace->users()
+                ->with('avatarFile')
+                ->select('users.id', 'users.name')
+                ->get()
+        )->resolve();
 
         return Inertia::render('workspaces/Member', [
             'workspace' => $workspace,
             'owner' => $owner,
             'members' => $members,
-            'inviteLink' => Inertia::defer(fn () => app(WorkspaceService::class)->generateInvitationLink($workspace, auth()->user())),
+            'inviteLink' => Inertia::defer(fn () => app(WorkspaceService::class)->generateInvitationLink($workspace,
+                auth()->user())),
         ]);
     }
 }

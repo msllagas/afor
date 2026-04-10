@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/AppLayout.vue';
 import workspaceRoutes from '@/routes/workspaces';
-import type { BreadcrumbItem, User, Workspace } from '@/types';
+import type { BreadcrumbItem, User, Workspace, WorkspaceMember } from '@/types';
 import { Head } from '@inertiajs/vue3';
 import { Link } from 'lucide-vue-next';
 import { ref } from 'vue';
@@ -11,7 +11,7 @@ import { ref } from 'vue';
 const props = defineProps<{
     workspace: Workspace;
     owner: User;
-    members: User[];
+    members: WorkspaceMember[];
     inviteLink: string;
 }>();
 
@@ -26,7 +26,6 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-const DUMMY_AVATAR_LINK = 'https://randomuser.me/api/portraits/lego/2.jpg'; // todo: for deletion once user avatars are implemented
 const copied = ref(false);
 function copyInviteLink() {
     navigator.clipboard.writeText(props?.inviteLink);
@@ -71,7 +70,7 @@ function copyInviteLink() {
                     <h3 class="text-xs font-semibold tracking-widest text-muted-foreground uppercase">Owner</h3>
                     <div class="flex items-center gap-3">
                         <Avatar class="h-9 w-9">
-                            <AvatarImage :alt="owner.name" :src="DUMMY_AVATAR_LINK" class="object-cover" />
+                            <AvatarImage :alt="owner.name" :src="owner.avatar ?? ''" class="object-cover" />
                             <AvatarFallback class="bg-muted text-xs font-medium">
                                 {{ owner.name.charAt(0) }}
                             </AvatarFallback>
@@ -100,7 +99,7 @@ function copyInviteLink() {
                             class="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/40"
                         >
                             <Avatar class="h-8 w-8">
-                                <AvatarImage :alt="member.name" :src="DUMMY_AVATAR_LINK" class="object-cover" />
+                                <AvatarImage :alt="member.name" :src="member.avatar ?? ''" class="object-cover" />
                                 <AvatarFallback class="bg-muted text-xs font-medium">
                                     {{ member.name.charAt(0) }}
                                 </AvatarFallback>

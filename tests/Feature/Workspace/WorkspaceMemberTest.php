@@ -14,15 +14,16 @@ test('workspace owner can access their workspace members', function () {
         ]));
 
     $response->assertOk()
-        ->assertInertia(fn(Assert $page) => $page
+        ->assertInertia(fn (Assert $page) => $page
             ->component('workspaces/Member')
             ->has('workspace')
-            ->has('owner', fn(Assert $page) => $page
+            ->has('owner', fn (Assert $page) => $page
                 ->where('id', $user->id)
-                ->where('name', $user->name
-                ))
+                ->where('name', $user->name)
+                ->where('avatar', $user->avatar)
+            )
             ->has('members')
-            ->loadDeferredProps(fn(Assert $reload) => $reload
+            ->loadDeferredProps(fn (Assert $reload) => $reload
                 ->has('inviteLink')
             )
         );
@@ -41,18 +42,20 @@ test('workspace members can access their workspace members', function () {
         ]));
 
     $response->assertOk()
-        ->assertInertia(fn(Assert $page) => $page
+        ->assertInertia(fn (Assert $page) => $page
             ->component('workspaces/Member')
             ->has('workspace')
-            ->has('owner', fn(Assert $page) => $page
+            ->has('owner', fn (Assert $page) => $page
                 ->where('id', $owner->id)
-                ->where('name', $owner->name
-                ))
-            ->has('members', fn(Assert $page) => $page
+                ->where('name', $owner->name)
+                ->where('avatar', $owner->avatar)
+            )
+            ->has('members', fn (Assert $page) => $page
                 ->where('0.id', $member->id)
-                ->where('0.name', $member->name
-                ))
-            ->loadDeferredProps(fn(Assert $reload) => $reload
+                ->where('0.name', $member->name)
+                ->where('0.avatar', $member->avatar)
+            )
+            ->loadDeferredProps(fn (Assert $reload) => $reload
                 ->has('inviteLink')
             )
         );
@@ -70,4 +73,3 @@ test('user that is not a member or owner of the workspace are redirected to dash
 
     $response->assertRedirect(route('dashboard'));
 });
-

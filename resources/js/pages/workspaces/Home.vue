@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { default as workspaceRoutes, default as workspaces } from '@/routes/workspaces';
-import type { BreadcrumbItem, User, Workspace } from '@/types';
+import type { BreadcrumbItem, Workspace, WorkspaceMember } from '@/types';
 import { Board } from '@/types';
 import { Head, router, usePage } from '@inertiajs/vue3';
 import { useEcho } from '@laravel/echo-vue';
@@ -15,7 +15,7 @@ import { onMounted, ref, watch } from 'vue';
 
 const props = defineProps<{
     workspace: Workspace;
-    members: User[];
+    members: WorkspaceMember[];
     inviteLink: string;
 }>();
 
@@ -105,7 +105,7 @@ useEcho<BoardData>(`workspace.${props.workspace.id}`, 'BoardAddedToWorkspace', (
                                                 >
                                                     <AvatarImage
                                                         :alt="member.name"
-                                                        :src="DUMMY_AVATAR_LINK"
+                                                        :src="member.avatar ?? ''"
                                                         class="object-cover"
                                                     />
                                                     <AvatarFallback class="bg-muted text-xs font-medium">

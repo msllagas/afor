@@ -1,7 +1,7 @@
 import { InertiaLinkProps } from '@inertiajs/vue3';
 import type { LucideIcon } from 'lucide-vue-next';
-export * from './workspace/workspace'
-export * from './workspace-invitation/workspace-invitation'
+export * from './workspace-invitation/workspace-invitation';
+export * from './workspace/workspace';
 
 export interface Auth {
     user: User;
@@ -19,9 +19,7 @@ export interface NavItem {
     isActive?: boolean;
 }
 
-export type AppPageProps<
-    T extends Record<string, unknown> = Record<string, unknown>,
-> = T & {
+export type AppPageProps<T extends Record<string, unknown> = Record<string, unknown>> = T & {
     name: string;
     quote: { message: string; author: string };
     auth: Auth;
@@ -37,5 +35,7 @@ export interface User {
     created_at: string;
     updated_at: string;
 }
+
+export type WorkspaceMember = Pick<User, 'id' | 'name' | 'email' | 'avatar'>;
 
 export type BreadcrumbItemType = BreadcrumbItem;
