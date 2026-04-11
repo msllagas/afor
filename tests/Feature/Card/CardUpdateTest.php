@@ -14,7 +14,7 @@ test('users can move a card to another board list on the same board', function (
     $user = User::factory()->create();
     $this->actingAs($user);
 
-    $workspace = Workspace::factory()->for($user)->create();
+    $workspace = Workspace::factory()->forUser($user)->create();
     $board = Board::factory()->for($workspace)->create();
 
     // First Board List with 2 cards
@@ -54,7 +54,7 @@ test('users can update a card', function () {
 
     $this->actingAs($user);
 
-    $workspace = Workspace::factory()->for($user)->create();
+    $workspace = Workspace::factory()->forUser($user)->create();
     $board = Board::factory()->for($workspace)->create();
     $boardList = BoardList::factory()->for($board)->create();
     $card = Card::factory()->create(['board_list_id' => $boardList->id]);
@@ -82,7 +82,7 @@ test('users cannot update a card they do not own', function () {
     $this->actingAs($user);
 
     $otherUser = User::factory()->create();
-    $otherUserWorkspace = Workspace::factory()->for($otherUser)->create();
+    $otherUserWorkspace = Workspace::factory()->forUser($otherUser)->create();
     $otherUserBoard = Board::factory()->for($otherUserWorkspace)->create();
 
     $otherUserBoardList = BoardList::factory()->for($otherUserBoard)->create();

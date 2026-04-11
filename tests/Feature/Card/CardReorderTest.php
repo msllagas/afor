@@ -13,7 +13,7 @@ test('users can reorder cards in board list', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
 
-    $workspace = Workspace::factory()->for($user)->create();
+    $workspace = Workspace::factory()->forUser($user)->create();
     $board = Board::factory()->for($workspace)->create();
 
     $boardList = BoardList::factory()->for($board)->create();

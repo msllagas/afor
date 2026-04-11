@@ -9,7 +9,7 @@ test('service generates invitation link for a workspace per user', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
 
-    $workspace = Workspace::factory()->for($user)->create();
+    $workspace = Workspace::factory()->forUser($user)->create();
 
     $service = app(WorkspaceService::class);
 

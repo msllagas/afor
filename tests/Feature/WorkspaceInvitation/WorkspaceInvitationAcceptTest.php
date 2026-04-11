@@ -11,7 +11,7 @@ test('users can accept invitation from another users', function () {
     $user = User::factory()->create();
     $anotherUser = User::factory()->create();
 
-    $workspace = Workspace::factory()->for($user)->create();
+    $workspace = Workspace::factory()->forUser($user)->create();
     $this->actingAs($anotherUser);
 
     $service = app(WorkspaceService::class);
@@ -36,7 +36,7 @@ test('users can accept invitation from another users', function () {
 
 test('users cannot accept their own invitation', function () {
     $user = User::factory()->create();
-    $workspace = Workspace::factory()->for($user)->create();
+    $workspace = Workspace::factory()->forUser($user)->create();
     $this->actingAs($user);
 
     $service = app(WorkspaceService::class);
@@ -58,7 +58,7 @@ test('users who already joined the workspace are redirected', function () {
     $user = User::factory()->create();
     $anotherUser = User::factory()->create();
 
-    $workspace = Workspace::factory()->for($user)->create();
+    $workspace = Workspace::factory()->forUser($user)->create();
     $workspace->users()->attach($anotherUser);
     $this->actingAs($anotherUser);
 
@@ -81,7 +81,7 @@ test('users are redirected when the invitation does not exist', function () {
     $user = User::factory()->create();
     $anotherUser = User::factory()->create();
 
-    $workspace = Workspace::factory()->for($user)->create();
+    $workspace = Workspace::factory()->forUser($user)->create();
     $this->actingAs($anotherUser);
 
     $token = Str::random(32);

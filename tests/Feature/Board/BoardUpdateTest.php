@@ -11,7 +11,7 @@ test('users can update board name', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
 
-    $workspace = Workspace::factory()->for($user)->create([
+    $workspace = Workspace::factory()->forUser($user)->create([
         'name' => 'Test Workspace',
     ]);
 

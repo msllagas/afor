@@ -7,7 +7,7 @@ use Inertia\Testing\AssertableInertia as Assert;
 
 test('guest users can view workspace invitation details', function () {
     $user = User::factory()->create();
-    $workspace = Workspace::factory()->for($user)->create();
+    $workspace = Workspace::factory()->forUser($user)->create();
 
     // Create a link for workspace invitation
     $service = app(WorkspaceService::class);

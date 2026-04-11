@@ -34,7 +34,7 @@ test('registering a user automatically creates a default workspace with a board,
 
     assertDatabaseHas('workspaces', [
         'name' => 'Test User Workspace',
-        'user_id' => auth()->id(),
+        'owner_id' => auth()->id(),
     ]);
 
     $user = User::where('email', 'test@example.com')->first();

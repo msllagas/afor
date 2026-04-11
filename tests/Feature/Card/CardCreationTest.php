@@ -14,7 +14,7 @@ test('users can create cards in board lists', function () {
 
     $this->actingAs($user);
 
-    $workspace = Workspace::factory()->for($user)->create();
+    $workspace = Workspace::factory()->forUser($user)->create();
     $board = Board::factory()->for($workspace)->create();
 
     BoardList::factory()->for($board)->create();

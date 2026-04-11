@@ -6,7 +6,7 @@ use Inertia\Testing\AssertableInertia as Assert;
 
 test('workspace owner can access their workspace members', function () {
     $user = User::factory()->create();
-    $workspace = Workspace::factory()->for($user)->create();
+    $workspace = Workspace::factory()->forUser($user)->create();
 
     $response = $this->actingAs($user)
         ->get(route('workspaces.members', [
@@ -33,7 +33,7 @@ test('workspace members can access their workspace members', function () {
     $owner = User::factory()->create();
     $member = User::factory()->create();
 
-    $workspace = Workspace::factory()->for($owner)->create();
+    $workspace = Workspace::factory()->forUser($owner)->create();
     $workspace->users()->attach($member->id);
 
     $response = $this->actingAs($member)
@@ -64,7 +64,7 @@ test('workspace members can access their workspace members', function () {
 test('user that is not a member or owner of the workspace are redirected to dashboard', function () {
     $user = User::factory()->create();
     $anotherUser = User::factory()->create();
-    $workspace = Workspace::factory()->for($anotherUser)->create();
+    $workspace = Workspace::factory()->forUser($anotherUser)->create();
 
     $response = $this->actingAs($user)
         ->get(route('workspaces.members', [

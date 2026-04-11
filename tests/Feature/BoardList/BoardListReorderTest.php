@@ -11,7 +11,7 @@ test('users can reorder board lists in board', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
 
-    $workspace = Workspace::factory()->for($user)->create();
+    $workspace = Workspace::factory()->forUser($user)->create();
     $board = Board::factory()->for($workspace)->create();
 
     $order = 0;

@@ -17,9 +17,9 @@ test('users can view boards index with their own and shared workspaces', functio
     $user = User::factory()->create();
     $anotherUser = User::factory()->create();
 
-    $ownedWorkspace = Workspace::factory()->for($user)->create(['name' => 'Owned Workspace']);
+    $ownedWorkspace = Workspace::factory()->forUser($user)->create(['name' => 'Owned Workspace']);
 
-    $sharedWorkspace = Workspace::factory()->for($anotherUser)->create(['name' => 'Shared Workspace']);
+    $sharedWorkspace = Workspace::factory()->forUser($anotherUser)->create(['name' => 'Shared Workspace']);
     $sharedWorkspace->users()->attach($user);
 
     $response = $this->actingAs($user)
