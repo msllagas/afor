@@ -27,6 +27,7 @@ class UserAvatarService
             'original_filename' => $file->getClientOriginalName(),
             'mime_type' => $file->getMimeType(),
             'size' => $file->getSize(),
+            'uploaded_by' => $user->id,
         ]);
     }
 

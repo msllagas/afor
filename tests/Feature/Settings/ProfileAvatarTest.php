@@ -18,6 +18,7 @@ test('users can upload avatar', function () {
     expect(File::query()->where('files.fileable_id', $user->id)
         ->where('fileable_type', User::class)
         ->where('collection', 'avatar')
+        ->where('uploaded_by', $user->id)
         ->exists()
     )->toBeTrue();
 
