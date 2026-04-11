@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\FileCollection;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Builder;
@@ -122,7 +123,7 @@ class User extends Authenticatable implements MustVerifyEmail
     public function avatarFile(): MorphOne
     {
         return $this->morphOne(File::class, 'fileable')
-            ->where('collection', 'avatar')
+            ->where('collection', FileCollection::AVATAR->value)
             ->latestOfMany();
     }
 
