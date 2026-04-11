@@ -21,15 +21,17 @@ class WorkspaceFactory extends Factory
         return [
             'name' => 'Guest Workspace',
             'description' => fake()->text(),
-            'user_id' => UserFactory::new(),
+            'owner_id' => UserFactory::new(),
         ];
     }
 
     public function forUser(?User $user = null): static
     {
-        return $this->state(fn (array $attributes) => [
-            'name' => $user?->name.' Workspace' ?? 'Guest Workspace',
-            'user_id' => $user?->id ?? User::factory(),
+        $user ??= User::factory()->create();
+
+        return $this->state([
+            'name' => $user->name.' Workspace',
+            'owner_id' => $user->id,
         ]);
     }
 }

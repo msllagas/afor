@@ -101,7 +101,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function ownedWorkspaces(): HasMany
     {
-        return $this->hasMany(Workspace::class);
+        return $this->hasMany(Workspace::class, 'owner_id');
     }
 
     // Workspaces this user is a member of

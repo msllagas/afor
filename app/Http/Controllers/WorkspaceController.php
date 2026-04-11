@@ -14,7 +14,7 @@ class WorkspaceController extends Controller
     {
         $user = auth()->user();
 
-        $isOwner = $workspace->user_id === $user->id;
+        $isOwner = $workspace->owner_id === $user->id;
 
         $isMember = $workspace->users()
             ->where('user_id', $user->id)
@@ -45,7 +45,7 @@ class WorkspaceController extends Controller
     {
         $user = auth()->user();
 
-        $isOwner = $workspace->user_id === $user->id;
+        $isOwner = $workspace->owner_id === $user->id;
 
         $isMember = $workspace->users()
             ->where('user_id', $user->id)
@@ -56,7 +56,7 @@ class WorkspaceController extends Controller
         }
 
         $owner = (new WorkspaceMemberResource(
-            $workspace->user()->select(['id', 'name'])->first()->load('avatarFile')
+            $workspace->owner()->select(['id', 'name'])->first()->load('avatarFile')
         ))->resolve();
 
         $members = WorkspaceMemberResource::collection(

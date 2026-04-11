@@ -17,8 +17,7 @@ return new class extends Migration
             $table->string('name');
             $table->longText('description')->nullable();
 
-            $table->foreignIdFor(User::class)
-                ->comment('Owner of the workspace')
+            $table->foreignIdFor(User::class, 'owner_id')
                 ->constrained()
                 ->cascadeOnDelete();
 

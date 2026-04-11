@@ -17,13 +17,13 @@ use Illuminate\Support\Carbon;
  * @property string $id
  * @property string $name
  * @property string|null $description
- * @property string $user_id Owner of the workspace
+ * @property string $owner_id
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property string|null $deleted_at
  * @property-read Collection<int, Board> $boards
  * @property-read int|null $boards_count
- * @property-read User $user
+ * @property-read User $owner
  * @property-read Collection<int, User> $users
  * @property-read int|null $users_count
  *
@@ -36,8 +36,8 @@ use Illuminate\Support\Carbon;
  * @method static Builder<static>|Workspace whereDescription($value)
  * @method static Builder<static>|Workspace whereId($value)
  * @method static Builder<static>|Workspace whereName($value)
+ * @method static Builder<static>|Workspace whereOwnerId($value)
  * @method static Builder<static>|Workspace whereUpdatedAt($value)
- * @method static Builder<static>|Workspace whereUserId($value)
  *
  * @mixin \Eloquent
  */
@@ -50,8 +50,7 @@ class Workspace extends Model
         'name',
     ];
 
-    // Owner of the workspace
-    public function user(): BelongsTo
+    public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
