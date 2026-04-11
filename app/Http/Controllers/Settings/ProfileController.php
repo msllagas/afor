@@ -4,18 +4,21 @@ namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
-use App\Models\File;
 use App\Models\User;
+use App\Services\UserAvatarService;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class ProfileController extends Controller
 {
+    public function __construct(
+        private readonly UserAvatarService $userAvatarService
+    ) {}
+
     /**
      * Show the user's profile settings page.
      */
@@ -70,29 +73,10 @@ class ProfileController extends Controller
             'avatar' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        $user = $request->user();
-        $avatar = $request->file('avatar');
-
-        $path = $avatar->store('avatars');
-
-        $oldAvatarFile = $user->avatarFile()->first();
-        if ($oldAvatarFile) {
-            // Delete the old avatar file from the storage
-            Storage::disk($oldAvatarFile->disk)->delete($oldAvatarFile->path);
-            // Delete the old avatar file from the database
-            $oldAvatarFile->delete();
-        }
-
-        File::query()->create([
-            'fileable_id' => $user->id,
-            'fileable_type' => User::class,
-            'collection' => 'avatar',
-            'disk' => config('filesystems.default'),
-            'path' => $path,
-            'original_filename' => $avatar->getClientOriginalName(),
-            'mime_type' => $avatar->getMimeType(),
-            'size' => $avatar->getSize(),
-        ]);
+        $this->userAvatarService->update(
+            user: $request->user(),
+            file: $request->file('avatar')
+        );
 
         return back();
     }
@@ -101,13 +85,7 @@ class ProfileController extends Controller
     {
         $user = auth()->user();
 
-        $avatarFile = $user->avatarFile()->first();
-        if ($avatarFile) {
-            // Delete the old avatar file from the storage
-            Storage::disk($avatarFile->disk)->delete($avatarFile->path);
-            // Delete the old avatar file from the database
-            $avatarFile->delete();
-        }
+        $this->userAvatarService->delete($user);
 
         return back();
     }
