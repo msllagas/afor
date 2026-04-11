@@ -86,9 +86,11 @@ class BoardController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateBoardsRequest $request, Board $boards)
+    public function update(UpdateBoardsRequest $request, Board $board): RedirectResponse
     {
-        //
+        $board->update($request->validated());
+
+        return back();
     }
 
     /**

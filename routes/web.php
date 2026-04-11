@@ -56,6 +56,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/{board}', [BoardController::class, 'show'])
                 ->name('show');
 
+            Route::patch('/{board}', [BoardController::class, 'update'])
+                ->name('update');
+
             Route::patch('/{board}/board-lists/reorder', [BoardListController::class, 'reorder'])
                 ->name('board-lists.reorder');
         });

@@ -26,6 +26,12 @@ const headerTitle = ref(props.board.name);
 const drag = ref(false);
 const boardLists = ref([...props.board.board_lists]);
 const input = useTemplateRef('add-new-list-input');
+const boardName = ref(props.board.name);
+const isEditingBoardName = ref(false);
+const editedBoardName = ref(props.board.name);
+const mirrorRef = ref<HTMLDivElement | null>(null);
+const inputWidth = ref(0);
+const inputRef = ref<HTMLInputElement | null>(null);
 
 const dragOptions = computed(() => ({
     animation: 200,
@@ -122,10 +128,60 @@ function handleArchive(boardListId: string) {
     );
 }
 
+function startEditingBoardName() {
+    editedBoardName.value = boardName.value;
+    isEditingBoardName.value = true;
+    nextTick(() => {
+        if (mirrorRef.value) inputWidth.value = mirrorRef.value.offsetWidth;
+        inputRef.value?.select();
+        const input = inputRef.value;
+        if (input) {
+            input.focus();
+            input.setSelectionRange(input.value.length, input.value.length);
+            input.scrollLeft = 999999;
+        }
+    });
+}
+
+function saveEdit() {
+    const sanitizedName = editedBoardName.value.trim();
+    isEditingBoardName.value = false;
+
+    if (!sanitizedName || sanitizedName === boardName.value) {
+        return;
+    }
+
+    boardName.value = sanitizedName;
+
+    router.patch(
+        boardRoutes.update({
+            board: props.board.id,
+        }).url,
+        {
+            name: sanitizedName,
+        },
+        {
+            preserveScroll: true,
+            preserveState: true,
+            onSuccess: () => {
+                headerTitle.value = sanitizedName;
+            },
+        },
+    );
+}
+
 watch(
     () => props.board,
     (newBoard) => (boardLists.value = [...newBoard.board_lists]),
 );
+
+watch(editedBoardName, () => {
+    nextTick(() => {
+        if (mirrorRef.value) {
+            inputWidth.value = mirrorRef.value.offsetWidth;
+        }
+    });
+});
 
 onMounted(() => {
     if (props.selectedCard) {
@@ -139,14 +195,57 @@ onMounted(() => {
     <div
         class="relative h-screen max-h-screen overflow-y-auto bg-gradient-to-r from-pink-500 via-fuchsia-500 to-rose-400 select-none"
     >
-        <div
-            class="sticky top-0 right-0 left-0 z-10 w-screen bg-[rgba(0,0,0,0.3)] p-4 shadow-[0_4px_30px_rgba(0,0,0,0.1)] backdrop-blur-sm"
+        <nav
+            class="fixed top-0 right-0 left-0 z-10 h-16 bg-[rgba(0,0,0,0.3)] shadow-[0_4px_30px_rgba(0,0,0,0.1)] backdrop-blur-sm"
         >
-            <div>
-                <h1 class="text-lg font-semibold tracking-tight">{{ board.name }}</h1>
+            <div class="flex h-full items-center gap-3 px-4">
+                <div class="min-w-0 flex-1 overflow-hidden">
+                    <h1
+                        v-if="!isEditingBoardName"
+                        class="inline-block max-w-full cursor-pointer truncate rounded-md px-2 py-1 text-lg font-semibold tracking-tight transition-colors hover:bg-white/30 dark:hover:bg-white/30"
+                        @click="startEditingBoardName"
+                    >
+                        {{ boardName }}
+                    </h1>
+
+                    <template v-else>
+                        <span
+                            ref="mirrorRef"
+                            class="invisible absolute px-2 py-1 text-lg font-semibold tracking-tight whitespace-pre"
+                            >{{ editedBoardName || ' ' }}</span
+                        >
+                        <input
+                            ref="inputRef"
+                            v-model="editedBoardName"
+                            :style="{ width: inputWidth + 'px' }"
+                            class="max-w-full rounded-md border border-blue-400 bg-white px-2 py-1 text-lg font-semibold tracking-tight outline-none dark:bg-gray-800"
+                            maxlength="255"
+                            @blur="saveEdit"
+                            @keyup.enter="saveEdit"
+                            @keyup.esc="saveEdit"
+                            @keydown.tab="saveEdit"
+                        />
+                    </template>
+                </div>
+
+                <div class="flex shrink-0 items-center gap-2">
+                    <!-- Todo: Dummy button, delete when functionality has been implement -->
+                    <button
+                        class="flex items-center gap-1.5 rounded-md bg-white/20 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-white/30"
+                    >
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                                d="M4 6h16M4 12h16M4 18h16"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                            />
+                        </svg>
+                    </button>
+                </div>
             </div>
-        </div>
-        <div class="mt-2">
+        </nav>
+        <div class="mt-20">
             <ol
                 v-if="board?.board_lists?.length > 0"
                 class="absolute flex h-full max-h-[calc(100vh-128px)] gap-2 overflow-x-hidden overflow-y-hidden px-2"
@@ -171,8 +270,8 @@ onMounted(() => {
                             <BoardList
                                 :key="element.id"
                                 :board-list="element"
-                                :is-moving-board-list="drag"
                                 :colors="colors"
+                                :is-moving-board-list="drag"
                                 @on-card-click="onCardClick"
                                 @on-list-archive="handleArchive"
                             />
