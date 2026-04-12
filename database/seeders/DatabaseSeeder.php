@@ -35,7 +35,7 @@ class DatabaseSeeder extends Seeder
 
             BoardList::factory()->for($board)->createMany([
                 ['name' => 'To Do', 'order' => 0, 'color' => BoardListColor::BLUE->value],
-                ['name' => 'In Progress', 'order' => 1, 'color' => BoardListColor::AMBER->value],
+                ['name' => 'In Progress', 'order' => 1, 'color' => BoardListColor::YELLOW->value],
                 ['name' => 'Done', 'order' => 2, 'color' => BoardListColor::GREEN->value],
             ]);
 

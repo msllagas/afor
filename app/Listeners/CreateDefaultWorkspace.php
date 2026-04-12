@@ -26,7 +26,7 @@ class CreateDefaultWorkspace
         $inProgress = $board->boardLists()->create([
             'name' => 'In Progress',
             'order' => 1,
-            'color' => BoardListColor::AMBER->value,
+            'color' => BoardListColor::YELLOW->value,
         ]);
 
         $done = $board->boardLists()->create([

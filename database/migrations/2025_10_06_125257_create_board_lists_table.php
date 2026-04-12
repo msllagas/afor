@@ -16,7 +16,7 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->string('name');
             $table->integer('order')->default(0);
-            $table->string('color')->nullable();
+            $table->string('color')->default('neutral');
             $table->foreignIdFor(Board::class)
                 ->constrained()
                 ->cascadeOnDelete();

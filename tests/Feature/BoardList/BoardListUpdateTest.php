@@ -43,13 +43,13 @@ test('users can change board list color', function () {
         'board' => $board,
         'board_list' => $boardList,
     ]), [
-        'color' => BoardListColor::PINK->value,
+        'color' => BoardListColor::ANGEL->value,
     ]);
 
     $response->assertRedirect();
 
     assertDatabaseHas('board_lists', [
         'id' => $boardList->id,
-        'color' => BoardListColor::PINK->value,
+        'color' => BoardListColor::ANGEL->value,
     ]);
 });
