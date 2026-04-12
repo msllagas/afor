@@ -2,6 +2,7 @@
 import Tiptap from '@/components/Tiptap.vue';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
+import { useTextAreaAutoResize } from '@/composables/useTextAreaAutoResize';
 import cardRoutes from '@/routes/board-lists/cards';
 import type { Card } from '@/types';
 import { router } from '@inertiajs/vue3';
@@ -16,6 +17,8 @@ const emit = defineEmits<{
 }>();
 
 const isDialogOpen = defineModel<boolean>({ required: true });
+
+const { autoResize } = useTextAreaAutoResize();
 
 function onSubmit(boardListId: string, cardId: string, event: Event) {
     const target = event.target;
@@ -45,14 +48,6 @@ function onSubmitDescription(boardListId: string, cardId: string, value: string)
             description: value,
         },
     );
-}
-
-function autoResize(event: Event) {
-    const target = event.target as HTMLTextAreaElement | null;
-    if (!target) return;
-
-    target.style.height = 'auto';
-    target.style.height = `${target.scrollHeight}px`;
 }
 </script>
 
