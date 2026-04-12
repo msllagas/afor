@@ -5,7 +5,7 @@ use App\Models\BoardList;
 use App\Models\Card;
 use App\Models\User;
 use App\Models\Workspace;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+
 use function Pest\Laravel\assertDatabaseHas;
 use function Pest\Laravel\patch;
 
@@ -48,4 +48,3 @@ test('users can reorder cards in board list', function () {
         'order' => 0,
     ]);
 });
-

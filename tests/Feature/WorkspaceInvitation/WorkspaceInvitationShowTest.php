@@ -16,21 +16,21 @@ test('guest users can view workspace invitation details', function () {
 
     $response = $this->get(route('workspace-invitations.show', [
         'workspace' => $workspace,
-        'token' => $token
+        'token' => $token,
     ]));
 
     $response->assertOk()
-        ->assertInertia(fn(Assert $page) => $page
+        ->assertInertia(fn (Assert $page) => $page
             ->component('workspace-invitations/Invite')
-            ->has('invitation', fn(Assert $page) => $page
+            ->has('invitation', fn (Assert $page) => $page
                 ->where('token', $token)
                 ->where('invited_by', $user->id)
                 ->where('workspace_id', $workspace->id)
-                ->has('inviter', fn(Assert $page) => $page
+                ->has('inviter', fn (Assert $page) => $page
                     ->where('id', $user->id)
                     ->where('name', $user->name
                     ))
-                ->has('workspace', fn(Assert $page) => $page
+                ->has('workspace', fn (Assert $page) => $page
                     ->where('id', $workspace->id)
                     ->where('name', $workspace->name
                     ))

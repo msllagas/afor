@@ -25,16 +25,15 @@ test('users can view boards index with their own and shared workspaces', functio
     $response = $this->actingAs($user)
         ->get(route('boards.index'));
 
-
     $response->assertOk()
-        ->assertInertia(fn(Assert $page) => $page
+        ->assertInertia(fn (Assert $page) => $page
             ->component('boards/Index')
-            ->has('ownedWorkspaces', 1, fn(Assert $page) => $page
+            ->has('ownedWorkspaces', 1, fn (Assert $page) => $page
                 ->where('id', $ownedWorkspace->id)
                 ->where('name', 'Owned Workspace')
                 ->has('boards')
             )
-            ->has('sharedWorkspaces', 1, fn(Assert $page) => $page
+            ->has('sharedWorkspaces', 1, fn (Assert $page) => $page
                 ->where('id', $sharedWorkspace->id)
                 ->where('name', 'Shared Workspace')
                 ->has('boards')

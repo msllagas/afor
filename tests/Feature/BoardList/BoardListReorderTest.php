@@ -1,11 +1,12 @@
 <?php
+
 use App\Models\Board;
 use App\Models\BoardList;
 use App\Models\User;
 use App\Models\Workspace;
+
 use function Pest\Laravel\assertDatabaseHas;
 use function Pest\Laravel\patch;
-
 
 test('users can reorder board lists in board', function () {
     $user = User::factory()->create();
@@ -22,10 +23,10 @@ test('users can reorder board lists in board', function () {
         'order' => $order++,
     ]);
     $boardList3 = BoardList::factory()->for($board)->create([
-        'order' => $order++
+        'order' => $order++,
     ]);
     $boardList4 = BoardList::factory()->for($board)->create([
-        'order' => $order++
+        'order' => $order++,
     ]);
 
     // Move boardList1 next to boardList3 shifting all boardLists in between
@@ -71,4 +72,3 @@ test('users can reorder board lists in board', function () {
         $boardList4->id,
     ]);
 });
-

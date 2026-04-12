@@ -1,10 +1,10 @@
 <?php
 
-
 use App\Models\Board;
 use App\Models\BoardList;
 use App\Models\User;
 use App\Models\Workspace;
+
 use function Pest\Laravel\assertDatabaseHas;
 use function Pest\Laravel\post;
 
@@ -40,7 +40,6 @@ test('adding a new board list assigns next order number', function () {
     BoardList::factory()->for($board)->create(
         ['order' => 1]
     );
-
 
     $response = post(route('boards.board-lists.store', [
         'board' => $board,

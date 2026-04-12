@@ -3,6 +3,7 @@
 use App\Models\User;
 use App\Models\Workspace;
 use App\Services\WorkspaceService;
+
 use function Pest\Laravel\assertDatabaseHas;
 
 test('service generates invitation link for a workspace per user', function () {
