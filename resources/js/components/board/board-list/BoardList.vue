@@ -3,7 +3,8 @@ import CardController from '@/actions/App/Http/Controllers/CardController';
 import BoardListDropdownMenu from '@/components/board/board-list/BoardListDropdownMenu.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import { useTextAreaAutoResize } from '@/composables/useTextAreaAutoResize';
+import { getLuminance } from '@/lib/utils';
 import cardRoutes from '@/routes/board-lists/cards';
 import boardListRoutes from '@/routes/boards/board-lists';
 import type { BoardList as BoardListType, Card as CardType } from '@/types';
@@ -23,6 +24,8 @@ const emit = defineEmits<{
     onListArchive: [boardListId: string];
 }>();
 
+const { autoResize } = useTextAreaAutoResize();
+
 const drag = ref(false);
 const isAddingCard = ref(false);
 const selectedColor = ref<string | null>('');
@@ -41,6 +44,10 @@ const dragOptions = computed(() => ({
     scrollSensitivity: 100,
     scrollSpeed: 20,
 }));
+const hoverBg = computed(() => {
+    const lum = getLuminance(selectedColor.value ?? '#242528');
+    return lum > 0.179 ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.12)';
+});
 
 function onChange(boardListId: string, event: any) {
     if (event.moved) {
@@ -124,6 +131,14 @@ function scrollToCard() {
     }
 }
 
+function onEnter(event: KeyboardEvent) {
+    const target = event.target as HTMLTextAreaElement | null;
+
+    if (!target?.form) return;
+
+    target.form.requestSubmit();
+}
+
 onMounted(() => {
     selectedColor.value = props.boardList.color ?? null;
 });
@@ -173,7 +188,7 @@ onMounted(() => {
                             class="mb-2 rounded-lg bg-[#242528] p-2 text-white shadow"
                             @click="emit('onCardClick', boardList.id, element)"
                         >
-                            <span class="text-sm break-words">{{ element.name }}</span>
+                            <span class="text-sm wrap-break-word">{{ element.name }}</span>
                         </div>
                     </li>
                 </template>
@@ -186,7 +201,15 @@ onMounted(() => {
                     v-bind="CardController.store.form(boardList.id)"
                     @success="scrollToCard"
                 >
-                    <Input id="name" ref="add-card-input" class="mb-2 w-full rounded-lg p-2 shadow" name="name" />
+                    <textarea
+                        ref="add-card-input"
+                        autocomplete="off"
+                        class="mb-2 w-full resize-none overflow-hidden rounded-lg bg-[#242528] p-2.25 text-sm leading-5 text-white shadow outline-2 outline-primary placeholder:text-gray-400 hover:outline-none focus:outline-primary"
+                        name="name"
+                        placeholder="Enter card title"
+                        @input="autoResize"
+                        @keydown.enter.exact.prevent="onEnter"
+                    />
                     <div class="flex items-center gap-2">
                         <Button :disabled="processing" class="cursor-pointer" data-test="update-profile-button">
                             Add card
@@ -201,13 +224,13 @@ onMounted(() => {
         </CardContent>
         <div v-if="!isAddingCard" class="px-2 pt-1.5">
             <Button
-                class="w-full cursor-pointer !justify-start hover:bg-[#242528]!"
-                size="sm"
+                class="add-card-btn group flex w-full cursor-pointer items-center justify-start gap-2 rounded-lg p-2 text-white/70 transition-all duration-150 hover:bg-white/10 hover:text-white active:scale-[0.98]"
+                size="lg"
                 variant="ghost"
                 @click="onAddCard"
             >
-                <Plus />
-                <span>Add card</span>
+                <Plus class="h-4 w-4 opacity-70 transition group-hover:opacity-100" />
+                <span class="font-medium">Add card</span>
             </Button>
         </div>
     </Card>
@@ -240,5 +263,9 @@ onMounted(() => {
 .handle,
 .handle * {
     cursor: grab;
+}
+
+.add-card-btn:hover {
+    background-color: v-bind(hoverBg);
 }
 </style>
