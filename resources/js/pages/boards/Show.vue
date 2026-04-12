@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import BoardListController from '@/actions/App/Http/Controllers/BoardListController';
+import AppearanceTabs from '@/components/AppearanceTabs.vue';
 import BoardList from '@/components/board/board-list/BoardList.vue';
 import CardDialog from '@/components/board/board-list/card/CardDialog.vue';
 import { Button } from '@/components/ui/button';
@@ -193,7 +194,8 @@ onMounted(() => {
 <template>
     <Head :title="headerTitle" />
     <div
-        class="relative h-screen max-h-screen overflow-y-auto bg-gradient-to-r from-pink-500 via-fuchsia-500 to-rose-400 select-none"
+        class="relative h-screen max-h-screen overflow-y-auto select-none"
+        style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
     >
         <nav
             class="fixed top-0 right-0 left-0 z-10 h-16 bg-[rgba(0,0,0,0.3)] shadow-[0_4px_30px_rgba(0,0,0,0.1)] backdrop-blur-sm"
@@ -202,7 +204,7 @@ onMounted(() => {
                 <div class="min-w-0 flex-1 overflow-hidden">
                     <h1
                         v-if="!isEditingBoardName"
-                        class="inline-block max-w-full cursor-pointer truncate rounded-md px-2 py-1 text-lg font-semibold tracking-tight transition-colors hover:bg-white/30 dark:hover:bg-white/30"
+                        class="inline-block max-w-full cursor-pointer truncate rounded-md px-2 py-1 text-lg font-semibold tracking-tight text-white transition-colors hover:bg-white/30 dark:hover:bg-white/30"
                         @click="startEditingBoardName"
                     >
                         {{ boardName }}
@@ -230,6 +232,8 @@ onMounted(() => {
 
                 <div class="flex shrink-0 items-center gap-2">
                     <!-- Todo: Dummy button, delete when functionality has been implement -->
+
+                    <AppearanceTabs />
                     <button
                         class="flex items-center gap-1.5 rounded-md bg-white/20 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-white/30"
                     >
@@ -248,7 +252,7 @@ onMounted(() => {
         <div class="mt-20">
             <ol
                 v-if="board?.board_lists?.length > 0"
-                class="absolute flex h-full max-h-[calc(100vh-128px)] gap-2 overflow-x-hidden overflow-y-hidden px-2"
+                class="absolute flex h-full max-h-[calc(100vh-128px)] gap-4 overflow-x-hidden overflow-y-hidden px-4"
             >
                 <draggable
                     :component-data="{
@@ -257,7 +261,7 @@ onMounted(() => {
                         name: !drag ? 'flip-list' : null,
                     }"
                     :list="boardLists"
-                    class="flex gap-2"
+                    class="flex gap-4"
                     handle=".handle"
                     item-key="id"
                     v-bind="dragOptions"

@@ -30,7 +30,7 @@ const emit = defineEmits<{
 <template>
     <DropdownMenu>
         <DropdownMenuTrigger as-child>
-            <Button size="sm" variant="ghost">
+            <Button size="sm" variant="ghost" v-bind="$attrs">
                 <Ellipsis />
             </Button>
         </DropdownMenuTrigger>
@@ -56,11 +56,15 @@ const emit = defineEmits<{
                             <DropdownMenuItem
                                 v-for="color in colors"
                                 :key="color"
-                                class="h-8"
-                                :style="{ backgroundColor: color }"
+                                class="h-8 hover:opacity-90"
+                                :class="`list-${color.toLowerCase()}`"
+                                :style="{ background: 'var(--list-bg)' }"
                                 @click="emit('colorSelected', color)"
                             />
-                            <DropdownMenuItem class="col-span-2 block text-center" @click="emit('colorSelected', null)">
+                            <DropdownMenuItem
+                                class="col-span-2 block text-center"
+                                @click="emit('colorSelected', 'neutral')"
+                            >
                                 Reset
                             </DropdownMenuItem>
                         </DropdownMenuSubContent>

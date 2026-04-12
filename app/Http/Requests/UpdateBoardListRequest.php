@@ -26,7 +26,7 @@ class UpdateBoardListRequest extends FormRequest
     {
         return [
             'is_archived' => 'sometimes|boolean',
-            'color' => ['sometimes', 'nullable', 'hex_color', new Enum(BoardListColor::class)],
+            'color' => ['sometimes', 'nullable', new Enum(BoardListColor::class)],
         ];
     }
 }

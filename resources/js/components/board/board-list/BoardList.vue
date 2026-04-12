@@ -4,7 +4,6 @@ import BoardListDropdownMenu from '@/components/board/board-list/BoardListDropdo
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { useTextAreaAutoResize } from '@/composables/useTextAreaAutoResize';
-import { getLuminance } from '@/lib/utils';
 import cardRoutes from '@/routes/board-lists/cards';
 import boardListRoutes from '@/routes/boards/board-lists';
 import type { BoardList as BoardListType, Card as CardType } from '@/types';
@@ -30,6 +29,8 @@ const drag = ref(false);
 const isAddingCard = ref(false);
 const selectedColor = ref<string | null>('');
 const addCardInput = useTemplateRef('add-card-input');
+const gradientColors = ['sunset', 'aurora'];
+
 const dragOptions = computed(() => ({
     animation: 200,
     group: {
@@ -44,10 +45,7 @@ const dragOptions = computed(() => ({
     scrollSensitivity: 100,
     scrollSpeed: 20,
 }));
-const hoverBg = computed(() => {
-    const lum = getLuminance(selectedColor.value ?? '#242528');
-    return lum > 0.179 ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.12)';
-});
+const isGradient = computed(() => gradientColors.includes(selectedColor.value ?? ''));
 
 function onChange(boardListId: string, event: any) {
     if (event.moved) {
@@ -146,20 +144,21 @@ onMounted(() => {
 
 <template>
     <Card
-        :style="{ backgroundColor: selectedColor }"
-        class="space-between relative flex max-h-full w-[272px] scroll-m-2 flex-col rounded-2xl pb-2 whitespace-normal shadow-lg"
+        class="space-between relative flex max-h-full w-[272px] scroll-m-2 flex-col rounded-2xl border-none! bg-(--list-bg) pb-2 whitespace-normal shadow-lg"
+        :class="selectedColor ? `list-${selectedColor}` : 'bg-draggable-list-card'"
+        :style="isGradient ? { background: `var(--list-bg)` } : {}"
     >
-        <CardHeader
-            class="handle relative flex grow-0 cursor-grab flex-wrap items-start justify-between px-2 pt-2 whitespace-normal"
-        >
-            <div class="relative min-h-[20px] shrink-1 grow-1 basis-[min-content]">
-                <h2 class="text-sm font-semibold">
-                    <Button class="hover:!bg-transparent" size="sm" variant="ghost">
-                        <span>{{ boardList.name }}</span>
-                    </Button>
+        <CardHeader class="handle relative flex grow-0 cursor-grab items-start justify-between gap-1 px-2 pt-2">
+            <div class="relative min-h-[20px] min-w-0 flex-1">
+                <h2
+                    class="overflow-wrap-anywhere px-3 py-1 text-sm font-semibold wrap-break-word text-(--list-fg)"
+                    @click="startEditingBoardListName"
+                >
+                    {{ boardList.name }}
                 </h2>
             </div>
             <BoardListDropdownMenu
+                class="text-(--list-fg-muted) hover:bg-(--list-bg-hovered)! hover:text-(--list-fg)"
                 :board-list-id="boardList.id"
                 :colors="colors"
                 @archive-list="onArchiveList"
@@ -184,8 +183,12 @@ onMounted(() => {
                     <li>
                         <div
                             :key="element.id"
-                            :class="{ 'cursor-pointer': !drag }"
-                            class="mb-2 rounded-lg bg-[#242528] p-2 text-white shadow"
+                            :class="[
+                                'mb-2 rounded-lg border border-neutral-400 bg-draggable-card p-2 shadow dark:border-transparent',
+                                drag
+                                    ? 'cursor-grabbing'
+                                    : 'cursor-pointer hover:shadow-md hover:outline-2 hover:outline-primary',
+                            ]"
                             @click="emit('onCardClick', boardList.id, element)"
                         >
                             <span class="text-sm wrap-break-word">{{ element.name }}</span>
@@ -204,7 +207,7 @@ onMounted(() => {
                     <textarea
                         ref="add-card-input"
                         autocomplete="off"
-                        class="mb-2 w-full resize-none overflow-hidden rounded-lg bg-[#242528] p-2.25 text-sm leading-5 text-white shadow outline-2 outline-primary placeholder:text-gray-400 hover:outline-none focus:outline-primary"
+                        class="mb-2 w-full resize-none overflow-hidden rounded-lg bg-draggable-card p-2.25 text-sm leading-5 shadow outline-2 outline-primary placeholder:text-gray-400 hover:outline-none focus:outline-primary"
                         name="name"
                         placeholder="Enter card title"
                         @input="autoResize"
@@ -224,12 +227,12 @@ onMounted(() => {
         </CardContent>
         <div v-if="!isAddingCard" class="px-2 pt-1.5">
             <Button
-                class="add-card-btn group flex w-full cursor-pointer items-center justify-start gap-2 rounded-lg p-2 text-white/70 transition-all duration-150 hover:bg-white/10 hover:text-white active:scale-[0.98]"
+                class="group flex w-full cursor-pointer items-center justify-start gap-2 rounded-lg p-2 text-(--list-fg-muted) transition-all duration-150 hover:bg-(--list-bg-hovered)! hover:text-(--list-fg)"
                 size="lg"
                 variant="ghost"
                 @click="onAddCard"
             >
-                <Plus class="h-4 w-4 opacity-70 transition group-hover:opacity-100" />
+                <Plus class="h-4 w-4" />
                 <span class="font-medium">Add card</span>
             </Button>
         </div>
@@ -238,7 +241,7 @@ onMounted(() => {
 
 <style scoped>
 .ghost {
-    background: v-bind('selectedColor') !important;
+    background: v-bind(--list-bg) !important;
     position: relative;
     border-radius: 8px;
 }
@@ -263,9 +266,5 @@ onMounted(() => {
 .handle,
 .handle * {
     cursor: grab;
-}
-
-.add-card-btn:hover {
-    background-color: v-bind(hoverBg);
 }
 </style>

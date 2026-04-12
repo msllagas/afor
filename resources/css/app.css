@@ -73,6 +73,9 @@
     --radius-2xl: calc(var(--radius) + 8px);
     --radius-3xl: calc(var(--radius) + 12px);
     --radius-4xl: calc(var(--radius) + 16px);
+
+    --color-draggable-list-card: var(--draggable-list-card);
+    --color-draggable-card: var(--draggable-card);
 }
 
 /*
@@ -137,6 +140,9 @@
     --sidebar-border: oklch(0.928 0.006 264.531);
     --sidebar-ring: oklch(0.707 0.022 261.325);
 
+    --draggable-list-card: oklch(0.92 0.005 264);
+    --draggable-card: oklch(1 0 0);
+
 }
 
 .dark {
@@ -172,6 +178,8 @@
     --sidebar-border: oklch(1 0 0 / 10%);
     --sidebar-ring: oklch(0.551 0.027 264.364);
 
+    --draggable-list-card: oklch(0.1752 0.0285 115.46);
+    --draggable-card: oklch(0.2646 0.0057 271.2);
 }
 
 @layer base {
