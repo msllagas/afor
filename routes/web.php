@@ -11,6 +11,21 @@ Route::get('/', function () {
     return Inertia::render('Welcome');
 })->name('home');
 
+Route::get('/about', function () {
+    return Inertia::render('About');
+});
+Route::get('/privacy-policy', function () {
+    return Inertia::render('PrivacyPolicy');
+});
+
+Route::get('/terms-of-use', function () {
+    return Inertia::render('TermsOfUse');
+});
+
+Route::get('/contact', function () {
+    return Inertia::render('Contact');
+});
+
 Route::middleware(['auth', 'verified'])->group(function () {
 
     /*

@@ -140,7 +140,7 @@ const features = [
             <div class="mx-auto max-w-6xl px-4 py-10">
                 <div class="flex flex-col items-center justify-between gap-6 sm:flex-row">
                     <div class="text-center sm:text-left">
-                        <p class="text-base font-semibold text-gray-900 dark:text-white">Afor</p>
+                        <p class="text-base font-semibold text-primary">Afor</p>
                         <p class="text-sm text-gray-500 dark:text-gray-400">Plan better. Work smarter.</p>
                     </div>
                     <div class="flex items-center gap-5">
@@ -164,8 +164,31 @@ const features = [
                         </a>
                     </div>
                 </div>
-                <div class="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
-                    © {{ new Date().getFullYear() }} Afor
+
+                <div class="mt-6 flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
+                    <nav class="flex flex-wrap justify-center gap-x-5 gap-y-1 sm:justify-start">
+                        <a
+                            class="text-sm text-gray-500 transition hover:text-primary dark:text-gray-400 dark:hover:text-primary"
+                            href="/about"
+                            >About</a
+                        >
+                        <a
+                            class="text-sm text-gray-500 transition hover:text-primary dark:text-gray-400 dark:hover:text-primary"
+                            href="/privacy-policy"
+                            >Privacy Policy</a
+                        >
+                        <a
+                            class="text-sm text-gray-500 transition hover:text-primary dark:text-gray-400 dark:hover:text-primary"
+                            href="/terms-of-use"
+                            >Terms of Use</a
+                        >
+                        <a
+                            class="text-sm text-gray-500 transition hover:text-primary dark:text-gray-400 dark:hover:text-primary"
+                            href="/contact"
+                            >Contact</a
+                        >
+                    </nav>
+                    <div class="text-sm text-gray-500 dark:text-gray-400">© {{ new Date().getFullYear() }} Afor</div>
                 </div>
             </div>
         </footer>
