@@ -144,15 +144,19 @@ function startEditingBoardName() {
     });
 }
 
-function saveEdit() {
+function saveBoardName() {
     const sanitizedName = editedBoardName.value.trim();
     isEditingBoardName.value = false;
 
-    if (!sanitizedName || sanitizedName === boardName.value) {
+    if (!sanitizedName) {
+        editedBoardName.value = boardName.value;
         return;
     }
 
+    if (sanitizedName === boardName.value) return;
+
     boardName.value = sanitizedName;
+    editedBoardName.value = sanitizedName;
 
     router.patch(
         boardRoutes.update({
@@ -222,10 +226,10 @@ onMounted(() => {
                             :style="{ width: inputWidth + 'px' }"
                             class="max-w-full rounded-md border border-blue-400 bg-white px-2 py-1 text-lg font-semibold tracking-tight outline-none dark:bg-gray-800"
                             maxlength="255"
-                            @blur="saveEdit"
-                            @keyup.enter="saveEdit"
-                            @keyup.esc="saveEdit"
-                            @keydown.tab="saveEdit"
+                            @blur="saveBoardName"
+                            @keydown.enter.prevent="saveBoardName"
+                            @keydown.esc.prevent="saveBoardName"
+                            @keydown.tab.prevent="saveBoardName"
                         />
                     </template>
                 </div>
