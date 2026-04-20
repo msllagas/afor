@@ -31,6 +31,11 @@ const selectedColor = ref<string | null>('');
 const addCardInput = useTemplateRef('add-card-input');
 const gradientColors = ['sunset', 'aurora'];
 
+const boardListName = ref(props.boardList.name);
+const isEditingBoardListName = ref(false);
+const editedBoardListName = ref(props.boardList.name);
+const boardListNameTextareaRef = ref<HTMLTextAreaElement | null>(null);
+
 const dragOptions = computed(() => ({
     animation: 200,
     group: {
@@ -137,6 +142,49 @@ function onEnter(event: KeyboardEvent) {
     target.form.requestSubmit();
 }
 
+function startEditingBoardListName() {
+    editedBoardListName.value = boardListName.value;
+    isEditingBoardListName.value = true;
+    nextTick(() => {
+        if (!boardListNameTextareaRef.value) return;
+        autoResize(boardListNameTextareaRef.value);
+        boardListNameTextareaRef.value.focus();
+        boardListNameTextareaRef.value.setSelectionRange(
+            boardListNameTextareaRef.value.value.length,
+            boardListNameTextareaRef.value.value.length,
+        );
+    });
+}
+
+function saveBoardListName() {
+    const sanitizedName = editedBoardListName.value.trim();
+    isEditingBoardListName.value = false;
+
+    if (!sanitizedName) {
+        editedBoardListName.value = boardListName.value;
+        return;
+    }
+
+    if (sanitizedName === boardListName.value) {
+        return;
+    }
+
+    boardListName.value = sanitizedName;
+    editedBoardListName.value = sanitizedName;
+
+    router.patch(
+        boardListRoutes.update({
+            board: props.boardList.board_id,
+            board_list: props.boardList.id,
+        }).url,
+        { name: sanitizedName },
+        {
+            preserveScroll: true,
+            preserveState: true,
+        },
+    );
+}
+
 onMounted(() => {
     selectedColor.value = props.boardList.color ?? null;
 });
@@ -148,14 +196,31 @@ onMounted(() => {
         :class="selectedColor ? `list-${selectedColor}` : 'bg-draggable-list-card'"
         :style="isGradient ? { background: `var(--list-bg)` } : {}"
     >
-        <CardHeader class="handle relative flex grow-0 cursor-grab items-start justify-between gap-1 px-2 pt-2">
+        <CardHeader
+            class="relative flex grow-0 cursor-grab items-start justify-between gap-1 px-2 pt-2"
+            :class="{ handle: !isEditingBoardListName }"
+        >
             <div class="relative min-h-[20px] min-w-0 flex-1">
                 <h2
-                    class="overflow-wrap-anywhere px-3 py-1 text-sm font-semibold wrap-break-word text-(--list-fg)"
+                    v-if="!isEditingBoardListName"
+                    class="overflow-wrap-anywhere w-full cursor-text border border-transparent px-2 py-1 text-sm leading-5 font-semibold tracking-tight wrap-break-word text-(--list-fg)"
                     @click="startEditingBoardListName"
                 >
-                    {{ boardList.name }}
+                    {{ boardListName }}
                 </h2>
+                <textarea
+                    v-else
+                    ref="boardListNameTextareaRef"
+                    v-model="editedBoardListName"
+                    rows="1"
+                    class="w-full resize-none overflow-hidden rounded-md border border-blue-400 bg-white px-2 py-1 text-sm leading-5 font-semibold tracking-tight outline-none dark:bg-gray-800"
+                    maxlength="255"
+                    @input="autoResize"
+                    @blur="saveBoardListName"
+                    @keydown.enter.prevent="saveBoardListName"
+                    @keydown.esc.prevent="saveBoardListName"
+                    @keydown.tab.prevent="saveBoardListName"
+                />
             </div>
             <BoardListDropdownMenu
                 class="text-(--list-fg-muted) hover:bg-(--list-bg-hovered)! hover:text-(--list-fg)"
@@ -265,6 +330,6 @@ onMounted(() => {
 
 .handle,
 .handle * {
-    cursor: grab;
+    cursor: pointer;
 }
 </style>

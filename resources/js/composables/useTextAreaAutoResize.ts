@@ -1,11 +1,11 @@
 export function useTextAreaAutoResize() {
-    const autoResize = (event: Event) => {
-        const target = event.target as HTMLTextAreaElement | null;
-        if (!target) return;
+    function autoResize(eventOrEl?: Event | HTMLTextAreaElement | null) {
+        const el = eventOrEl instanceof Event ? (eventOrEl.target as HTMLTextAreaElement) : eventOrEl;
 
-        target.style.height = 'auto';
-        target.style.height = `${target.scrollHeight}px`;
-    };
+        if (!el) return;
+        el.style.height = 'auto';
+        el.style.height = `${el.scrollHeight}px`;
+    }
 
     return { autoResize };
 }
