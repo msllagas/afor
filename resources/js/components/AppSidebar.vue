@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import NavMain from '@/components/NavMain.vue';
+import NavWorkspace from '@/components/NavWorkspace.vue';
 import {
     Sidebar,
     SidebarContent,
@@ -9,18 +10,13 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
+import boards from '@/routes/boards';
+import workspacesRoutes from '@/routes/workspaces';
 import { type NavItem, Workspace } from '@/types';
+import type { PageProps as InertiaPageProps } from '@inertiajs/core';
 import { Link, usePage } from '@inertiajs/vue3';
-import {
-    Kanban,
-    LayoutGrid,
-    SquareTerminal
-} from 'lucide-vue-next';
+import { Kanban, LayoutGrid, SquareTerminal } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
-import boards from "@/routes/boards";
-import NavWorkspace from "@/components/NavWorkspace.vue";
-import workspacesRoutes from "@/routes/workspaces";
-import type { PageProps as InertiaPageProps } from '@inertiajs/core'
 
 const mainNavItems: NavItem[] = [
     {
@@ -32,31 +28,31 @@ const mainNavItems: NavItem[] = [
         title: 'Boards',
         href: boards.index(),
         icon: Kanban,
-    }
+    },
 ];
 
 interface PageProps extends InertiaPageProps {
-    workspaces: Workspace[]
+    workspaces: Workspace[];
 }
 
-const page = usePage<PageProps>()
+const page = usePage<PageProps>();
 
-const workspaces = page.props?.workspaces.map(workspace => ({
+const workspaces = page.props?.workspaces.map((workspace) => ({
     title: workspace.name,
-    url: "#",
+    url: '#',
     icon: SquareTerminal,
     isActive: true,
     items: [
         {
-            title: "Boards",
+            title: 'Home',
             url: workspacesRoutes.home(workspace.id).url,
         },
         {
-            title: "Members",
+            title: 'Members',
             url: workspacesRoutes.members(workspace.id).url,
         },
-    ]
-}))
+    ],
+}));
 </script>
 
 <template>
@@ -66,7 +62,7 @@ const workspaces = page.props?.workspaces.map(workspace => ({
                 <SidebarMenuItem>
                     <SidebarMenuButton as-child size="lg">
                         <Link :href="dashboard()">
-                            <AppLogo/>
+                            <AppLogo />
                         </Link>
                     </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -74,9 +70,9 @@ const workspaces = page.props?.workspaces.map(workspace => ({
         </SidebarHeader>
 
         <SidebarContent>
-            <NavMain :items="mainNavItems"/>
-            <NavWorkspace :items="workspaces"/>
+            <NavMain :items="mainNavItems" />
+            <NavWorkspace :items="workspaces" />
         </SidebarContent>
     </Sidebar>
-    <slot/>
+    <slot />
 </template>

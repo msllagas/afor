@@ -29,7 +29,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: workspaceRoutes.home(props.workspace.id).url,
     },
     {
-        title: 'Boards',
+        title: 'Home',
         href: workspaceRoutes.members(props.workspace.id).url,
     },
 ];
@@ -69,7 +69,7 @@ useEcho<BoardData>(`workspace.${props.workspace.id}`, 'BoardAddedToWorkspace', (
 </script>
 
 <template>
-    <Head :title="workspace.name + ' - Boards'" />
+    <Head :title="workspace.name + ' - Home'" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="px-6 sm:px-10">
