@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\UserResource;
 use App\Http\Resources\WorkspaceMemberResource;
+use App\Models\User;
 use App\Models\Workspace;
 use App\Services\WorkspaceService;
+use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 
 class WorkspaceController extends Controller
@@ -73,5 +75,16 @@ class WorkspaceController extends Controller
             'inviteLink' => Inertia::defer(fn () => app(WorkspaceService::class)->generateInvitationLink($workspace,
                 auth()->user())),
         ]);
+    }
+
+    public function removeMember(Workspace $workspace, User $user): RedirectResponse
+    {
+        try {
+            app(WorkspaceService::class)->removeMember($workspace, $user);
+        } catch (\InvalidArgumentException $e) {
+            abort(403, $e->getMessage());
+        }
+
+        return back();
     }
 }

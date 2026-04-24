@@ -51,6 +51,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/{workspace}/members', [WorkspaceController::class, 'members'])
                 ->name('members');
 
+            Route::delete('/{workspace}/members/{user}', [WorkspaceController::class, 'removeMember'])
+                ->name('members.user.destroy')
+                ->scopeBindings();
+
             Route::post('/{workspace}/boards', [BoardController::class, 'store'])
                 ->name('boards.store');
 
