@@ -55,9 +55,9 @@ class WorkspaceController extends Controller
             return redirect()->route('dashboard');
         }
 
-        $owner = (new WorkspaceMemberResource(
+        $owner = new WorkspaceMemberResource(
             $workspace->owner()->select(['id', 'name'])->first()->load('avatarFile')
-        ))->resolve();
+        )->resolve();
 
         $members = WorkspaceMemberResource::collection(
             $workspace->users()
