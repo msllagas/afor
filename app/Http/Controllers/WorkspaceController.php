@@ -12,6 +12,10 @@ use Inertia\Inertia;
 
 class WorkspaceController extends Controller
 {
+    public function __construct(
+        private readonly WorkspaceService $workspaceService
+    ) {}
+
     public function home(Workspace $workspace)
     {
         $user = auth()->user();
@@ -38,7 +42,7 @@ class WorkspaceController extends Controller
         return Inertia::render('workspaces/Home', [
             'workspace' => $workspace,
             'members' => $members,
-            'inviteLink' => Inertia::defer(fn () => app(WorkspaceService::class)->generateInvitationLink($workspace,
+            'inviteLink' => Inertia::defer(fn () => $this->workspaceService->generateInvitationLink($workspace,
                 auth()->user())),
         ]);
     }
@@ -72,7 +76,7 @@ class WorkspaceController extends Controller
             'workspace' => $workspace,
             'owner' => $owner,
             'members' => $members,
-            'inviteLink' => Inertia::defer(fn () => app(WorkspaceService::class)->generateInvitationLink($workspace,
+            'inviteLink' => Inertia::defer(fn () => $this->workspaceService->generateInvitationLink($workspace,
                 auth()->user())),
         ]);
     }
@@ -80,7 +84,7 @@ class WorkspaceController extends Controller
     public function removeMember(Workspace $workspace, User $user): RedirectResponse
     {
         try {
-            app(WorkspaceService::class)->removeMember($workspace, $user);
+            $this->workspaceService->removeMember($workspace, $user);
         } catch (\InvalidArgumentException $e) {
             abort(403, $e->getMessage());
         }
