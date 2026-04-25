@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use App\Enums\FileCollection;
 use Database\Factories\WorkspaceFactory;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -11,7 +13,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * @property string $id
@@ -23,6 +27,8 @@ use Illuminate\Support\Carbon;
  * @property string|null $deleted_at
  * @property-read Collection<int, Board> $boards
  * @property-read int|null $boards_count
+ * @property-read mixed $logo
+ * @property-read File|null $logoFile
  * @property-read User $owner
  * @property-read Collection<int, User> $users
  * @property-read int|null $users_count
@@ -48,6 +54,7 @@ class Workspace extends Model
 
     protected $fillable = [
         'name',
+        'description',
     ];
 
     public function owner(): BelongsTo
@@ -65,5 +72,20 @@ class Workspace extends Model
     public function boards(): HasMany
     {
         return $this->hasMany(Board::class);
+    }
+
+    public function logoFile(): MorphOne
+    {
+        return $this->morphOne(File::class, 'fileable')
+            ->where('collection', FileCollection::WORKSPACE_LOGO->value);
+    }
+
+    public function logo(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->logoFile
+                ? Storage::url($this->logoFile->path)
+                : null
+        );
     }
 }

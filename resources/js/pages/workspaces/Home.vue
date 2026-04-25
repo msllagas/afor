@@ -80,11 +80,7 @@ useEcho<BoardData>(`workspace.${props.workspace.id}`, 'BoardAddedToWorkspace', (
                             <div
                                 class="h-16 w-16 overflow-hidden rounded-2xl border border-border/50 shadow-md sm:h-20 sm:w-20"
                             >
-                                <img
-                                    :alt="workspace.name"
-                                    :src="DUMMY_AVATAR_LINK"
-                                    class="h-full w-full object-cover"
-                                />
+                                <img :alt="workspace.name" :src="workspace.logo" class="h-full w-full object-cover" />
                             </div>
                         </div>
                         <div class="min-w-0 space-y-1">

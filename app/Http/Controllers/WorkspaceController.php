@@ -2,19 +2,55 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\FileCollection;
+use App\FileUploadData;
+use App\Http\Requests\UpdateWorkspaceRequest;
 use App\Http\Resources\UserResource;
 use App\Http\Resources\WorkspaceMemberResource;
+use App\Http\Resources\WorkspaceResource;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Services\FileUploadService;
 use App\Services\WorkspaceService;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class WorkspaceController extends Controller
 {
     public function __construct(
         private readonly WorkspaceService $workspaceService
     ) {}
+
+    public function update(UpdateWorkspaceRequest $request, Workspace $workspace): RedirectResponse
+    {
+        $isMember = $workspace->users()->where('user_id', $request->user()->id)->exists();
+        $isOwner = $workspace->owner_id === $request->user()->id;
+
+        if (!$isMember && !$isOwner) {
+            throw new AuthorizationException('You are not authorized to update this workspace.', 403);
+        }
+
+        $workspace->update($request->safe()->only(['name', 'description']));
+
+        if ($request->hasFile('logo')) {
+
+            $path = "workspaces/{$workspace->id}/logo";
+
+            $fileUploadData = new FileUploadData(
+                model: $workspace,
+                file: $request->file('logo'),
+                collection: FileCollection::WORKSPACE_LOGO,
+                path: $path,
+                uploadedBy: auth()->user()
+            );
+
+            app(FileUploadService::class)->replace($fileUploadData);
+        }
+
+        return back();
+    }
 
     public function home(Workspace $workspace)
     {
@@ -26,7 +62,7 @@ class WorkspaceController extends Controller
             ->where('user_id', $user->id)
             ->exists();
 
-        if (! $isOwner && ! $isMember) {
+        if (!$isOwner && !$isMember) {
             return redirect()->route('dashboard');
         }
 
@@ -37,11 +73,11 @@ class WorkspaceController extends Controller
                 ->get()
         )->resolve();
 
-        $workspace->load('boards');
+        $workspace->load('boards', 'logoFile');
 
         return Inertia::render('workspaces/Home', [
-            'workspace' => $workspace,
-            'members' => $members,
+            'workspace'  => new WorkspaceResource($workspace),
+            'members'    => $members,
             'inviteLink' => Inertia::defer(fn () => $this->workspaceService->generateInvitationLink($workspace,
                 auth()->user())),
         ]);
@@ -57,7 +93,7 @@ class WorkspaceController extends Controller
             ->where('user_id', $user->id)
             ->exists();
 
-        if (! $isOwner && ! $isMember) {
+        if (!$isOwner && !$isMember) {
             return redirect()->route('dashboard');
         }
 
@@ -73,9 +109,9 @@ class WorkspaceController extends Controller
         )->resolve();
 
         return Inertia::render('workspaces/Member', [
-            'workspace' => $workspace,
-            'owner' => $owner,
-            'members' => $members,
+            'workspace'  => $workspace,
+            'owner'      => $owner,
+            'members'    => $members,
             'inviteLink' => Inertia::defer(fn () => $this->workspaceService->generateInvitationLink($workspace,
                 auth()->user())),
         ]);
@@ -90,5 +126,14 @@ class WorkspaceController extends Controller
         }
 
         return back();
+    }
+
+    public function settings(Workspace $workspace): Response
+    {
+        $workspace->load('logoFile');
+
+        return Inertia::render('workspaces/Settings', [
+            'workspace' => new WorkspaceResource($workspace),
+        ]);
     }
 }

@@ -32,16 +32,17 @@ const mainNavItems: NavItem[] = [
 ];
 
 interface PageProps extends InertiaPageProps {
-    workspaces: Workspace[];
+    ownedWorkspaces: Workspace[];
+    sharedWorkspaces: Workspace[];
 }
 
 const page = usePage<PageProps>();
 
-const workspaces = page.props?.workspaces.map((workspace) => ({
+const ownedWorkspaces = page.props?.ownedWorkspaces.map((workspace) => ({
     title: workspace.name,
     url: '#',
     icon: SquareTerminal,
-    isActive: true,
+    isActive: page.url.startsWith(`/workspaces/${workspace.id}`),
     items: [
         {
             title: 'Home',
@@ -50,6 +51,31 @@ const workspaces = page.props?.workspaces.map((workspace) => ({
         {
             title: 'Members',
             url: workspacesRoutes.members(workspace.id).url,
+        },
+        {
+            title: 'Settings',
+            url: workspacesRoutes.settings(workspace.id).url,
+        },
+    ],
+}));
+
+const sharedWorkspaces = page.props?.sharedWorkspaces.map((workspace) => ({
+    title: workspace.name,
+    url: '#',
+    icon: SquareTerminal,
+    isActive: page.url.startsWith(`/workspaces/${workspace.id}`),
+    items: [
+        {
+            title: 'Home',
+            url: workspacesRoutes.home(workspace.id).url,
+        },
+        {
+            title: 'Members',
+            url: workspacesRoutes.members(workspace.id).url,
+        },
+        {
+            title: 'Settings',
+            url: workspacesRoutes.settings(workspace.id).url,
         },
     ],
 }));
@@ -71,7 +97,8 @@ const workspaces = page.props?.workspaces.map((workspace) => ({
 
         <SidebarContent>
             <NavMain :items="mainNavItems" />
-            <NavWorkspace :items="workspaces" />
+            <NavWorkspace :items="ownedWorkspaces" title="My Workspaces" />
+            <NavWorkspace :items="sharedWorkspaces" title="Shared With Me" />
         </SidebarContent>
     </Sidebar>
     <slot />

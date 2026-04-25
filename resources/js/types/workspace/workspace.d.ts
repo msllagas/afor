@@ -26,4 +26,5 @@ export interface Workspace {
     name: string;
     description?: string;
     boards: Board[];
+    logo?: string; // url path
 }

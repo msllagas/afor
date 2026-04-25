@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Http\Resources\UserResource;
+use App\Http\Resources\WorkspaceResource;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -43,13 +44,22 @@ class HandleInertiaRequests extends Middleware
 
         return [
             ...parent::share($request),
-            'name' => config('app.name'),
+            'name'  => config('app.name'),
             'quote' => ['message' => trim($message), 'author' => trim($author)],
-            'auth' => [
+            'auth'  => [
                 'user' => $user ? new UserResource($user->loadMissing('avatarFile')) : null,
             ],
-            'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
-            'workspaces' => $request->user()?->workspaces,
+            'sidebarOpen'      => !$request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            'sharedWorkspaces' => $request->user()
+                ? WorkspaceResource::collection(
+                    $request->user()->sharedWorkspaces()->with('logoFile')->get()
+                )->resolve()
+                : [],
+            'ownedWorkspaces' => $request->user()
+                ? WorkspaceResource::collection(
+                    $request->user()->ownedWorkspaces()->with('logoFile')->get()
+                )->resolve()
+                : [],
         ];
     }
 }

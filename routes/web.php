@@ -45,6 +45,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('workspaces.')
         ->group(function () {
 
+            Route::patch('/{workspace}', [WorkspaceController::class, 'update'])
+                ->name('update');
+
             Route::get('/{workspace}/home', [WorkspaceController::class, 'home'])
                 ->name('home');
 
@@ -54,6 +57,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::delete('/{workspace}/members/{user}', [WorkspaceController::class, 'removeMember'])
                 ->name('members.user.destroy')
                 ->scopeBindings();
+
+            Route::get('/{workspace}/settings', [WorkspaceController::class, 'settings'])
+                ->name('settings');
 
             Route::post('/{workspace}/boards', [BoardController::class, 'store'])
                 ->name('boards.store');
