@@ -6,6 +6,10 @@ use Illuminate\Http\UploadedFile;
 
 use function PHPUnit\Framework\assertSame;
 
+beforeEach(function () {
+    Storage::fake('public');
+});
+
 test('users can upload avatar', function () {
     $user = User::factory()->create();
 
