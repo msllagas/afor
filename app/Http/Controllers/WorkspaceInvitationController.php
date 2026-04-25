@@ -39,7 +39,7 @@ class WorkspaceInvitationController extends Controller
 
         $authUser = auth()->user();
 
-        if (! $invitationExists) {
+        if (!$invitationExists) {
             dd('do something when invitation does not exists');
         }
 
@@ -47,7 +47,7 @@ class WorkspaceInvitationController extends Controller
             ->where('user_id', $authUser->id);
 
         // Only attach user if it does not exist yet in workspace
-        if ($workspace->owner->id !== $authUser->id && ! $userExistInWorkspace->exists()) {
+        if ($workspace->owner->id !== $authUser->id && !$userExistInWorkspace->exists()) {
             $workspace->users()->attach($authUser->id);
         }
 

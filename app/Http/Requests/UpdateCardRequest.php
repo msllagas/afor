@@ -23,10 +23,10 @@ class UpdateCardRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'sometimes|string|max:255',
-            'description' => 'sometimes|string|max:65535',
+            'name'          => 'sometimes|string|max:255',
+            'description'   => 'sometimes|string|max:65535',
             'board_list_id' => 'sometimes|exists:board_lists,id',
-            'order' => 'sometimes|integer',
+            'order'         => 'sometimes|integer',
         ];
     }
 }

@@ -20,7 +20,7 @@ test('users can accept invitation from another users', function () {
 
     $response = post(route('workspace-invitations.accept', [
         'workspace' => $workspace,
-        'token' => $token,
+        'token'     => $token,
     ]));
 
     $response->assertRedirect(route('workspaces.home', [
@@ -29,7 +29,7 @@ test('users can accept invitation from another users', function () {
 
     assertDatabaseHas('workspace_user', [
         'workspace_id' => $workspace->id,
-        'user_id' => $anotherUser->id,
+        'user_id'      => $anotherUser->id,
     ]);
 
 });
@@ -45,7 +45,7 @@ test('users cannot accept their own invitation', function () {
 
     $response = post(route('workspace-invitations.accept', [
         'workspace' => $workspace,
-        'token' => $token,
+        'token'     => $token,
     ]));
 
     // Just redirect to workspace home
@@ -68,7 +68,7 @@ test('users who already joined the workspace are redirected', function () {
 
     $response = post(route('workspace-invitations.accept', [
         'workspace' => $workspace,
-        'token' => $token,
+        'token'     => $token,
     ]));
 
     // Just redirect to workspace home
@@ -88,7 +88,7 @@ test('users are redirected when the invitation does not exist', function () {
 
     $response = post(route('workspace-invitations.accept', [
         'workspace' => $workspace,
-        'token' => $token,
+        'token'     => $token,
     ]));
 
 })->skip(message: 'implement this test once the accept invitation route has implemented the logic');

@@ -30,18 +30,18 @@ test('users can move a card to another board list on the same board', function (
     // Move boardList2Card1 to boardList1
     $payload = [
         'board_list_id' => $boardList1->id,
-        'order' => 2,
+        'order'         => 2,
     ];
 
     patch(route('board-lists.cards.update', [
         'board_list' => $boardList2,
-        'card' => $boardList2Card1,
+        'card'       => $boardList2Card1,
     ]), $payload);
 
     assertDatabaseHas('cards', [
-        'id' => $boardList2Card1->id,
+        'id'            => $boardList2Card1->id,
         'board_list_id' => $boardList1->id,
-        'order' => 2,
+        'order'         => 2,
     ]);
 
     expect($boardList1->cards()->count())->toBe(3)
@@ -60,20 +60,20 @@ test('users can update a card', function () {
     $card = Card::factory()->create(['board_list_id' => $boardList->id]);
 
     $payload = [
-        'name' => 'Updated card name',
+        'name'        => 'Updated card name',
         'description' => 'Updated card description',
     ];
 
     $response = patchJson(route('board-lists.cards.update', [
         'board_list' => $boardList,
-        'card' => $card,
+        'card'       => $card,
     ]), $payload);
 
     $this->assertDatabaseHas('cards', [
-        'id' => $card->id,
+        'id'            => $card->id,
         'board_list_id' => $boardList->id,
-        'name' => 'Updated card name',
-        'description' => 'Updated card description',
+        'name'          => 'Updated card name',
+        'description'   => 'Updated card description',
     ]);
 });
 
@@ -90,14 +90,14 @@ test('users cannot update a card they do not own', function () {
     $anotherUserBoardListCard = Card::factory()->for($otherUserBoardList)->create();
 
     $payload = [
-        'name' => 'Updated Board Name',
+        'name'        => 'Updated Board Name',
         'description' => 'Updated description',
     ];
 
     // Update card owned by the other user
     $response = patchJson(route('board-lists.cards.update', [
         'board_list' => $otherUserBoard->boardLists()->first()->id,
-        'card' => $anotherUserBoardListCard,
+        'card'       => $anotherUserBoardListCard,
     ]), $payload);
 
     $response->assertForbidden()

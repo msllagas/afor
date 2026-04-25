@@ -22,7 +22,7 @@ class BoardListController extends Controller
             $request->validated(),
             [
                 'board_id' => $board->id,
-                'order' => $nextOrder,
+                'order'    => $nextOrder,
             ]
         ));
 

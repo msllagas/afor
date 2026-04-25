@@ -43,23 +43,23 @@ test('users can reorder board lists in board', function () {
     ]), $payload);
 
     assertDatabaseHas('board_lists', [
-        'id' => $boardList1->id,
+        'id'    => $boardList1->id,
         'order' => 2,
     ]);
 
     assertDatabaseHas('board_lists', [
-        'id' => $boardList2->id,
+        'id'    => $boardList2->id,
         'order' => 0,
     ]);
 
     assertDatabaseHas('board_lists', [
-        'id' => $boardList3->id,
+        'id'    => $boardList3->id,
         'order' => 1,
     ]);
 
     // Still the same
     assertDatabaseHas('board_lists', [
-        'id' => $boardList4->id,
+        'id'    => $boardList4->id,
         'order' => 3,
     ]);
 

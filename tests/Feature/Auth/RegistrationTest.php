@@ -12,9 +12,9 @@ test('registration screen can be rendered', function () {
 
 test('new users can register', function () {
     $response = $this->post(route('register.store'), [
-        'name' => 'Test User',
-        'email' => 'test@example.com',
-        'password' => 'password',
+        'name'                  => 'Test User',
+        'email'                 => 'test@example.com',
+        'password'              => 'password',
         'password_confirmation' => 'password',
     ]);
 
@@ -24,16 +24,16 @@ test('new users can register', function () {
 
 test('registering a user automatically creates a default workspace with a board, board lists, and cards', function () {
     $response = $this->post(route('register.store'), [
-        'name' => 'Test User',
-        'email' => 'test@example.com',
-        'password' => 'password',
+        'name'                  => 'Test User',
+        'email'                 => 'test@example.com',
+        'password'              => 'password',
         'password_confirmation' => 'password',
     ]);
 
     $this->assertAuthenticated();
 
     assertDatabaseHas('workspaces', [
-        'name' => 'Test User Workspace',
+        'name'     => 'Test User Workspace',
         'owner_id' => auth()->id(),
     ]);
 
@@ -43,30 +43,30 @@ test('registering a user automatically creates a default workspace with a board,
 
     assertDatabaseHas('boards', [
         'workspace_id' => $workspace->id,
-        'name' => 'Getting Started',
+        'name'         => 'Getting Started',
     ]);
 
     $board = $workspace->boards()->first();
 
     assertDatabaseHas('board_lists', [
         'board_id' => $board->id,
-        'name' => 'To Do',
+        'name'     => 'To Do',
     ]);
 
     assertDatabaseHas('board_lists', [
         'board_id' => $board->id,
-        'name' => 'In Progress',
+        'name'     => 'In Progress',
     ]);
 
     assertDatabaseHas('board_lists', [
         'board_id' => $board->id,
-        'name' => 'Done',
+        'name'     => 'Done',
     ]);
 
     $todoList = $board->boardLists()->where('name', 'To Do')->first();
 
     assertDatabaseHas('cards', [
         'board_list_id' => $todoList->id,
-        'name' => 'Welcome to your board 🎉',
+        'name'          => 'Welcome to your board 🎉',
     ]);
 });

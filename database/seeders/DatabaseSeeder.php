@@ -18,12 +18,12 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $mandy = User::factory()->withoutTwoFactor()->create([
-            'name' => 'Mandy The Creator',
+            'name'  => 'Mandy The Creator',
             'email' => 'mandy.afor@example.com',
         ]);
 
         $angel = User::factory()->withoutTwoFactor()->create([
-            'name' => 'Angel The Girlfriend',
+            'name'  => 'Angel The Girlfriend',
             'email' => 'angel.afor@example.com',
         ]);
 

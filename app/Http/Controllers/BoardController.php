@@ -31,7 +31,7 @@ class BoardController extends Controller
             ->get();
 
         return Inertia::render('boards/Index', [
-            'ownedWorkspaces' => $ownedWorkspaces,
+            'ownedWorkspaces'  => $ownedWorkspaces,
             'sharedWorkspaces' => $sharedWorkspaces,
         ]);
     }
@@ -69,9 +69,9 @@ class BoardController extends Controller
         ]);
 
         return Inertia::render('boards/Show', [
-            'board' => $board,
+            'board'        => $board,
             'selectedCard' => null,
-            'colors' => BoardListColor::cases(),
+            'colors'       => BoardListColor::cases(),
         ]);
     }
 

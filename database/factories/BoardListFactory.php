@@ -18,12 +18,12 @@ class BoardListFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => fake()->name(),
-            'board_id' => BoardFactory::new(),
-            'order' => 0,
+            'name'        => fake()->name(),
+            'board_id'    => BoardFactory::new(),
+            'order'       => 0,
             'is_archived' => false,
-            'created_at' => now(),
-            'updated_at' => now(),
+            'created_at'  => now(),
+            'updated_at'  => now(),
         ];
     }
 }

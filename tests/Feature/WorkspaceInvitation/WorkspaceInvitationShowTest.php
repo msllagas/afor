@@ -16,7 +16,7 @@ test('guest users can view workspace invitation details', function () {
 
     $response = $this->get(route('workspace-invitations.show', [
         'workspace' => $workspace,
-        'token' => $token,
+        'token'     => $token,
     ]));
 
     $response->assertOk()

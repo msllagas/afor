@@ -5,12 +5,12 @@ use Inertia\Testing\AssertableInertia as Assert;
 use Laravel\Fortify\Features;
 
 test('two factor settings page can be rendered', function () {
-    if (! Features::canManageTwoFactorAuthentication()) {
+    if (!Features::canManageTwoFactorAuthentication()) {
         $this->markTestSkipped('Two-factor authentication is not enabled.');
     }
 
     Features::twoFactorAuthentication([
-        'confirm' => true,
+        'confirm'         => true,
         'confirmPassword' => true,
     ]);
 
@@ -26,14 +26,14 @@ test('two factor settings page can be rendered', function () {
 });
 
 test('two factor settings page requires password confirmation when enabled', function () {
-    if (! Features::canManageTwoFactorAuthentication()) {
+    if (!Features::canManageTwoFactorAuthentication()) {
         $this->markTestSkipped('Two-factor authentication is not enabled.');
     }
 
     $user = User::factory()->create();
 
     Features::twoFactorAuthentication([
-        'confirm' => true,
+        'confirm'         => true,
         'confirmPassword' => true,
     ]);
 
@@ -44,14 +44,14 @@ test('two factor settings page requires password confirmation when enabled', fun
 });
 
 test('two factor settings page does not requires password confirmation when disabled', function () {
-    if (! Features::canManageTwoFactorAuthentication()) {
+    if (!Features::canManageTwoFactorAuthentication()) {
         $this->markTestSkipped('Two-factor authentication is not enabled.');
     }
 
     $user = User::factory()->create();
 
     Features::twoFactorAuthentication([
-        'confirm' => true,
+        'confirm'         => true,
         'confirmPassword' => false,
     ]);
 
@@ -64,7 +64,7 @@ test('two factor settings page does not requires password confirmation when disa
 });
 
 test('two factor settings page returns forbidden response when two factor is disabled', function () {
-    if (! Features::canManageTwoFactorAuthentication()) {
+    if (!Features::canManageTwoFactorAuthentication()) {
         $this->markTestSkipped('Two-factor authentication is not enabled.');
     }
 

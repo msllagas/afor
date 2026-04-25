@@ -20,9 +20,9 @@ class CardFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => fake()->name(),
-            'description' => fake()->text(),
-            'order' => self::$order++,
+            'name'          => fake()->name(),
+            'description'   => fake()->text(),
+            'order'         => self::$order++,
             'board_list_id' => BoardListFactory::new(),
         ];
     }

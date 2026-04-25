@@ -42,7 +42,7 @@ class CardController extends Controller
             $request->validated(),
             [
                 'board_list_id' => $boardList->id,
-                'order' => $nextOrder,
+                'order'         => $nextOrder,
             ],
         ));
 
@@ -64,7 +64,7 @@ class CardController extends Controller
         ]);
 
         return Inertia::render('boards/Show', [
-            'board' => $board,
+            'board'        => $board,
             'selectedCard' => $card,
         ]);
     }
@@ -78,7 +78,7 @@ class CardController extends Controller
         $board->load('boardLists.cards');
 
         return Inertia::render('boards/Show', [
-            'board' => $boardList->board,
+            'board'        => $boardList->board,
             'selectedCard' => $card,
         ]);
 

@@ -21,7 +21,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Model::shouldBeStrict(! app()->isProduction());
+        Model::shouldBeStrict(!app()->isProduction());
         DB::prohibitDestructiveCommands(app()->isProduction());
 
         if ($this->app->environment('local') && class_exists(\Laravel\Telescope\TelescopeServiceProvider::class)) {

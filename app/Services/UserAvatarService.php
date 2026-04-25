@@ -19,15 +19,15 @@ class UserAvatarService
         $this->deleteExistingAvatar($user);
 
         File::query()->create([
-            'fileable_id' => $user->id,
-            'fileable_type' => User::class,
-            'collection' => FileCollection::AVATAR->value,
-            'disk' => $disk,
-            'path' => $path,
+            'fileable_id'       => $user->id,
+            'fileable_type'     => User::class,
+            'collection'        => FileCollection::AVATAR->value,
+            'disk'              => $disk,
+            'path'              => $path,
             'original_filename' => $file->getClientOriginalName(),
-            'mime_type' => $file->getMimeType(),
-            'size' => $file->getSize(),
-            'uploaded_by' => $user->id,
+            'mime_type'         => $file->getMimeType(),
+            'size'              => $file->getSize(),
+            'uploaded_by'       => $user->id,
         ]);
     }
 

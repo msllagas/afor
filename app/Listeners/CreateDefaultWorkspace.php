@@ -18,19 +18,19 @@ class CreateDefaultWorkspace
         ]);
 
         $todo = $board->boardLists()->create([
-            'name' => 'To Do',
+            'name'  => 'To Do',
             'order' => 0,
             'color' => BoardListColor::BLUE->value,
         ]);
 
         $inProgress = $board->boardLists()->create([
-            'name' => 'In Progress',
+            'name'  => 'In Progress',
             'order' => 1,
             'color' => BoardListColor::YELLOW->value,
         ]);
 
         $done = $board->boardLists()->create([
-            'name' => 'Done',
+            'name'  => 'Done',
             'order' => 2,
             'color' => BoardListColor::GREEN->value,
         ]);

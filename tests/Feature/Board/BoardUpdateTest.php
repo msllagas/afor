@@ -26,7 +26,7 @@ test('users can update board name', function () {
     ]);
 
     assertDatabaseHas('boards', [
-        'id' => $board->id,
+        'id'   => $board->id,
         'name' => 'Updated Test Board',
     ]);
 

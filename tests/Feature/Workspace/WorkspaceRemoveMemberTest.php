@@ -13,13 +13,13 @@ test('workspace owner can remove members', function () {
     $response = $this->actingAs($user)
         ->delete(route('workspaces.members.user.destroy', [
             'workspace' => $workspace,
-            'user' => $member,
+            'user'      => $member,
         ]));
 
     $response->assertStatus(302);
     $this->assertDatabaseMissing('workspace_user', [
         'workspace_id' => $workspace->id,
-        'user_id' => $member->id,
+        'user_id'      => $member->id,
     ]);
 });
 
@@ -32,7 +32,7 @@ test('workspace owner cannot remove themselves from the workspace', function () 
     $response = $this->actingAs($user)
         ->delete(route('workspaces.members.user.destroy', [
             'workspace' => $workspace,
-            'user' => $user,
+            'user'      => $user,
         ]));
 
     $response->assertStatus(403);
@@ -47,7 +47,7 @@ test('workspace owner cannot remove non-member', function () {
     $response = $this->actingAs($user)
         ->delete(route('workspaces.members.user.destroy', [
             'workspace' => $workspace,
-            'user' => $nonMember,
+            'user'      => $nonMember,
         ]));
 
     $response->assertStatus(404); // It is 404 due to scopeBindings method on route

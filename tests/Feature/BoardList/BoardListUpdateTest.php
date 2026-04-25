@@ -18,7 +18,7 @@ test('users can archive a board list', function () {
     expect($boardList->is_archived)->tobeFalse();
 
     $response = patch(route('boards.board-lists.update', [
-        'board' => $board,
+        'board'      => $board,
         'board_list' => $boardList,
     ]), [
         'is_archived' => true,
@@ -27,7 +27,7 @@ test('users can archive a board list', function () {
     $response->assertRedirect();
 
     assertDatabaseHas('board_lists', [
-        'id' => $boardList->id,
+        'id'          => $boardList->id,
         'is_archived' => true,
     ]);
 });
@@ -40,7 +40,7 @@ test('users can change board list color', function () {
     $boardList = BoardList::factory()->for($board)->create();
 
     $response = patch(route('boards.board-lists.update', [
-        'board' => $board,
+        'board'      => $board,
         'board_list' => $boardList,
     ]), [
         'color' => BoardListColor::ANGEL->value,
@@ -49,7 +49,7 @@ test('users can change board list color', function () {
     $response->assertRedirect();
 
     assertDatabaseHas('board_lists', [
-        'id' => $boardList->id,
+        'id'    => $boardList->id,
         'color' => BoardListColor::ANGEL->value,
     ]);
 });
@@ -62,7 +62,7 @@ test('users can change board list name', function () {
     $boardList = BoardList::factory()->for($board)->create(['name' => 'Initial name']);
 
     $response = patch(route('boards.board-lists.update', [
-        'board' => $board,
+        'board'      => $board,
         'board_list' => $boardList,
     ]), [
         'name' => 'New name',
@@ -71,7 +71,7 @@ test('users can change board list name', function () {
     $response->assertRedirect();
 
     assertDatabaseHas('board_lists', [
-        'id' => $boardList->id,
+        'id'   => $boardList->id,
         'name' => 'New name',
     ]);
 });

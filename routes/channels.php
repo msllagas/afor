@@ -8,5 +8,5 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
 });
 
 Broadcast::channel('workspace.{workspaceId}', function (User $user, $workspaceId) {
-    return ! is_null($user->workspaces->firstWhere('id', $workspaceId));
+    return !is_null($user->workspaces->firstWhere('id', $workspaceId));
 });

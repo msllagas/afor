@@ -19,9 +19,9 @@ class WorkspaceFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => 'Guest Workspace',
+            'name'        => 'Guest Workspace',
             'description' => fake()->text(),
-            'owner_id' => UserFactory::new(),
+            'owner_id'    => UserFactory::new(),
         ];
     }
 
@@ -30,7 +30,7 @@ class WorkspaceFactory extends Factory
         $user ??= User::factory()->create();
 
         return $this->state([
-            'name' => $user->name.' Workspace',
+            'name'     => $user->name.' Workspace',
             'owner_id' => $user->id,
         ]);
     }

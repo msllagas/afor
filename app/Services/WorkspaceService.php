@@ -14,7 +14,7 @@ class WorkspaceService
         $invitation = WorkspaceInvitation::query()
             ->firstOrCreate([
                 'workspace_id' => $workspace->id,
-                'invited_by' => $user->id,
+                'invited_by'   => $user->id,
             ], [
                 'token' => strtoupper(config('app.name')).str()->random(32),
             ]);
@@ -29,7 +29,7 @@ class WorkspaceService
             throw new \InvalidArgumentException('Cannot remove the workspace owner.');
         }
 
-        if (! $workspace->users()->where('user_id', $user->id)->exists()) {
+        if (!$workspace->users()->where('user_id', $user->id)->exists()) {
             throw new \InvalidArgumentException('User is not a member of this workspace.');
         }
 

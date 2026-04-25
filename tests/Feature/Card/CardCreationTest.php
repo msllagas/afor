@@ -28,7 +28,7 @@ test('users can create cards in board lists', function () {
     ]);
 
     assertDatabaseHas('cards', [
-        'name' => 'Test Card',
+        'name'          => 'Test Card',
         'board_list_id' => $boardList->id,
     ]);
 });
@@ -54,8 +54,8 @@ test('adding a new card assigns next order number', function () {
     $response->assertRedirect();
 
     assertDatabaseHas('cards', [
-        'name' => 'Test Card',
+        'name'          => 'Test Card',
         'board_list_id' => $boardList->id,
-        'order' => 3,
+        'order'         => 3,
     ]);
 });

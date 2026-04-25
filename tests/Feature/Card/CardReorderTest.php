@@ -34,17 +34,17 @@ test('users can reorder cards in board list', function () {
     ]), $payload);
 
     assertDatabaseHas('cards', [
-        'id' => $card1->id,
+        'id'    => $card1->id,
         'order' => 1,
     ]);
 
     assertDatabaseHas('cards', [
-        'id' => $card2->id,
+        'id'    => $card2->id,
         'order' => 2,
     ]);
 
     assertDatabaseHas('cards', [
-        'id' => $card3->id,
+        'id'    => $card3->id,
         'order' => 0,
     ]);
 });

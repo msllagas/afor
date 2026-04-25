@@ -20,7 +20,7 @@ test('users can create board list', function () {
     ]);
 
     assertDatabaseHas('board_lists', [
-        'name' => 'Test Board List',
+        'name'     => 'Test Board List',
         'board_id' => $board->id,
     ]);
 });
@@ -50,8 +50,8 @@ test('adding a new board list assigns next order number', function () {
     $response->assertRedirect();
 
     assertDatabaseHas('board_lists', [
-        'name' => 'Test Board List',
+        'name'     => 'Test Board List',
         'board_id' => $board->id,
-        'order' => 2,
+        'order'    => 2,
     ]);
 });
