@@ -38,7 +38,6 @@ const page = usePage();
 const user = page.props.auth.user;
 const boards = ref<Board[]>([]);
 const AVATAR_CAP = 5;
-const DUMMY_AVATAR_LINK = 'https://randomuser.me/api/portraits/lego/2.jpg'; // todo: for deletion once user avatars are implemented
 const copied = ref(false);
 
 function copyInviteLink() {
