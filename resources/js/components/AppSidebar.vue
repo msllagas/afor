@@ -15,7 +15,7 @@ import workspacesRoutes from '@/routes/workspaces';
 import { type NavItem, Workspace } from '@/types';
 import type { PageProps as InertiaPageProps } from '@inertiajs/core';
 import { Link, usePage } from '@inertiajs/vue3';
-import { Kanban, LayoutGrid, SquareTerminal } from 'lucide-vue-next';
+import { Kanban, LayoutGrid } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 
 const mainNavItems: NavItem[] = [
@@ -40,8 +40,8 @@ const page = usePage<PageProps>();
 
 const ownedWorkspaces = page.props?.ownedWorkspaces.map((workspace) => ({
     title: workspace.name,
+    logo: workspace.logo,
     url: '#',
-    icon: SquareTerminal,
     isActive: page.url.startsWith(`/workspaces/${workspace.id}`),
     items: [
         {
@@ -61,8 +61,8 @@ const ownedWorkspaces = page.props?.ownedWorkspaces.map((workspace) => ({
 
 const sharedWorkspaces = page.props?.sharedWorkspaces.map((workspace) => ({
     title: workspace.name,
+    logo: workspace.logo,
     url: '#',
-    icon: SquareTerminal,
     isActive: page.url.startsWith(`/workspaces/${workspace.id}`),
     items: [
         {

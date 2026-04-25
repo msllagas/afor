@@ -12,14 +12,13 @@ import {
 } from '@/components/ui/sidebar';
 import { urlIsActive } from '@/lib/utils';
 import { Link, usePage } from '@inertiajs/vue3';
-import type { LucideIcon } from 'lucide-vue-next';
 import { ChevronRight } from 'lucide-vue-next';
 
 defineProps<{
     items: {
         title: string;
+        logo?: string;
         url: string;
-        icon?: LucideIcon;
         isActive?: boolean;
         items?: {
             title: string;
@@ -45,7 +44,18 @@ const page = usePage();
                 <SidebarMenuItem>
                     <CollapsibleTrigger as-child>
                         <SidebarMenuButton :tooltip="item.title">
-                            <component :is="item.icon" v-if="item.icon" />
+                            <img
+                                v-if="item.logo"
+                                :alt="item.title"
+                                :src="item.logo"
+                                class="h-5 w-5 rounded-md object-cover ring-1 ring-border/50"
+                            />
+                            <div
+                                v-else
+                                class="flex h-5 w-5 items-center justify-center rounded-md bg-linear-to-br from-primary/20 to-accent/20 text-[10px] font-bold text-primary ring-1 ring-border/50"
+                            >
+                                {{ item.title.charAt(0).toUpperCase() }}
+                            </div>
                             <span>{{ item.title }}</span>
                             <ChevronRight
                                 class="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90"
@@ -55,7 +65,7 @@ const page = usePage();
                     <CollapsibleContent>
                         <SidebarMenuSub>
                             <SidebarMenuSubItem v-for="subItem in item.items" :key="subItem.title">
-                                <SidebarMenuSubButton as-child :is-active="urlIsActive(subItem.url, page.url)">
+                                <SidebarMenuSubButton :is-active="urlIsActive(subItem.url, page.url)" as-child>
                                     <Link :href="subItem.url">
                                         <span>{{ subItem.title }}</span>
                                     </Link>
