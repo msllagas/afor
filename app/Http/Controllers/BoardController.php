@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\BoardListColor;
 use App\Http\Requests\StoreBoardsRequest;
 use App\Http\Requests\UpdateBoardsRequest;
+use App\Http\Resources\WorkspaceResource;
 use App\Models\Board;
 use App\Models\Workspace;
 use App\Services\BoardService;
@@ -22,17 +23,23 @@ class BoardController extends Controller
         $user = auth()->user();
         $ownedWorkspaces = $user->ownedWorkspaces()
             ->select('id', 'name')
-            ->with('boards:id,name,workspace_id')
+            ->with([
+                'boards:id,name,workspace_id',
+                'logoFile',
+            ])
             ->get();
 
         $sharedWorkspaces = $user->sharedWorkspaces()
             ->select('workspaces.id', 'workspaces.name')
-            ->with('boards:id,name,workspace_id')
+            ->with([
+                'boards:id,name,workspace_id',
+                'logoFile',
+            ])
             ->get();
 
         return Inertia::render('boards/Index', [
-            'ownedWorkspaces'  => $ownedWorkspaces,
-            'sharedWorkspaces' => $sharedWorkspaces,
+            'ownedWorkspaces'  => WorkspaceResource::collection($ownedWorkspaces)->resolve(),
+            'sharedWorkspaces' => WorkspaceResource::collection($sharedWorkspaces)->resolve(),
         ]);
     }
 

@@ -32,12 +32,13 @@ test('users can view boards index with their own and shared workspaces', functio
                 ->where('id', $ownedWorkspace->id)
                 ->where('name', 'Owned Workspace')
                 ->has('boards')
+                ->etc()
             )
             ->has('sharedWorkspaces', 1, fn (Assert $page) => $page
                 ->where('id', $sharedWorkspace->id)
                 ->where('name', 'Shared Workspace')
                 ->has('boards')
-                ->has('shared_workspaces') // Renamed pivot property to shared_workspaces
+                ->etc()
             )
         );
 });

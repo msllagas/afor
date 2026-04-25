@@ -2,10 +2,10 @@
 import BoardCard from '@/components/board/BoardCard.vue';
 import BoardCardPopover from '@/components/board/BoardCardPopover.vue';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useInitials } from '@/composables/useInitials';
 import AppLayout from '@/layouts/AppLayout.vue';
 import boardsRoutes from '@/routes/boards';
-import type { BreadcrumbItem } from '@/types';
-import type { Workspace } from '@/types/workspace/workspace';
+import type { BreadcrumbItem, Workspace } from '@/types';
 import { Head, router } from '@inertiajs/vue3';
 import { Crown, Users } from 'lucide-vue-next';
 import { onMounted } from 'vue';
@@ -22,7 +22,7 @@ const props = defineProps<{
     sharedWorkspaces: Workspace[];
 }>();
 
-const DUMMY_AVATAR_LINK = 'https://randomuser.me/api/portraits/lego/2.jpg'; // todo: for deletion once user avatars are implemented
+const { getInitials } = useInitials();
 
 onMounted(() => {
     router.visit(boardsRoutes.index().url, {
@@ -54,13 +54,13 @@ onMounted(() => {
                                 <Avatar class="h-8 w-8 rounded-lg">
                                     <AvatarImage
                                         :alt="ownedWorkspace.name"
-                                        :src="DUMMY_AVATAR_LINK"
+                                        :src="ownedWorkspace.logo ?? ''"
                                         class="object-cover"
                                     />
                                     <AvatarFallback
                                         class="rounded-lg bg-primary text-xs font-bold text-primary-foreground"
                                     >
-                                        {{ ownedWorkspace.name.charAt(0).toUpperCase() }}
+                                        {{ getInitials(ownedWorkspace.name) }}
                                     </AvatarFallback>
                                 </Avatar>
                                 <span class="text-base font-semibold tracking-tight">{{ ownedWorkspace.name }}</span>
@@ -95,11 +95,11 @@ onMounted(() => {
                                 <Avatar class="h-8 w-8 rounded-lg opacity-75">
                                     <AvatarImage
                                         :alt="sharedWorkspace.name"
-                                        :src="DUMMY_AVATAR_LINK"
+                                        :src="sharedWorkspace.logo ?? ''"
                                         class="object-cover"
                                     />
                                     <AvatarFallback class="rounded-lg bg-muted text-xs font-bold text-muted-foreground">
-                                        {{ sharedWorkspace.name.charAt(0).toUpperCase() }}
+                                        {{ getInitials(sharedWorkspace.name) }}
                                     </AvatarFallback>
                                 </Avatar>
                                 <span class="text-base font-medium tracking-tight text-muted-foreground">{{
