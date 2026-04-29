@@ -78,11 +78,6 @@ function onDialogClose(value: boolean) {
         isDialogOpen.value = false;
 
         window.history.pushState({}, '', boardRoutes.show(props.board.id).url);
-        router.visit(boardRoutes.show(props.board.id).url, {
-            only: ['board', 'selectedCard'],
-            preserveScroll: true,
-            preserveState: true,
-        });
     }
 }
 
@@ -125,6 +120,29 @@ function handleArchive(boardListId: string) {
         }).url,
         {
             is_archived: true,
+        },
+    );
+}
+
+function handleDeleteCard(boardListId: string, cardId: string) {
+    boardLists.value.forEach((list) => {
+        if (list.id === boardListId) {
+            list.cards = list.cards.filter((card) => card.id !== cardId);
+        }
+    });
+    onDialogClose(false);
+
+    router.delete(
+        cardRoutes.destroy({
+            board_list: boardListId,
+            card: cardId,
+        }).url,
+        {
+            preserveScroll: true,
+            preserveState: true,
+            onSuccess: () => {
+                headerTitle.value = props.board.name;
+            },
         },
     );
 }
@@ -335,6 +353,7 @@ onMounted(() => {
         :model-value="isDialogOpen"
         :selected-card="selectedCard"
         @update-open="onDialogClose"
+        @delete-card="handleDeleteCard"
     />
 </template>
 

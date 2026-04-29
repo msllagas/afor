@@ -99,9 +99,12 @@ class CardController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Card $card)
+    public function destroy(BoardList $boardList, Card $card): RedirectResponse
     {
-        //
+        // todo: prevent non-members from deleting cards
+        $card->delete();
+
+        return back();
     }
 
     public function reorder(Request $request, BoardList $boardList): RedirectResponse
