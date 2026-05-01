@@ -69,7 +69,7 @@ class WorkspaceController extends Controller
         $members = UserResource::collection(
             $workspace->users()
                 ->with('avatarFile')
-                ->select('users.id', 'users.name', 'users.email')
+                ->select('users.id', 'users.name', 'users.email', 'users.email_verified_at')
                 ->get()
         )->resolve();
 

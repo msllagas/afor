@@ -61,6 +61,7 @@ test('workspace members can access their workspace home', function () {
                 ->where('0.id', $member->id)
                 ->where('0.name', $member->name)
                 ->where('0.avatar', $member->avatar)
+                ->etc()
             )
         );
 });
