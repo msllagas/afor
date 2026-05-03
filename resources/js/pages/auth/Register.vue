@@ -12,10 +12,7 @@ import { LoaderCircle } from 'lucide-vue-next';
 </script>
 
 <template>
-    <AuthBase
-        title="Create an account"
-        description="Enter your details below to create your account"
-    >
+    <AuthBase title="Create an account" description="Enter your details below to create your account">
         <Head title="Register" />
 
         <Form
@@ -82,6 +79,13 @@ import { LoaderCircle } from 'lucide-vue-next';
                     <InputError :message="errors.password_confirmation" />
                 </div>
 
+                <div class="text-center text-xs text-muted-foreground">
+                    By creating an account, you agree to our
+                    <TextLink href="/terms" class="underline underline-offset-4">Terms of Use</TextLink>
+                    and
+                    <TextLink href="/privacy-policy" class="underline underline-offset-4">Privacy Policy</TextLink>.
+                </div>
+
                 <Button
                     type="submit"
                     class="mt-2 w-full"
@@ -89,22 +93,14 @@ import { LoaderCircle } from 'lucide-vue-next';
                     :disabled="processing"
                     data-test="register-user-button"
                 >
-                    <LoaderCircle
-                        v-if="processing"
-                        class="h-4 w-4 animate-spin"
-                    />
+                    <LoaderCircle v-if="processing" class="h-4 w-4 animate-spin" />
                     Create account
                 </Button>
             </div>
 
             <div class="text-center text-sm text-muted-foreground">
                 Already have an account?
-                <TextLink
-                    :href="login()"
-                    class="underline underline-offset-4"
-                    :tabindex="6"
-                    >Log in</TextLink
-                >
+                <TextLink :href="login()" class="underline underline-offset-4" :tabindex="6">Log in</TextLink>
             </div>
         </Form>
     </AuthBase>
