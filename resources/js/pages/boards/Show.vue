@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import BoardListController from '@/actions/App/Http/Controllers/BoardListController';
-import AppearanceTabs from '@/components/AppearanceTabs.vue';
+import AppLogo from '@/components/AppLogo.vue';
 import BoardList from '@/components/board/board-list/BoardList.vue';
 import CardDialog from '@/components/board/board-list/card/CardDialog.vue';
 import { Button } from '@/components/ui/button';
@@ -8,8 +8,9 @@ import { Input } from '@/components/ui/input';
 import cardRoutes from '@/routes/board-lists/cards';
 import boardRoutes from '@/routes/boards';
 import boardListRoutes from '@/routes/boards/board-lists';
+import { home } from '@/routes/workspaces';
 import type { Board, Card } from '@/types';
-import { Form, Head, router } from '@inertiajs/vue3';
+import { Form, Head, Link, router } from '@inertiajs/vue3';
 import { Plus, X } from 'lucide-vue-next';
 import { computed, nextTick, onMounted, ref, useTemplateRef, watch } from 'vue';
 import draggable from 'vuedraggable';
@@ -223,10 +224,13 @@ onMounted(() => {
             class="fixed top-0 right-0 left-0 z-10 h-16 bg-[rgba(0,0,0,0.3)] shadow-[0_4px_30px_rgba(0,0,0,0.1)] backdrop-blur-sm"
         >
             <div class="flex h-full items-center gap-3 px-4">
+                <Link :href="home(board.workspace_id)">
+                    <AppLogo :show-name="false" />
+                </Link>
                 <div class="min-w-0 flex-1 overflow-hidden">
                     <h1
                         v-if="!isEditingBoardName"
-                        class="inline-block max-w-full cursor-pointer truncate rounded-md px-2 py-1 text-lg font-semibold tracking-tight text-white transition-colors hover:bg-white/30 dark:hover:bg-white/30"
+                        class="mt-1.5 inline-block max-w-full cursor-pointer truncate rounded-md px-2 py-1 text-lg font-semibold tracking-tight text-white transition-colors hover:bg-white/30 dark:hover:bg-white/30"
                         @click="startEditingBoardName"
                     >
                         {{ boardName }}
@@ -252,23 +256,7 @@ onMounted(() => {
                     </template>
                 </div>
 
-                <div class="flex shrink-0 items-center gap-2">
-                    <!-- Todo: Dummy button, delete when functionality has been implement -->
-
-                    <AppearanceTabs />
-                    <button
-                        class="flex items-center gap-1.5 rounded-md bg-white/20 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-white/30"
-                    >
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path
-                                d="M4 6h16M4 12h16M4 18h16"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                            />
-                        </svg>
-                    </button>
-                </div>
+                <div class="flex shrink-0 items-center gap-2"></div>
             </div>
         </nav>
         <div class="mt-20">

@@ -18,6 +18,7 @@ export interface BoardList {
 export interface Board {
     id: string;
     name: string;
+    workspace_id: string;
     board_lists: BoardList[];
 }
 
