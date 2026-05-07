@@ -30,7 +30,7 @@ function copyInviteLink(from: 'default' | 'empty' = 'default') {
     setTimeout(() => (copied.value = null), 2500);
 }
 
-function removeMember(memberId: number) {
+function removeMember(memberId: string) {
     // for optimistic UI
     workspaceMembers.value = workspaceMembers.value.filter((member) => member.id !== memberId);
 
