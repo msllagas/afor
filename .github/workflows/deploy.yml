@@ -116,3 +116,30 @@ jobs:
       - name: Run Tests
         run: ./vendor/bin/pest
 
+  deploy:
+    name: Deploy to Prod
+    runs-on: ubuntu-latest
+    needs: test  # blocked if lint or test fails
+    if: github.event_name == 'push'
+
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            cd /var/www/cicd-laravel
+            git pull origin main
+            composer install --no-dev --optimize-autoloader
+            npm ci && npm run build
+            php artisan migrate --force
+            php artisan optimize:clear
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+            php artisan event:cache
+            php artisan queue:restart
+            sudo systemctl restart php8.4-fpm
+            sudo systemctl restart nginx
