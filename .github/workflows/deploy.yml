@@ -130,7 +130,7 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_KEY }}
           script: |
-            cd /var/www/cicd-laravel
+            cd /var/www/afor
             git pull origin main
             composer install --no-dev --optimize-autoloader
             npm ci && npm run build
