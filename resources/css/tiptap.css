@@ -1,52 +1,55 @@
 @reference './app.css';
 
 .tiptap-active {
-    @apply text-pink-500
+    @apply text-pink-500;
 }
 
 .tiptap:focus-visible {
-    @apply outline-none shadow-none border-transparent;
+    @apply border-transparent shadow-none outline-none;
 }
 
-.tiptap h1, .tiptap h2, .tiptap h3, .tiptap h4 {
+.tiptap h1,
+.tiptap h2,
+.tiptap h3,
+.tiptap h4 {
     @apply font-bold;
 }
 
 .tiptap h1 {
-    @apply text-3xl font-bold leading-9;
+    @apply text-3xl leading-9 font-bold;
 }
 
 .tiptap h2 {
-    @apply text-2xl font-semibold leading-8;
+    @apply text-2xl leading-8 font-semibold;
 }
 
 .tiptap h3 {
-    @apply text-xl font-semibold leading-7;
+    @apply text-xl leading-7 font-semibold;
 }
 
 .tiptap h4 {
-    @apply text-lg font-medium leading-6;
+    @apply text-lg leading-6 font-medium;
 }
 
-.tiptap ul:not([data-type="taskList"]) {
-    @apply list-disc
+.tiptap ul:not([data-type='taskList']) {
+    @apply list-disc;
 }
 
-.tiptap ul:not([data-type="taskList"]) ul {
+.tiptap ul:not([data-type='taskList']) ul {
     list-style: circle;
 }
 
-.tiptap ul:not([data-type="taskList"]) ul ul {
+.tiptap ul:not([data-type='taskList']) ul ul {
     list-style: square;
 }
 
 .tiptap ul:last-child {
-    @apply mb-0
+    @apply mb-0;
 }
 
 .tiptap ul ul,
 .tiptap ol ol {
-    @apply mt-0 mb-0
+    @apply mt-0 mb-0;
 }
 
 .tiptap ol,
@@ -55,6 +58,5 @@
 }
 
 .tiptap p {
-    @apply text-sm
+    @apply text-sm;
 }
-

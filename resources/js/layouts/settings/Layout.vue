@@ -34,10 +34,7 @@ const currentPath = typeof window !== undefined ? window.location.pathname : '';
 
 <template>
     <div class="px-4 py-6">
-        <Heading
-            title="Settings"
-            description="Manage your profile and account settings"
-        />
+        <Heading title="Settings" description="Manage your profile and account settings" />
 
         <div class="flex flex-col lg:flex-row lg:space-x-12">
             <aside class="w-full max-w-xl lg:w-48">
@@ -46,10 +43,7 @@ const currentPath = typeof window !== undefined ? window.location.pathname : '';
                         v-for="item in sidebarNavItems"
                         :key="toUrl(item.href)"
                         variant="ghost"
-                        :class="[
-                            'w-full justify-start',
-                            { 'bg-muted': urlIsActive(item.href, currentPath) },
-                        ]"
+                        :class="['w-full justify-start', { 'bg-muted': urlIsActive(item.href, currentPath) }]"
                         as-child
                     >
                         <Link :href="item.href">

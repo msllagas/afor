@@ -1,13 +1,13 @@
-import type { Workspace } from "@/types";
+import type { Workspace } from '@/types';
 
 export interface Inviter {
-    id: string,
-    name: string,
+    id: string;
+    name: string;
 }
 
 export interface Invitation {
-    token: string,
-    invited_by: string,
-    workspace: Workspace,
-    inviter: Inviter,
+    token: string;
+    invited_by: string;
+    workspace: Workspace;
+    inviter: Inviter;
 }

@@ -32,8 +32,7 @@
 
 @theme inline {
     --font-sans:
-        Instrument Sans, ui-sans-serif, system-ui, sans-serif,
-        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+        Instrument Sans, ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
         'Noto Color Emoji';
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
@@ -100,9 +99,8 @@
     body,
     html {
         --font-sans:
-            'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
-            'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
-            'Noto Color Emoji';
+            'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+            'Segoe UI Symbol', 'Noto Color Emoji';
     }
 }
 
@@ -129,7 +127,7 @@
     --chart-2: oklch(0.73 0.18 350);
     --chart-3: oklch(0.66 0.21 354);
     --chart-4: oklch(0.59 0.22 1);
-    --chart-5: oklch(0.52 0.20 4);
+    --chart-5: oklch(0.52 0.2 4);
     --radius: 0.625rem;
     --sidebar: oklch(0.985 0.002 247.839);
     --sidebar-foreground: oklch(0.13 0.028 261.692);
@@ -142,7 +140,6 @@
 
     --draggable-list-card: oklch(0.92 0.005 264);
     --draggable-card: oklch(1 0 0);
-
 }
 
 .dark {
@@ -168,7 +165,7 @@
     --chart-2: oklch(0.73 0.18 350);
     --chart-3: oklch(0.66 0.21 354);
     --chart-4: oklch(0.59 0.22 1);
-    --chart-5: oklch(0.52 0.20 4);
+    --chart-5: oklch(0.52 0.2 4);
     --sidebar: oklch(0.21 0.034 264.665);
     --sidebar-foreground: oklch(0.985 0.002 247.839);
     --sidebar-primary: oklch(0.73 0.18 350);
@@ -190,5 +187,3 @@
         @apply bg-background text-foreground;
     }
 }
-
-
