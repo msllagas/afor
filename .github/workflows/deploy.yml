@@ -1,0 +1,52 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  lint:
+    name: Lint Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.4
+          tools: composer:v2
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          cache: 'npm'
+
+      - name: Install PHP Dependencies
+        run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+
+      - name: Install Node Dependencies
+        run: npm ci
+
+      - name: Pint
+        run: ./vendor/bin/pint --test
+
+      - name: Prettier
+        run: npm run format:check
+
+      # Build first so Wayfinder generates types (actions, routes, wayfinder dirs)
+      - name: Build
+        run: npm run build
+
+      - name: ESLint
+        run: npm run lint:check
+
+      - name: TypeScript
+        run: npm run types:check
