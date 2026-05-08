@@ -1,6 +1,6 @@
 <?php
 
-namespace App;
+namespace App\DTOs;
 
 use App\Enums\FileCollection;
 use App\Models\User;

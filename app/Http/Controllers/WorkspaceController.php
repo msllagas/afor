@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\DTOs\FileUploadData;
 use App\Enums\FileCollection;
-use App\FileUploadData;
 use App\Http\Requests\UpdateWorkspaceRequest;
 use App\Http\Resources\UserResource;
 use App\Http\Resources\WorkspaceMemberResource;

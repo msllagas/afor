@@ -1,7 +1,7 @@
 <?php
 
+use App\DTOs\FileUploadData;
 use App\Enums\FileCollection;
-use App\FileUploadData;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Services\FileUploadService;

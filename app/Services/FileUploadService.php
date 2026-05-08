@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
+use App\DTOs\FileUploadData;
 use App\Enums\FileCollection;
-use App\FileUploadData;
 use App\Models\File;
 use Illuminate\Container\Attributes\Config;
 use Illuminate\Database\Eloquent\Model;
