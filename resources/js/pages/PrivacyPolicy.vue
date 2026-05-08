@@ -7,7 +7,7 @@
             <div class="mb-12">
                 <p class="mb-2 text-sm font-medium tracking-widest text-primary uppercase">Afor</p>
                 <h1 class="mb-3 text-4xl font-bold text-foreground">Privacy Policy</h1>
-                <p class="text-sm text-muted-foreground">Effective Date: April 19, 2026</p>
+                <p class="text-sm text-muted-foreground">Effective Date: May 4, 2026</p>
                 <div class="mt-6 h-px bg-border" />
             </div>
 
