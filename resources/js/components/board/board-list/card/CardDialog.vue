@@ -121,7 +121,6 @@ function onSubmitDescription(boardListId: string, cardId: string, value: string)
                                 :model-value="selectedCard.description"
                                 name="description"
                                 @blur="onSubmitDescription(selectedCard.board_list_id, selectedCard.id, $event)"
-                                @update:model-value="console.log($event)"
                             />
                         </div>
                     </div>

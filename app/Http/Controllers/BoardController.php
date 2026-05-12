@@ -78,7 +78,7 @@ class BoardController extends Controller
         return Inertia::render('boards/Show', [
             'board'        => $board,
             'selectedCard' => null,
-            'colors'       => BoardListColor::cases(),
+            'colors'       => Inertia::once(fn () => BoardListColor::cases()),
         ]);
     }
 

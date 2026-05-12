@@ -12,7 +12,7 @@ import { home } from '@/routes/workspaces';
 import type { Board, Card } from '@/types';
 import { Form, Head, Link, router } from '@inertiajs/vue3';
 import { Plus, X } from 'lucide-vue-next';
-import { computed, nextTick, onMounted, ref, useTemplateRef, watch } from 'vue';
+import { computed, nextTick, onMounted, provide, ref, useTemplateRef, watch } from 'vue';
 import draggable from 'vuedraggable';
 
 const props = defineProps<{
@@ -20,6 +20,7 @@ const props = defineProps<{
     selectedCard?: Card;
     colors: Array<string>;
 }>();
+provide('colors', props.colors);
 
 const isDialogOpen = ref(false);
 const isFetching = ref(false);

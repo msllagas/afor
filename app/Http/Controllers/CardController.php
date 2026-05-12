@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\BoardListColor;
 use App\Http\Requests\StoreCardRequest;
 use App\Http\Requests\UpdateCardRequest;
 use App\Models\BoardList;
@@ -66,6 +67,7 @@ class CardController extends Controller
         return Inertia::render('boards/Show', [
             'board'        => $board,
             'selectedCard' => $card,
+            'colors'       => Inertia::once(fn () => BoardListColor::cases()),
         ]);
     }
 

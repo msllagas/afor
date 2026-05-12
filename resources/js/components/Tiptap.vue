@@ -7,14 +7,29 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
+import Highlight from '@tiptap/extension-highlight';
+import { TextStyle } from '@tiptap/extension-text-style';
 import StarterKit from '@tiptap/starter-kit';
 import { Content, EditorContent, useEditor } from '@tiptap/vue-3';
-import { Bold, Heading1, Heading2, Heading3, Heading4, Italic, List, Underline } from 'lucide-vue-next';
-import { computed } from 'vue';
+import {
+    Bold,
+    Heading1,
+    Heading2,
+    Heading3,
+    Heading4,
+    HighlighterIcon,
+    Italic,
+    List,
+    Underline,
+} from 'lucide-vue-next';
+import { computed, inject } from 'vue';
 
 const model = defineModel();
 const emit = defineEmits(['update:modelValue', 'blur']);
+
+const colors = inject('colors') as string[];
 
 const headings = [1, 2, 3, 4] as const;
 const headingIcons = {
@@ -35,10 +50,21 @@ StarterKit.configure({
         levels: [...headings],
     },
 });
-
+const MultiHighlight = Highlight.extend({
+    addAttributes() {
+        return {
+            ...this.parent?.(),
+            class: {
+                default: null,
+                parseHTML: (el) => el.getAttribute('class'),
+                renderHTML: (attrs) => (attrs.class ? { class: attrs.class } : {}),
+            },
+        };
+    },
+});
 const editor = useEditor({
     content: model.value as Content,
-    extensions: [StarterKit],
+    extensions: [StarterKit, MultiHighlight.configure({ multicolor: true }), TextStyle],
     onUpdate: ({ editor }) => {
         emit('update:modelValue', editor.getHTML());
     },
@@ -53,6 +79,15 @@ const activeHeading = computed(() => {
     }
     return null;
 });
+
+const highlightColors = colors.map((color) => ({
+    label: color,
+    class: `list-${color.toLowerCase()}`,
+}));
+
+function toggleHighlight(cls: string) {
+    (editor.value?.chain().focus().toggleHighlight as any)({ class: cls }).run();
+}
 </script>
 <template>
     <div v-if="editor">
@@ -121,6 +156,29 @@ const activeHeading = computed(() => {
                     <Underline :class="{ 'tiptap-active': editor.isActive('underline') }" />
                 </Button>
             </div>
+            <Separator orientation="vertical" />
+            <Popover>
+                <PopoverTrigger>
+                    <Button class="rounded-2xl" size="icon" variant="ghost">
+                        <HighlighterIcon :class="{ 'tiptap-active': editor.isActive('highlight') }" />
+                    </Button>
+                </PopoverTrigger>
+                <PopoverContent class="space-y-2 space-x-2">
+                    <Button
+                        v-for="{ class: cls } in highlightColors"
+                        :key="cls"
+                        :class="[
+                            cls,
+                            'cursor-pointer',
+                            { 'tiptap-active': editor.isActive('highlight', { class: cls }) },
+                        ]"
+                        :style="{ backgroundColor: 'var(--list-fg-muted)', color: 'var(--list-bg)' }"
+                        @click="toggleHighlight(cls)"
+                    >
+                        A
+                    </Button>
+                </PopoverContent>
+            </Popover>
         </div>
         <div class="p-4">
             <editor-content :editor="editor" />
