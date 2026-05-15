@@ -15,6 +15,10 @@ use Inertia\Response;
 
 class BoardController extends Controller
 {
+    public function __construct(
+        private readonly BoardService $boardService,
+    ) {}
+
     /**
      * Display a listing of the resource.
      */
@@ -56,7 +60,7 @@ class BoardController extends Controller
      */
     public function store(StoreBoardsRequest $request, Workspace $workspace): RedirectResponse
     {
-        $board = app(BoardService::class)->create($request->validated(), $workspace);
+        $board = $this->boardService->create($request->validated(), $workspace);
 
         return to_route('boards.show', [
             'board' => $board,
@@ -103,8 +107,38 @@ class BoardController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Board $boards)
+    public function destroy(Board $board)
     {
-        //
+        // for now, only allow force deletion of archived boards
+        if (!($board->archived_by && $board->archived_at)) {
+            // if trash bins have been implemented, that's when soft deletion can be done, but for now
+            // we'll just return errors
+            return response()->json([
+                'errors' => [
+                    'board' => ['Only archived boards can be deleted.'],
+                ],
+            ], 422);
+        }
+
+        $board->forceDelete();
+
+        return response()->noContent();
+    }
+
+    public function archive(Board $board): RedirectResponse
+    {
+        $this->boardService->archive($board, auth()->user());
+
+        return back();
+    }
+
+    public function unarchive(Board $board): Board
+    {
+        return $this->boardService->unarchive($board);
+    }
+
+    public function archived(Workspace $workspace)
+    {
+        return $workspace->boards()->archived()->get();
     }
 }

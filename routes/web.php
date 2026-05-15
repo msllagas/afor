@@ -64,6 +64,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/{workspace}/boards', [BoardController::class, 'store'])
                 ->name('boards.store');
 
+            Route::get('/{workspace}/boards/archived', [BoardController::class, 'archived'])
+                ->name('boards.archived');
+
         });
 
     /*
@@ -83,6 +86,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
             Route::patch('/{board}', [BoardController::class, 'update'])
                 ->name('update');
+
+            Route::delete('/{board}', [BoardController::class, 'destroy'])
+                ->name('destroy');
+
+            Route::patch('/{board}/archive', [BoardController::class, 'archive'])
+                ->name('archive');
+
+            Route::patch('/{board}/unarchive', [BoardController::class, 'unarchive'])
+                ->name('unarchive');
 
             Route::patch('/{board}/board-lists/reorder', [BoardListController::class, 'reorder'])
                 ->name('board-lists.reorder');

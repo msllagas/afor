@@ -73,13 +73,18 @@ class WorkspaceController extends Controller
                 ->get()
         )->resolve();
 
-        $workspace->load('boards', 'logoFile');
+        $workspace->load([
+            'logoFile',
+        ]);
 
         return Inertia::render('workspaces/Home', [
+            'boards' => Inertia::defer(function () use ($workspace) {
+                return $workspace->boards()->unarchived()->get();
+            }, 'boards'),
             'workspace'  => new WorkspaceResource($workspace),
             'members'    => $members,
             'inviteLink' => Inertia::defer(fn () => $this->workspaceService->generateInvitationLink($workspace,
-                auth()->user())),
+                auth()->user()), 'inviteLink'),
         ]);
     }
 

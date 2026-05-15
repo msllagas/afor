@@ -3,6 +3,7 @@ import BoardListController from '@/actions/App/Http/Controllers/BoardListControl
 import AppLogo from '@/components/AppLogo.vue';
 import BoardList from '@/components/board/board-list/BoardList.vue';
 import CardDialog from '@/components/board/board-list/card/CardDialog.vue';
+import BoardDropdownMenu from '@/components/board/BoardDropdownMenu.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import cardRoutes from '@/routes/board-lists/cards';
@@ -195,6 +196,23 @@ function saveBoardName() {
     );
 }
 
+function handleArchiveBoard() {
+    router.patch(
+        boardRoutes.archive({
+            board: props.board.id,
+        }).url,
+        {},
+        {
+            onSuccess: () => {
+                router.visit(home(props.board.workspace_id).url, {
+                    only: ['board'],
+                    replace: true,
+                });
+            },
+        },
+    );
+}
+
 watch(
     () => props.board,
     (newBoard) => (boardLists.value = [...newBoard.board_lists]),
@@ -257,7 +275,9 @@ onMounted(() => {
                     </template>
                 </div>
 
-                <div class="flex shrink-0 items-center gap-2"></div>
+                <div class="flex shrink-0 items-center gap-2">
+                    <BoardDropdownMenu @archive-board="handleArchiveBoard" />
+                </div>
             </div>
         </nav>
         <div class="mt-20">

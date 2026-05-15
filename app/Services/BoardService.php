@@ -4,11 +4,12 @@ namespace App\Services;
 
 use App\Events\BoardAddedToWorkspace;
 use App\Models\Board;
+use App\Models\User;
 use App\Models\Workspace;
 
 class BoardService
 {
-    private const DEFAULT_LISTS = [
+    private const array DEFAULT_LISTS = [
         ['name' => 'To Do', 'order' => 0],
         ['name' => 'In Progress', 'order' => 1],
         ['name' => 'Done', 'order' => 2],
@@ -26,6 +27,26 @@ class BoardService
         BoardAddedToWorkspace::dispatch($board, $workspace->id);
 
         return $board->load('boardLists.cards');
+    }
+
+    public function archive(Board $board, User $archiver): Board
+    {
+        $board->update([
+            'archived_by' => $archiver->id,
+            'archived_at' => now(),
+        ]);
+
+        return $board;
+    }
+
+    public function unarchive(Board $board): Board
+    {
+        $board->update([
+            'archived_by' => null,
+            'archived_at' => null,
+        ]);
+
+        return $board;
     }
 
     private function createDefaultLists(Board $board): void

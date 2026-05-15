@@ -32,6 +32,7 @@ test('workspace owner can access their workspace home', function () {
             )
             ->loadDeferredProps(fn (Assert $reload) => $reload
                 ->has('inviteLink')
+                ->has('boards')
             )
         );
 });

@@ -3,17 +3,22 @@ import BoardCard from '@/components/board/BoardCard.vue';
 import BoardCardPopover from '@/components/board/BoardCardPopover.vue';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import ArchivedBoardsDialog from '@/components/workspace/ArchivedBoardsDialog.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { cn } from '@/lib/utils';
 import { default as workspaceRoutes, default as workspaces } from '@/routes/workspaces';
 import type { BreadcrumbItem, Workspace, WorkspaceMember } from '@/types';
 import { Board } from '@/types';
-import { Head, router, usePage } from '@inertiajs/vue3';
+import { Deferred, Head, router, usePage } from '@inertiajs/vue3';
 import { useEcho } from '@laravel/echo-vue';
-import { Link } from 'lucide-vue-next';
-import { onMounted, ref, watch } from 'vue';
+import { ArchiveXIcon, Link } from 'lucide-vue-next';
+import { computed, onMounted, ref } from 'vue';
 
 const props = defineProps<{
+    boards: Board[];
     workspace: Workspace;
     members: WorkspaceMember[];
     inviteLink: string;
@@ -36,14 +41,26 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 const page = usePage();
 const user = page.props.auth.user;
-const boards = ref<Board[]>([]);
 const AVATAR_CAP = 5;
 const copied = ref(false);
+const showArchivedBoardsDialog = ref(false);
+
+const boards = computed(() => props.boards); // created to push the newly created boards from the echo websocket event
 
 function copyInviteLink() {
     navigator.clipboard.writeText(props?.inviteLink);
     copied.value = true;
     setTimeout(() => (copied.value = false), 2500);
+}
+
+function handleUnarchiveBoard(board: Board) {
+    const index = boards.value.findIndex((b) => new Date(b.created_at) > new Date(board.created_at));
+
+    if (index === -1) {
+        boards.value.push(board);
+    } else {
+        boards.value.splice(index, 0, board);
+    }
 }
 
 onMounted(() => {
@@ -54,14 +71,6 @@ onMounted(() => {
     });
 });
 
-watch(
-    () => props.workspace.boards,
-    (newBoards) => {
-        boards.value = [...newBoards];
-    },
-    { immediate: true },
-);
-
 useEcho<BoardData>(`workspace.${props.workspace.id}`, 'BoardAddedToWorkspace', (e) => {
     boards.value.push(e.board);
 });
@@ -71,7 +80,7 @@ useEcho<BoardData>(`workspace.${props.workspace.id}`, 'BoardAddedToWorkspace', (
     <Head :title="workspace.name + ' - Home'" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="px-6 sm:px-10">
+        <div class="px-6 pb-6 sm:px-10">
             <section>
                 <header class="mt-10">
                     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-5">
@@ -146,9 +155,9 @@ useEcho<BoardData>(`workspace.${props.workspace.id}`, 'BoardAddedToWorkspace', (
                             </Transition>
 
                             <Button
+                                class="cursor-pointer gap-2 shadow-sm"
                                 size="sm"
                                 variant="outline"
-                                class="cursor-pointer gap-2 shadow-sm"
                                 @click="copyInviteLink"
                             >
                                 <Link class="h-3.5 w-3.5" />
@@ -162,17 +171,52 @@ useEcho<BoardData>(`workspace.${props.workspace.id}`, 'BoardAddedToWorkspace', (
                 <div class="my-8 flex items-center gap-3">
                     <h3 class="text-base font-semibold tracking-tight">Boards</h3>
                     <span class="rounded-md bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary tabular-nums">
-                        {{ boards.length }}
+                        {{ boards?.length ?? 0 }}
                     </span>
                     <div class="h-px flex-1 bg-border/50" />
+                    <Button
+                        class="cursor-pointer"
+                        size="sm"
+                        variant="outline"
+                        @click="showArchivedBoardsDialog = !showArchivedBoardsDialog"
+                    >
+                        <ArchiveXIcon class="h-3.5 w-3.5" />
+                        View Archived Boards
+                    </Button>
                 </div>
                 <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                    <BoardCard v-for="board in boards" :key="board.id" :board="board" />
-                    <BoardCardPopover :workspace-id="workspace.id" />
+                    <Deferred data="boards">
+                        <template #fallback>
+                            <template v-for="i in 4" :key="i">
+                                <Card class="w-full gap-2 overflow-hidden rounded-2xl pt-0 pb-2 shadow-lg">
+                                    <CardContent class="h-24 p-0">
+                                        <Skeleton class="h-full w-full rounded-none" />
+                                    </CardContent>
+                                    <CardFooter class="m-0.5 px-6">
+                                        <Skeleton
+                                            :class="
+                                                cn(
+                                                    'h-3.5 rounded-md',
+                                                    i % 3 === 0 ? 'w-1/2' : i % 2 === 0 ? 'w-3/4' : 'w-2/3',
+                                                )
+                                            "
+                                        />
+                                    </CardFooter>
+                                </Card>
+                            </template>
+                        </template>
+                        <BoardCard v-for="board in boards" :key="board.id" :board="board" />
+                        <BoardCardPopover :workspace-id="workspace.id" />
+                    </Deferred>
                 </div>
             </section>
         </div>
     </AppLayout>
+    <ArchivedBoardsDialog
+        v-model:open="showArchivedBoardsDialog"
+        :workspace="workspace"
+        @unarchive-board="handleUnarchiveBoard"
+    />
 </template>
 
 <style scoped></style>

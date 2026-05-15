@@ -20,6 +20,7 @@ export interface Board {
     name: string;
     workspace_id: string;
     board_lists: BoardList[];
+    created_at: string;
 }
 
 export interface Workspace {
