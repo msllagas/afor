@@ -9,7 +9,7 @@ A Kanban-based project management and collaboration tool built with Laravel and 
 [![License: MIT](https://img.shields.io/badge/License-MIT-pink.svg)](LICENSE)
 [![Laravel](https://img.shields.io/badge/Laravel-12-FF2D20?logo=laravel&logoColor=white)](https://laravel.com)
 [![Vue](https://img.shields.io/badge/Vue-3-42b883?logo=vue.js&logoColor=white)](https://vuejs.org)
-[![Inertia.js](https://img.shields.io/badge/Inertia.js-2-9553e9?logo=inertia&logoColor=white)](https://inertiajs.com)
+[![Inertia.js](https://img.shields.io/badge/Inertia.js-3-9553e9?logo=inertia&logoColor=white)](https://inertiajs.com)
 
 </div>
 
