@@ -67,6 +67,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/{workspace}/boards/archived', [BoardController::class, 'archived'])
                 ->name('boards.archived');
 
+            Route::post('/{workspace}/boards/{board}/favorite', [BoardController::class, 'toggleFavorite'])
+                ->name('boards.favorite')
+                ->scopeBindings();
+
         });
 
     /*

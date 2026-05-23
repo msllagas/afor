@@ -12,10 +12,11 @@ import { cn } from '@/lib/utils';
 import { default as workspaceRoutes, default as workspaces } from '@/routes/workspaces';
 import type { BreadcrumbItem, Workspace, WorkspaceMember } from '@/types';
 import { Board } from '@/types';
-import { Deferred, Head, router, usePage } from '@inertiajs/vue3';
+import { Deferred, Head, router, useHttp, usePage } from '@inertiajs/vue3';
 import { useEcho } from '@laravel/echo-vue';
 import { ArchiveXIcon, Link } from 'lucide-vue-next';
 import { computed, onMounted, ref } from 'vue';
+import { toast } from 'vue-sonner';
 
 const props = defineProps<{
     boards: Board[];
@@ -40,12 +41,15 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 const page = usePage();
+const http = useHttp();
+
 const user = page.props.auth.user;
 const AVATAR_CAP = 5;
 const copied = ref(false);
 const showArchivedBoardsDialog = ref(false);
 
 const boards = computed(() => props.boards); // created to push the newly created boards from the echo websocket event
+const favoritedBoards = computed(() => props.boards?.filter((board) => board.is_favorited));
 
 function copyInviteLink() {
     navigator.clipboard.writeText(props?.inviteLink);
@@ -61,6 +65,25 @@ function handleUnarchiveBoard(board: Board) {
     } else {
         boards.value.splice(index, 0, board);
     }
+}
+
+function handleStarBoard(board: Board) {
+    // optimistically toggle locally
+    board.is_favorited = !board.is_favorited;
+
+    http.post(
+        workspaceRoutes.boards.favorite({
+            workspace: props.workspace,
+            board: board,
+        }).url,
+        {
+            onError: () => {
+                toast.error('Failed to star board. Please try again.');
+                // revert if fails
+                board.is_favorited = !board.is_favorited;
+            },
+        },
+    );
 }
 
 onMounted(() => {
@@ -80,7 +103,7 @@ useEcho<BoardData>(`workspace.${props.workspace.id}`, 'BoardAddedToWorkspace', (
     <Head :title="workspace.name + ' - Home'" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="px-6 pb-6 sm:px-10">
+        <div class="px-6 pb-14 sm:px-10">
             <section>
                 <header class="mt-10">
                     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-5">
@@ -167,6 +190,47 @@ useEcho<BoardData>(`workspace.${props.workspace.id}`, 'BoardAddedToWorkspace', (
                     </div>
                 </header>
             </section>
+
+            <!-- Starred Boards -->
+            <section v-if="favoritedBoards?.length">
+                <div class="my-8 flex items-center gap-3">
+                    <h3 class="text-base font-semibold tracking-tight">Starred Boards</h3>
+                    <span class="rounded-md bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary tabular-nums">
+                        {{ favoritedBoards?.length ?? 0 }}
+                    </span>
+                    <div class="h-px flex-1 bg-border/50" />
+                </div>
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    <Deferred data="boards">
+                        <template #fallback>
+                            <template v-for="i in 4" :key="i">
+                                <Card class="w-full gap-2 overflow-hidden rounded-2xl pt-0 pb-2 shadow-lg">
+                                    <CardContent class="h-24 p-0">
+                                        <Skeleton class="h-full w-full rounded-none" />
+                                    </CardContent>
+                                    <CardFooter class="m-0.5 px-6">
+                                        <Skeleton
+                                            :class="
+                                                cn(
+                                                    'h-3.5 rounded-md',
+                                                    i % 3 === 0 ? 'w-1/2' : i % 2 === 0 ? 'w-3/4' : 'w-2/3',
+                                                )
+                                            "
+                                        />
+                                    </CardFooter>
+                                </Card>
+                            </template>
+                        </template>
+                        <BoardCard
+                            v-for="board in favoritedBoards"
+                            :key="board.id"
+                            :board="board"
+                            @star-board="handleStarBoard"
+                        />
+                    </Deferred>
+                </div>
+            </section>
+
             <section>
                 <div class="my-8 flex items-center gap-3">
                     <h3 class="text-base font-semibold tracking-tight">Boards</h3>
@@ -205,7 +269,12 @@ useEcho<BoardData>(`workspace.${props.workspace.id}`, 'BoardAddedToWorkspace', (
                                 </Card>
                             </template>
                         </template>
-                        <BoardCard v-for="board in boards" :key="board.id" :board="board" />
+                        <BoardCard
+                            v-for="board in boards"
+                            :key="board.id"
+                            :board="board"
+                            @star-board="handleStarBoard"
+                        />
                         <BoardCardPopover :workspace-id="workspace.id" />
                     </Deferred>
                 </div>

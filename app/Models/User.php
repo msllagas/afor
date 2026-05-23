@@ -35,6 +35,8 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property Carbon|null $updated_at
  * @property-read mixed $avatar
  * @property-read File|null $avatarFile
+ * @property-read Collection<int, Board> $favoriteBoards
+ * @property-read int|null $favorite_boards_count
  * @property-read DatabaseNotificationCollection<int, DatabaseNotification> $notifications
  * @property-read int|null $notifications_count
  * @property-read Collection<int, Workspace> $ownedWorkspaces
@@ -134,5 +136,10 @@ class User extends Authenticatable implements MustVerifyEmail
                 ? Storage::url($this->avatarFile->path)
                 : null
         );
+    }
+
+    public function favoriteBoards(): BelongsToMany
+    {
+        return $this->belongsToMany(Board::class, 'board_user_favorites');
     }
 }

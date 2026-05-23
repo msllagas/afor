@@ -49,6 +49,17 @@ class BoardService
         return $board;
     }
 
+    public function toggleFavorite(Board $board, User $user): Board
+    {
+        $user->favoriteBoards()->toggle($board->id);
+
+        $board->loadExists([
+            'favoritedByUsers as is_favorited' => fn ($query) => $query->where('user_id', $user->id),
+        ]);
+
+        return $board;
+    }
+
     private function createDefaultLists(Board $board): void
     {
         $board->boardLists()->createMany(self::DEFAULT_LISTS);

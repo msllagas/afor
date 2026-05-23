@@ -78,8 +78,13 @@ class WorkspaceController extends Controller
         ]);
 
         return Inertia::render('workspaces/Home', [
-            'boards' => Inertia::defer(function () use ($workspace) {
-                return $workspace->boards()->unarchived()->get();
+            'boards' => Inertia::defer(function () use ($workspace, $user) {
+                return $workspace->boards()
+                    ->unarchived()
+                    ->withExists([
+                        'favoritedByUsers as is_favorited' => fn ($query) => $query->where('user_id', $user->id),
+                    ])
+                    ->get();
             }, 'boards'),
             'workspace'  => new WorkspaceResource($workspace),
             'members'    => $members,

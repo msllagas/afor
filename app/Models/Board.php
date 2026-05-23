@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
@@ -25,6 +26,8 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $deleted_at
  * @property-read Collection<int, BoardList> $boardLists
  * @property-read int|null $board_lists_count
+ * @property-read Collection<int, User> $favoritedByUsers
+ * @property-read int|null $favorited_by_users_count
  * @property-read Workspace $workspace
  *
  * @method static Builder<static>|Board archived()
@@ -81,5 +84,10 @@ class Board extends Model
     {
         return $this->hasMany(BoardList::class)
             ->orderBy('order');
+    }
+
+    public function favoritedByUsers(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'board_user_favorites');
     }
 }

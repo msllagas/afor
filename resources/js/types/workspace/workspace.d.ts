@@ -20,6 +20,7 @@ export interface Board {
     name: string;
     workspace_id: string;
     board_lists: BoardList[];
+    is_favorited?: boolean;
     created_at: string;
 }
 

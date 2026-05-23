@@ -141,4 +141,9 @@ class BoardController extends Controller
     {
         return $workspace->boards()->archived()->get();
     }
+
+    public function toggleFavorite(Workspace $workspace, Board $board): Board
+    {
+        return $this->boardService->toggleFavorite($board, auth()->user());
+    }
 }
