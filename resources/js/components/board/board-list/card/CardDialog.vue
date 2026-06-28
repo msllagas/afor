@@ -5,6 +5,7 @@ import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
+    DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
@@ -102,6 +103,7 @@ function onSubmitDescription(boardListId: string, cardId: string, value: string)
                                 </DropdownMenuTrigger>
 
                                 <DropdownMenuContent align="end" class="w-40">
+                                    <DropdownMenuLabel>Card Actions</DropdownMenuLabel>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem
                                         class="cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive"
