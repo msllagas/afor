@@ -1,5 +1,7 @@
 <script lang="ts" setup>
 import SeoHead from '@/components/SeoHead.vue';
+import { home } from '@/routes';
+import { Link } from '@inertiajs/vue3';
 </script>
 
 <template>
@@ -19,6 +21,12 @@ import SeoHead from '@/components/SeoHead.vue';
             >
                 afor@mandyllagas.com
             </a>
+            <Link
+                :href="home()"
+                class="block text-sm text-muted-foreground underline-offset-4 transition-colors hover:text-primary hover:underline"
+            >
+                Back to home
+            </Link>
         </div>
     </div>
 </template>

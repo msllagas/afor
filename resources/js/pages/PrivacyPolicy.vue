@@ -1,5 +1,7 @@
 <script lang="ts" setup>
 import SeoHead from '@/components/SeoHead.vue';
+import { home } from '@/routes';
+import { Link } from '@inertiajs/vue3';
 </script>
 
 <template>
@@ -11,7 +13,12 @@ import SeoHead from '@/components/SeoHead.vue';
         <div class="mx-auto max-w-3xl px-6 py-16">
             <!-- Header -->
             <div class="mb-12">
-                <p class="mb-2 text-sm font-medium tracking-widest text-primary uppercase">Afor</p>
+                <Link
+                    :href="home()"
+                    class="mb-2 inline-block text-sm font-medium tracking-widest text-primary uppercase transition-opacity hover:opacity-75"
+                >
+                    Afor
+                </Link>
                 <h1 class="mb-3 text-4xl font-bold text-foreground">Privacy Policy</h1>
                 <p class="text-sm text-muted-foreground">Effective Date: May 4, 2026</p>
                 <div class="mt-6 h-px bg-border" />
