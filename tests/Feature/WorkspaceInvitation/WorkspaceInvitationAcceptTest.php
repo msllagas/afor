@@ -2,9 +2,11 @@
 
 use App\Models\User;
 use App\Models\Workspace;
+use App\Models\WorkspaceInvitation;
 use App\Services\WorkspaceService;
 
 use function Pest\Laravel\assertDatabaseHas;
+use function Pest\Laravel\assertDatabaseMissing;
 use function Pest\Laravel\post;
 
 test('users can accept invitation from another users', function () {
@@ -77,18 +79,57 @@ test('users who already joined the workspace are redirected', function () {
     ]));
 });
 
-test('users are redirected when the invitation does not exist', function () {
+test('users get not found when the invitation does not exist', function () {
+    $workspace = Workspace::factory()->forUser()->create();
     $user = User::factory()->create();
-    $anotherUser = User::factory()->create();
 
-    $workspace = Workspace::factory()->forUser($user)->create();
-    $this->actingAs($anotherUser);
-
-    $token = Str::random(32);
-
-    $response = post(route('workspace-invitations.accept', [
+    $response = $this->actingAs($user)->post(route('workspace-invitations.accept', [
         'workspace' => $workspace,
-        'token'     => $token,
+        'token'     => Str::random(32),
     ]));
 
-})->skip(message: 'implement this test once the accept invitation route has implemented the logic');
+    $response->assertNotFound();
+    assertDatabaseMissing('workspace_user', ['user_id' => $user->id]);
+});
+
+test('users cannot join through an invite link a member created', function () {
+    $owner = User::factory()->create();
+    $member = User::factory()->create();
+    $workspace = Workspace::factory()->forUser($owner)->create();
+    $workspace->users()->attach($member->id);
+    $memberInvitation = WorkspaceInvitation::factory()->for($workspace)->issuedBy($member)->create();
+    $outsider = User::factory()->create();
+
+    $response = $this->actingAs($outsider)->post(route('workspace-invitations.accept', [
+        'workspace' => $workspace,
+        'token'     => $memberInvitation->token,
+    ]));
+
+    $response->assertNotFound();
+    assertDatabaseMissing('workspace_user', ['user_id' => $outsider->id]);
+});
+
+test('users cannot join a workspace with an invite token from another workspace', function () {
+    $otherInvitation = WorkspaceInvitation::factory()->create();
+    $workspace = Workspace::factory()->forUser()->create();
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)->post(route('workspace-invitations.accept', [
+        'workspace' => $workspace,
+        'token'     => $otherInvitation->token,
+    ]));
+
+    $response->assertNotFound();
+    assertDatabaseMissing('workspace_user', ['user_id' => $user->id]);
+});
+
+test('guests are sent to log in before accepting an invitation', function () {
+    $invitation = WorkspaceInvitation::factory()->create();
+
+    $response = post(route('workspace-invitations.accept', [
+        'workspace' => $invitation->workspace_id,
+        'token'     => $invitation->token,
+    ]));
+
+    $response->assertRedirect(route('login'));
+});

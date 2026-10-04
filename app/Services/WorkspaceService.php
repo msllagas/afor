@@ -6,6 +6,7 @@ use App\Enums\FileCollection;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceInvitation;
+use Illuminate\Support\Facades\DB;
 
 class WorkspaceService
 {
@@ -13,16 +14,42 @@ class WorkspaceService
         private readonly FileUploadService $fileUploadService
     ) {}
 
+    /**
+     * Get the workspace's invite link, creating it on first use. Only the owner can invite people.
+     *
+     * @throws \InvalidArgumentException when the user is not the workspace owner
+     */
     public function generateInvitationLink(Workspace $workspace, User $user): string
     {
+        if ($workspace->owner_id !== $user->id) {
+            throw new \InvalidArgumentException('Only the workspace owner can invite people.');
+        }
 
         $invitation = WorkspaceInvitation::query()
             ->firstOrCreate([
                 'workspace_id' => $workspace->id,
                 'invited_by'   => $user->id,
             ], [
-                'token' => strtoupper(config('app.name')).str()->random(32),
+                'token' => $this->newInvitationToken(),
             ]);
+
+        return route('workspace-invitations.show', [$workspace, $invitation->token]);
+    }
+
+    /**
+     * Replace the workspace's invite link so every link shared before stops working.
+     */
+    public function resetInvitationLink(Workspace $workspace): string
+    {
+        $invitation = DB::transaction(function () use ($workspace) {
+            WorkspaceInvitation::query()->whereBelongsTo($workspace)->delete();
+
+            return WorkspaceInvitation::query()->create([
+                'workspace_id' => $workspace->id,
+                'invited_by'   => $workspace->owner_id,
+                'token'        => $this->newInvitationToken(),
+            ]);
+        });
 
         return route('workspace-invitations.show', [$workspace, $invitation->token]);
     }
@@ -52,5 +79,10 @@ class WorkspaceService
         $workspace->delete();
 
         $this->fileUploadService->delete($workspace, FileCollection::WORKSPACE_LOGO);
+    }
+
+    private function newInvitationToken(): string
+    {
+        return strtoupper(config('app.name')).str()->random(32);
     }
 }

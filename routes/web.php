@@ -4,6 +4,7 @@ use App\Http\Controllers\BoardController;
 use App\Http\Controllers\BoardListController;
 use App\Http\Controllers\CardController;
 use App\Http\Controllers\WorkspaceController;
+use App\Http\Controllers\WorkspaceInvitationController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -60,6 +61,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::delete('/{workspace}/members/{user}', [WorkspaceController::class, 'removeMember'])
                 ->name('members.user.destroy')
                 ->scopeBindings();
+
+            Route::post('/{workspace}/invite-link/reset', [WorkspaceInvitationController::class, 'reset'])
+                ->name('invite-link.reset');
 
             Route::get('/{workspace}/settings', [WorkspaceController::class, 'settings'])
                 ->name('settings');

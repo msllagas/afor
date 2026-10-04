@@ -2,6 +2,7 @@
 
 use App\Models\User;
 use App\Models\Workspace;
+use App\Models\WorkspaceInvitation;
 use App\Services\WorkspaceService;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -36,4 +37,18 @@ test('guest users can view workspace invitation details', function () {
                     ))
             )
         );
+});
+
+test('invite links a member created show not found', function () {
+    $member = User::factory()->create();
+    $workspace = Workspace::factory()->forUser()->create();
+    $workspace->users()->attach($member->id);
+    $memberInvitation = WorkspaceInvitation::factory()->for($workspace)->issuedBy($member)->create();
+
+    $response = $this->get(route('workspace-invitations.show', [
+        'workspace' => $workspace,
+        'token'     => $memberInvitation->token,
+    ]));
+
+    $response->assertNotFound();
 });

@@ -4,12 +4,18 @@ namespace App\Http\Controllers;
 
 use App\Models\Workspace;
 use App\Models\WorkspaceInvitation;
+use App\Services\WorkspaceService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class WorkspaceInvitationController extends Controller
 {
+    public function __construct(
+        private readonly WorkspaceService $workspaceService
+    ) {}
+
     /**
      * Display the specified resource.
      */
@@ -21,8 +27,7 @@ class WorkspaceInvitationController extends Controller
                 'inviter:id,name',
                 'workspace:id,name',
             ])
-            ->where('workspace_id', $workspace->id)
-            ->where('token', $token)
+            ->validFor($workspace, $token)
             ->firstOrFail();
 
         return Inertia::render('workspace-invitations/Invite', [
@@ -30,30 +35,35 @@ class WorkspaceInvitationController extends Controller
         ]);
     }
 
+    /**
+     * Join the workspace through its invite link. Links not issued by the owner, or reset since, are not found.
+     */
     public function accept(Workspace $workspace, string $token): RedirectResponse
     {
-        $invitationExists = WorkspaceInvitation::query()
-            ->where('workspace_id', $workspace->id)
-            ->where('token', $token)
+        $invitationIsValid = WorkspaceInvitation::query()
+            ->validFor($workspace, $token)
             ->exists();
 
-        $authUser = auth()->user();
+        abort_unless($invitationIsValid, 404);
 
-        if (!$invitationExists) {
-            dd('do something when invitation does not exists');
+        $user = auth()->user();
+
+        if (!$workspace->isAccessibleBy($user)) {
+            $workspace->users()->attach($user->id);
         }
-
-        $userExistInWorkspace = $workspace->users()
-            ->where('user_id', $authUser->id);
-
-        // Only attach user if it does not exist yet in workspace
-        if ($workspace->owner->id !== $authUser->id && !$userExistInWorkspace->exists()) {
-            $workspace->users()->attach($authUser->id);
-        }
-
-        $workspace->load('boards');
 
         return redirect()->route('workspaces.home', $workspace);
+    }
 
+    /**
+     * Replace the workspace's invite link, so links already shared stop working.
+     */
+    public function reset(Workspace $workspace): RedirectResponse
+    {
+        Gate::authorize('invite', $workspace);
+
+        $this->workspaceService->resetInvitationLink($workspace);
+
+        return back();
     }
 }

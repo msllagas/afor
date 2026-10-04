@@ -8,7 +8,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import workspaceRoutes from '@/routes/workspaces';
 import type { BreadcrumbItem, Workspace, WorkspaceMember } from '@/types';
 import { Deferred, Head, router, usePage } from '@inertiajs/vue3';
-import { Check, Crown, Link as LinkIcon, Search, UserRoundMinus, UserRoundPlus } from 'lucide-vue-next';
+import { Check, Crown, Link as LinkIcon, RotateCcw, Search, UserRoundMinus, UserRoundPlus } from 'lucide-vue-next';
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
 import { toast } from 'vue-sonner';
 
@@ -20,6 +20,8 @@ const props = defineProps<{
     owner: WorkspaceMember;
     members: WorkspaceMember[];
     canManageMembers: boolean;
+    canInvite: boolean;
+    /** Only sent to the owner. */
     inviteLink?: string;
 }>();
 
@@ -37,6 +39,8 @@ const pendingRemovalIds = new Set<string>();
 const search = ref('');
 const confirmingRemovalId = ref<string | null>(null);
 const isInviteLinkCopied = ref(false);
+const isConfirmingReset = ref(false);
+const isResettingLink = ref(false);
 const announcement = ref('');
 const listRef = ref<HTMLElement | null>(null);
 let copiedResetTimer: ReturnType<typeof setTimeout> | undefined;
@@ -130,6 +134,59 @@ async function copyInviteLink() {
 
 function selectInviteLink(event: FocusEvent) {
     (event.target as HTMLInputElement).select();
+}
+
+function askToResetLink() {
+    isConfirmingReset.value = true;
+    focusById('cancel-reset-link');
+}
+
+function cancelResetLink() {
+    isConfirmingReset.value = false;
+    focusById('reset-link');
+}
+
+function handleResetFailure(status?: number) {
+    const descriptions: Record<number, string> = {
+        403: 'Only the workspace owner can reset the invite link.',
+        419: 'Your session expired. Refresh the page, then try again.',
+    };
+    const canRetry = status === undefined || !(status in descriptions);
+
+    toast.error('Couldn’t reset the invite link', {
+        description:
+            status === undefined
+                ? 'Check your connection, then try again.'
+                : (descriptions[status] ?? 'Something went wrong on our end. Try again in a moment.'),
+        action: canRetry ? { label: 'Try again', onClick: resetInviteLink } : undefined,
+    });
+}
+
+function resetInviteLink() {
+    router.post(workspaceRoutes.inviteLink.reset(props.workspace.id).url, undefined, {
+        only: ['inviteLink'],
+        preserveScroll: true,
+        preserveState: true,
+        onStart: () => (isResettingLink.value = true),
+        onSuccess: () => {
+            isConfirmingReset.value = false;
+            isInviteLinkCopied.value = false;
+            toast.success('Invite link reset', { description: 'Links shared before no longer work.' });
+            announce('Invite link reset. Links shared before no longer work.');
+            focusById('copy-invite-link');
+        },
+        onHttpException: (response) => {
+            handleResetFailure(response.status);
+
+            return false;
+        },
+        onNetworkError: () => {
+            handleResetFailure();
+
+            return false;
+        },
+        onFinish: () => (isResettingLink.value = false),
+    });
 }
 
 function askToRemove(member: WorkspaceMember) {
@@ -245,6 +302,7 @@ onBeforeUnmount(() => clearTimeout(copiedResetTimer));
             </header>
 
             <section
+                v-if="canInvite"
                 aria-labelledby="invite-heading"
                 class="mt-8 rounded-2xl border border-primary/15 bg-blush/40 p-4 sm:p-5"
             >
@@ -255,10 +313,11 @@ onBeforeUnmount(() => clearTimeout(copiedResetTimer));
                     >
                         <UserRoundPlus class="size-4" />
                     </span>
-                    <div class="min-w-0">
+                    <div class="min-w-0 flex-1">
                         <h2 id="invite-heading" class="font-semibold">Invite people</h2>
                         <p class="text-sm text-muted-foreground">
-                            Anyone with this link can join {{ workspace.name }}.
+                            Anyone with this link can join {{ workspace.name }}. Reset it if it reaches the wrong
+                            people.
                         </p>
                     </div>
                 </div>
@@ -271,27 +330,89 @@ onBeforeUnmount(() => clearTimeout(copiedResetTimer));
                         </div>
                     </template>
 
-                    <div class="mt-4 flex gap-2">
+                    <div class="mt-4 flex flex-wrap gap-2">
                         <Input
                             :model-value="inviteLink"
                             aria-label="Invite link"
-                            class="min-w-0 flex-1 bg-background text-muted-foreground"
+                            class="min-w-0 flex-[1_1_12rem] bg-background text-muted-foreground"
                             readonly
                             @focus="selectInviteLink"
                         />
-                        <Button
-                            :aria-label="isInviteLinkCopied ? 'Invite link copied' : 'Copy invite link'"
-                            :disabled="!inviteLink"
-                            class="shrink-0 cursor-pointer sm:min-w-28"
-                            @click="copyInviteLink"
-                        >
-                            <Check v-if="isInviteLinkCopied" aria-hidden="true" />
-                            <LinkIcon v-else aria-hidden="true" />
-                            <span class="hidden sm:inline">{{ isInviteLinkCopied ? 'Copied' : 'Copy link' }}</span>
-                        </Button>
+                        <div class="flex shrink-0 gap-2">
+                            <Button
+                                id="copy-invite-link"
+                                :aria-label="isInviteLinkCopied ? 'Invite link copied' : 'Copy invite link'"
+                                :disabled="!inviteLink || isResettingLink"
+                                class="cursor-pointer sm:min-w-28"
+                                @click="copyInviteLink"
+                            >
+                                <Check v-if="isInviteLinkCopied" aria-hidden="true" />
+                                <LinkIcon v-else aria-hidden="true" />
+                                <span class="hidden sm:inline">{{ isInviteLinkCopied ? 'Copied' : 'Copy link' }}</span>
+                            </Button>
+                            <Button
+                                v-if="!isConfirmingReset"
+                                id="reset-link"
+                                aria-label="Reset invite link"
+                                class="cursor-pointer bg-background"
+                                variant="outline"
+                                @click="askToResetLink"
+                            >
+                                <RotateCcw aria-hidden="true" />
+                                <span class="hidden sm:inline">Reset</span>
+                            </Button>
+                        </div>
+                    </div>
+
+                    <div
+                        v-if="isConfirmingReset"
+                        aria-labelledby="confirm-reset-link"
+                        class="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-xl border border-destructive/20 bg-background p-3"
+                        role="group"
+                        @keydown.esc.stop.prevent="cancelResetLink"
+                    >
+                        <p id="confirm-reset-link" class="text-sm">
+                            Reset the invite link?
+                            <span class="text-muted-foreground">
+                                The current link stops working, including anywhere it was forwarded. People who already
+                                joined stay.
+                            </span>
+                        </p>
+                        <div class="ml-auto flex gap-2">
+                            <Button
+                                id="cancel-reset-link"
+                                :disabled="isResettingLink"
+                                class="cursor-pointer"
+                                size="sm"
+                                variant="outline"
+                                @click="cancelResetLink"
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                :disabled="isResettingLink"
+                                class="cursor-pointer"
+                                size="sm"
+                                variant="destructive"
+                                @click="resetInviteLink"
+                            >
+                                {{ isResettingLink ? 'Resetting…' : 'Reset link' }}
+                            </Button>
+                        </div>
                     </div>
                 </Deferred>
             </section>
+
+            <p
+                v-else
+                class="mt-8 flex items-start gap-3 rounded-2xl border bg-muted/40 p-4 text-sm text-muted-foreground sm:p-5"
+            >
+                <UserRoundPlus aria-hidden="true" class="mt-0.5 size-4 shrink-0" />
+                <span>
+                    Only <span class="font-medium text-foreground">{{ owner.name }}</span
+                    >, the workspace owner, can invite people. Ask them if someone else should join.
+                </span>
+            </p>
 
             <section aria-labelledby="people-heading" class="mt-10">
                 <div class="mb-4 flex flex-wrap items-center justify-between gap-3 border-b pb-3">
@@ -436,7 +557,10 @@ onBeforeUnmount(() => clearTimeout(copiedResetTimer));
                     >
                         <p class="font-medium">It’s just {{ canManageMembers ? 'you' : owner.name }} for now</p>
                         <p class="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
-                            Share the invite link above to bring people into {{ workspace.name }}.
+                            <template v-if="canInvite">
+                                Share the invite link above to bring people into {{ workspace.name }}.
+                            </template>
+                            <template v-else>Only {{ owner.name }} can invite people to {{ workspace.name }}.</template>
                         </p>
                     </div>
                 </Transition>

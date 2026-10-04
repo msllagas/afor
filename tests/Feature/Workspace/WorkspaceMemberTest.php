@@ -25,6 +25,7 @@ test('workspace owner can access their workspace members', function () {
             )
             ->has('members')
             ->where('canManageMembers', true)
+            ->where('canInvite', true)
             ->loadDeferredProps(fn (Assert $reload) => $reload
                 ->has('inviteLink')
             )
@@ -61,10 +62,24 @@ test('workspace members can access their workspace members', function () {
                 ->has('joined_at')
             )
             ->where('canManageMembers', false)
-            ->loadDeferredProps(fn (Assert $reload) => $reload
-                ->has('inviteLink')
-            )
         );
+});
+
+test('workspace members do not get an invite link, even when they ask for it', function () {
+    $owner = User::factory()->create();
+    $member = User::factory()->create();
+    $workspace = Workspace::factory()->forUser($owner)->create();
+    $workspace->users()->attach($member->id);
+
+    $this->actingAs($member)
+        ->get(route('workspaces.members', ['workspace' => $workspace]))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('canInvite', false)
+            ->missing('inviteLink')
+            ->reload(fn (Assert $reload) => $reload->missing('inviteLink'), only: 'inviteLink')
+        );
+
+    $this->assertDatabaseMissing('workspace_invitations', ['workspace_id' => $workspace->id]);
 });
 
 test('user that is not a member or owner of the workspace are redirected to dashboard', function () {

@@ -65,6 +65,8 @@ class WorkspaceController extends Controller
             return redirect()->route('dashboard');
         }
 
+        $canInvite = $user->can('invite', $workspace);
+
         return Inertia::render('workspaces/Home', [
             'workspace' => fn () => new WorkspaceResource($workspace->load('logoFile')),
             'members'   => fn () => UserResource::collection(
@@ -87,7 +89,10 @@ class WorkspaceController extends Controller
                 ])
                 ->oldest()
                 ->get()),
-            'inviteLink' => Inertia::defer(fn () => $this->workspaceService->generateInvitationLink($workspace, $user)),
+            'canInvite' => $canInvite,
+            ...($canInvite ? [
+                'inviteLink' => Inertia::defer(fn () => $this->workspaceService->generateInvitationLink($workspace, $user)),
+            ] : []),
         ]);
     }
 
@@ -98,6 +103,8 @@ class WorkspaceController extends Controller
         if (!$workspace->isAccessibleBy($user)) {
             return redirect()->route('dashboard');
         }
+
+        $canInvite = $user->can('invite', $workspace);
 
         return Inertia::render('workspaces/Member', [
             'workspace' => fn () => new WorkspaceResource($workspace->load('logoFile')),
@@ -112,7 +119,11 @@ class WorkspaceController extends Controller
                     ->get()
             )->resolve(),
             'canManageMembers' => fn () => $user->can('manageMembers', $workspace),
-            'inviteLink'       => Inertia::defer(fn () => $this->workspaceService->generateInvitationLink($workspace, $user)),
+            'canInvite'        => $canInvite,
+            // Members never receive the link, not even through a partial reload that asks for it.
+            ...($canInvite ? [
+                'inviteLink' => Inertia::defer(fn () => $this->workspaceService->generateInvitationLink($workspace, $user)),
+            ] : []),
         ]);
     }
 

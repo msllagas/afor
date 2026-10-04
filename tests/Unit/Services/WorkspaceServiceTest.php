@@ -2,6 +2,7 @@
 
 use App\Models\User;
 use App\Models\Workspace;
+use App\Models\WorkspaceInvitation;
 use App\Services\WorkspaceService;
 
 use function Pest\Laravel\assertDatabaseHas;
@@ -20,6 +21,33 @@ test('service generates invitation link for a workspace per user', function () {
         ->toBeString()
         ->toContain("/invite/{$this->workspace->id}/");
 
+    assertDatabaseHas('workspace_invitations', [
+        'workspace_id' => $this->workspace->id,
+        'invited_by'   => $this->user->id,
+        'token'        => Str::of($link)->afterLast('/'),
+    ]);
+});
+
+test('service refuses to generate an invitation link for a workspace member', function () {
+    $member = User::factory()->create();
+    $this->workspace->users()->attach($member->id);
+
+    expect(fn () => $this->service->generateInvitationLink($this->workspace, $member))
+        ->toThrow(InvalidArgumentException::class, 'Only the workspace owner can invite people.');
+
+    $this->assertDatabaseMissing('workspace_invitations', ['invited_by' => $member->id]);
+});
+
+test('service resets the invitation link by replacing every existing invitation', function () {
+    $member = User::factory()->create();
+    $ownerInvitation = WorkspaceInvitation::factory()->for($this->workspace)->create();
+    $memberInvitation = WorkspaceInvitation::factory()->for($this->workspace)->issuedBy($member)->create();
+
+    $link = $this->service->resetInvitationLink($this->workspace);
+
+    expect(Str::of($link)->afterLast('/')->value())->not->toBe($ownerInvitation->token);
+    $this->assertModelMissing($ownerInvitation);
+    $this->assertModelMissing($memberInvitation);
     assertDatabaseHas('workspace_invitations', [
         'workspace_id' => $this->workspace->id,
         'invited_by'   => $this->user->id,

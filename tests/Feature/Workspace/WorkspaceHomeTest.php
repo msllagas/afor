@@ -33,11 +33,31 @@ test('workspace owner can access their workspace home', function () {
                 ->where('0.name', $member->name)
                 ->where('0.avatar', $member->avatar)
             )
+            ->where('canInvite', true)
             ->loadDeferredProps(fn (Assert $reload) => $reload
                 ->has('inviteLink')
                 ->has('boards')
             )
         );
+});
+
+test('workspace members get their workspace home without an invite link', function () {
+    $owner = User::factory()->create();
+    $member = User::factory()->create();
+    $workspace = Workspace::factory()->forUser($owner)->create();
+    $workspace->users()->attach($member->id);
+
+    $this->actingAs($member)
+        ->get(route('workspaces.home', ['workspace' => $workspace]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('canInvite', false)
+            ->missing('inviteLink')
+            ->loadDeferredProps(fn (Assert $reload) => $reload->has('boards'))
+            ->reload(fn (Assert $reload) => $reload->missing('inviteLink'), only: 'inviteLink')
+        );
+
+    $this->assertDatabaseMissing('workspace_invitations', ['workspace_id' => $workspace->id]);
 });
 
 test('workspace members can access their workspace home', function () {

@@ -22,6 +22,8 @@ const props = defineProps<{
     workspace: Workspace;
     members: WorkspaceMember[];
     boards?: Board[];
+    canInvite: boolean;
+    /** Only sent to the owner. */
     inviteLink?: string;
 }>();
 
@@ -167,6 +169,7 @@ onBeforeUnmount(() => clearTimeout(copiedResetTimer));
                     </Link>
 
                     <Button
+                        v-if="canInvite"
                         :disabled="!inviteLink"
                         class="cursor-pointer rounded-full text-xs sm:h-9 sm:px-4 sm:text-sm"
                         size="sm"
@@ -177,7 +180,7 @@ onBeforeUnmount(() => clearTimeout(copiedResetTimer));
                         <LinkIcon v-else class="size-3.5" aria-hidden="true" />
                         {{ isInviteLinkCopied ? 'Link copied' : 'Copy invite link' }}
                     </Button>
-                    <span aria-live="polite" class="sr-only">
+                    <span v-if="canInvite" aria-live="polite" class="sr-only">
                         {{ isInviteLinkCopied ? 'Invite link copied to clipboard' : '' }}
                     </span>
                 </div>

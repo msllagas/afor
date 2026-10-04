@@ -2,8 +2,11 @@
 
 namespace App\Models;
 
+use Database\Factories\WorkspaceInvitationFactory;
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
@@ -21,6 +24,7 @@ use Illuminate\Support\Carbon;
  * @method static Builder<static>|WorkspaceInvitation newModelQuery()
  * @method static Builder<static>|WorkspaceInvitation newQuery()
  * @method static Builder<static>|WorkspaceInvitation query()
+ * @method static Builder<static>|WorkspaceInvitation validFor(Workspace $workspace, string $token)
  * @method static Builder<static>|WorkspaceInvitation whereCreatedAt($value)
  * @method static Builder<static>|WorkspaceInvitation whereId($value)
  * @method static Builder<static>|WorkspaceInvitation whereInvitedBy($value)
@@ -32,11 +36,25 @@ use Illuminate\Support\Carbon;
  */
 class WorkspaceInvitation extends Model
 {
-    use HasUuids;
+    /** @use HasFactory<WorkspaceInvitationFactory> */
+    use HasFactory, HasUuids;
 
     protected $table = 'workspace_invitations';
 
     protected $guarded = ['id'];
+
+    /**
+     * Invitations that still let people join: the token belongs to the workspace and was issued by its owner.
+     *
+     * A link a member created before invites became owner-only, or one issued by a previous owner, no longer works.
+     */
+    #[Scope]
+    public function validFor(Builder $query, Workspace $workspace, string $token): Builder
+    {
+        return $query->whereBelongsTo($workspace)
+            ->where('token', $token)
+            ->where('invited_by', $workspace->owner_id);
+    }
 
     public function workspace(): BelongsTo
     {

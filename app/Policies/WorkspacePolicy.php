@@ -46,6 +46,14 @@ class WorkspacePolicy
     }
 
     /**
+     * Determine whether the user can invite people, which means seeing and resetting the invite link.
+     */
+    public function invite(User $user, Workspace $workspace): Response
+    {
+        return $this->ownerOnly($user, $workspace, 'Only the workspace owner can invite people.');
+    }
+
+    /**
      * Allow the workspace owner, deny members with a 403 and hide the workspace from everyone else.
      */
     private function ownerOnly(User $user, Workspace $workspace, string $deniedMessage): Response
