@@ -144,6 +144,20 @@ test('non-members cannot update the workspace logo they are not member of', func
     $this->assertDatabaseEmpty('files'); // not uploaded
 });
 
+test('workspace name cannot be blank', function () {
+    $this->actingAs($this->user)
+        ->patchJson(route('workspaces.update', $this->workspace), [
+            'name' => '',
+        ])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['name']);
+
+    $this->assertDatabaseHas('workspaces', [
+        'id'   => $this->workspace->id,
+        'name' => $this->workspace->name,
+    ]);
+});
+
 test('deletes existing logo of a workspace if new logo has been added', function () {
     // First upload
     $firstFileUploaded = UploadedFile::fake()->image('logo.png');

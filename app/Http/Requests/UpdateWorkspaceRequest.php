@@ -27,7 +27,7 @@ class UpdateWorkspaceRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name'        => 'sometimes|string|max:65',
+            'name'        => 'sometimes|required|string|max:65',
             'description' => 'sometimes|nullable|string|max:255',
             'logo'        => 'sometimes|nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ];
