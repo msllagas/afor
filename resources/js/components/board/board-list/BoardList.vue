@@ -306,7 +306,7 @@ onMounted(() => {
 
 <style scoped>
 .ghost {
-    background: v-bind(--list-bg) !important;
+    background: var(--list-bg) !important;
     position: relative;
     border-radius: 8px;
 }
