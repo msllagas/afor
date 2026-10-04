@@ -1,194 +1,313 @@
 <script lang="ts" setup>
+import AppLogoIcon from '@/components/AppLogoIcon.vue';
+import SeoHead from '@/components/SeoHead.vue';
 import { Button } from '@/components/ui/button';
-import { Card, CardDescription, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { dashboard, login, register } from '@/routes';
+import { about, contact, dashboard, home, login, privacyPolicy, register, termsOfUse } from '@/routes';
 import { Head, Link } from '@inertiajs/vue3';
-import { AlignStartHorizontal, Code, Github, Paintbrush, Users } from 'lucide-vue-next';
+import { ArrowLeftRight, Code, Github, Palette, Users } from 'lucide-vue-next';
+
+type PreviewCard = {
+    title: string;
+    labels: string[];
+    members: string[];
+    isDragging?: boolean;
+};
+
+type PreviewList = {
+    title: string;
+    color: string;
+    cards: PreviewCard[];
+    hasDropTarget?: boolean;
+    isHiddenOnMobile?: boolean;
+};
+
+const previewMembers = ['MA', 'JS', 'KR'];
+
+const previewLists: PreviewList[] = [
+    {
+        title: 'To do',
+        color: 'list-angel',
+        isHiddenOnMobile: true,
+        cards: [
+            { title: 'Write the onboarding checklist', labels: ['list-blue'], members: ['JS'] },
+            { title: 'Book the venue for Friday', labels: ['list-orange', 'list-angel'], members: ['MA', 'KR'] },
+        ],
+    },
+    {
+        title: 'Doing',
+        color: 'list-purple',
+        cards: [
+            { title: 'Design the invite email', labels: ['list-angel'], members: ['MA'] },
+            { title: 'Fix the login redirect', labels: ['list-red'], members: ['KR'] },
+        ],
+    },
+    {
+        title: 'Done',
+        color: 'list-green',
+        hasDropTarget: true,
+        cards: [
+            { title: 'Pick colors for each list', labels: ['list-angel'], members: ['MA', 'JS'], isDragging: true },
+            { title: 'Set up the team workspace', labels: ['list-green'], members: ['JS'] },
+        ],
+    },
+];
+
+const listColors = ['list-angel', 'list-red', 'list-orange', 'list-yellow', 'list-green', 'list-blue', 'list-purple'];
 
 const features = [
     {
-        title: 'Team Collaboration',
-        description: 'Invite friends or teammates to your workspace and manage boards together in realtime.',
+        title: 'Share a workspace',
+        description: 'Invite teammates or friends to a workspace and work on the same boards together.',
         icon: Users,
     },
     {
-        title: 'Customizable Boards',
-        description:
-            'Personalize your board lists with color options to better organize and distinguish your workflow.',
-        icon: Paintbrush,
+        title: 'Color your lists',
+        description: 'Give each list its own color so you can tell your work apart at a glance.',
+        icon: Palette,
+        showsListColors: true,
     },
     {
-        title: 'Real-Time & Flexible Layout',
-        description:
-            'See instant updates when boards are created and rearrange both cards and board lists with smooth drag and drop.',
-        icon: AlignStartHorizontal,
+        title: 'See changes live',
+        description: 'Boards update for everyone as changes happen. Drag cards and lists to put them in order.',
+        icon: ArrowLeftRight,
     },
+];
+
+const footerLinks = [
+    { label: 'About', route: about() },
+    { label: 'Privacy Policy', route: privacyPolicy() },
+    { label: 'Terms of Use', route: termsOfUse() },
+    { label: 'Contact', route: contact() },
 ];
 </script>
 
 <template>
-    <Head title="Welcome">
-        <link href="https://rsms.me/" rel="preconnect" />
-        <link href="https://rsms.me/inter/inter.css" rel="stylesheet" />
-    </Head>
-    <div class="">
-        <header
-            class="sticky top-0 z-50 h-16 w-full border-b bg-background/95 backdrop-blur dark:border-neutral-800/60"
-        >
-            <nav class="mx-auto h-full max-w-6xl px-4 sm:px-6 lg:px-8">
-                <div class="flex h-full items-center justify-between">
-                    <div>
-                        <h1 class="text-xl font-semibold text-primary">Afor</h1>
-                    </div>
-                    <div>
-                        <Button v-if="$page.props.auth.user" as-child>
-                            <Link
-                                :href="dashboard()"
-                                class="inline-block rounded-sm border border-[#19140035] px-5 py-1.5 text-sm leading-normal text-[#1b1b18] hover:border-[#1915014a] dark:border-[#3E3E3A] dark:text-[#EDEDEC] dark:hover:border-[#62605b]"
-                            >
-                                Dashboard
-                            </Link>
+    <div class="flex min-h-screen flex-col bg-background text-foreground">
+        <SeoHead
+            title="Afor - Kanban boards for the work you share"
+            description="Afor is a kanban board for teams and friends. Put tasks on cards, sort them into colored lists, and see every change in real time."
+        />
+        <Head>
+            <link href="https://fonts.bunny.net/css?family=fraunces:500,600" rel="stylesheet" />
+        </Head>
+        <header class="sticky top-0 z-50 h-16 w-full border-b bg-background/90 backdrop-blur">
+            <nav class="mx-auto flex h-full max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
+                <Link
+                    class="flex items-center gap-2.5 rounded-md font-display text-2xl font-semibold text-primary focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
+                    :href="home()"
+                >
+                    <span aria-hidden="true" class="size-8 shrink-0 [&>svg]:size-full">
+                        <AppLogoIcon />
+                    </span>
+                    Afor
+                </Link>
+                <div class="flex items-center gap-2">
+                    <Button v-if="$page.props.auth.user" as-child>
+                        <Link :href="dashboard()">Dashboard</Link>
+                    </Button>
+                    <template v-else>
+                        <Button as-child variant="ghost">
+                            <Link :href="login()">Log in</Link>
                         </Button>
-                        <template v-else>
-                            <Link
-                                :href="login()"
-                                class="inline-block rounded-sm border border-transparent px-5 py-1.5 text-sm leading-normal text-[#1b1b18] hover:border-[#19140035] dark:text-[#EDEDEC] dark:hover:border-[#3E3E3A]"
-                            >
-                                Log in
-                            </Link>
-                            <Button as-child>
-                                <Link
-                                    :href="register()"
-                                    class="inline-block rounded-sm border border-[#19140035] px-5 py-1.5 text-sm leading-normal text-[#1b1b18] hover:border-[#1915014a] dark:border-[#3E3E3A] dark:text-[#EDEDEC] dark:hover:border-[#62605b]"
-                                >
-                                    Register
-                                </Link>
-                            </Button>
-                        </template>
-                    </div>
+                        <Button as-child>
+                            <Link :href="register()">Create account</Link>
+                        </Button>
+                    </template>
                 </div>
             </nav>
         </header>
-        <main>
-            <section class="relative overflow-hidden">
-                <div class="mx-auto max-w-6xl px-4 py-24">
-                    <div class="mx-auto max-w-3xl text-center">
+
+        <main class="flex-1">
+            <section class="relative isolate overflow-hidden">
+                <div
+                    aria-hidden="true"
+                    class="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[520px] bg-linear-to-b from-blush/70 to-transparent"
+                />
+                <div
+                    class="mx-auto grid max-w-6xl items-center gap-12 px-4 pt-16 pb-20 sm:px-6 lg:grid-cols-12 lg:gap-10 lg:px-8 lg:pt-24 lg:pb-28"
+                >
+                    <div class="lg:col-span-5">
                         <h1
-                            class="text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl lg:text-6xl dark:text-white"
+                            class="font-display text-5xl leading-[1.05] font-semibold tracking-tight text-balance sm:text-6xl"
                         >
-                            The Simple Way to Stay Organized
+                            Plan together, one card at a time.
                         </h1>
-                        <p class="mx-auto mt-6 max-w-2xl text-lg text-gray-600 sm:text-xl dark:text-gray-400">
-                            Plan better, work smarter, and accomplish more with Afor.
+                        <p class="mt-6 max-w-md text-lg leading-relaxed text-pretty text-muted-foreground">
+                            Afor is a kanban board for the work you share. Put tasks on cards, sort them into lists, and
+                            everyone in your workspace sees each move as it happens.
                         </p>
-                        <div
-                            class="mx-auto mt-10 flex max-w-md flex-col justify-center gap-4 sm:max-w-none sm:flex-row"
-                        >
-                            <Button class="px-8 font-semibold" size="lg">Get Started</Button>
-                            <Button class="px-8 font-semibold" size="lg" variant="outline"> Learn More</Button>
+                        <div class="mt-10 flex flex-col gap-3 sm:flex-row">
+                            <Button v-if="$page.props.auth.user" as-child class="px-8" size="lg">
+                                <Link :href="dashboard()">Go to your dashboard</Link>
+                            </Button>
+                            <template v-else>
+                                <Button as-child class="px-8" size="lg">
+                                    <Link :href="register()">Create your account</Link>
+                                </Button>
+                                <Button as-child class="px-8" size="lg" variant="outline">
+                                    <Link :href="login()">Log in</Link>
+                                </Button>
+                            </template>
+                        </div>
+                    </div>
+
+                    <div
+                        aria-hidden="true"
+                        class="duration-700 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-6 lg:col-span-7"
+                    >
+                        <div class="rounded-3xl border bg-card/80 p-3 shadow-xl shadow-primary/5 sm:p-4">
+                            <div class="mb-3 flex items-center justify-between px-1">
+                                <p class="font-semibold">Launch week</p>
+                                <div class="flex -space-x-1">
+                                    <span
+                                        v-for="member in previewMembers"
+                                        :key="member"
+                                        class="flex size-7 items-center justify-center rounded-full bg-blush text-[10px] font-semibold text-blush-foreground ring-2 ring-card"
+                                    >
+                                        {{ member }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 items-start gap-3 sm:grid-cols-3">
+                                <div
+                                    v-for="list in previewLists"
+                                    :key="list.title"
+                                    :class="[list.color, { 'hidden sm:flex': list.isHiddenOnMobile }]"
+                                    class="flex flex-col gap-2 rounded-2xl bg-(--list-bg) p-2"
+                                >
+                                    <p class="px-1.5 pt-1 text-sm font-semibold text-(--list-fg)">{{ list.title }}</p>
+                                    <template v-for="card in list.cards" :key="card.title">
+                                        <div
+                                            :class="
+                                                card.isDragging
+                                                    ? 'relative z-10 -ml-5 rotate-3 shadow-xl ring-2 ring-primary/70'
+                                                    : 'shadow-sm'
+                                            "
+                                            class="rounded-lg bg-card p-2.5 text-card-foreground"
+                                        >
+                                            <div class="mb-2 flex gap-1">
+                                                <span
+                                                    v-for="label in card.labels"
+                                                    :key="label"
+                                                    :class="label"
+                                                    class="h-1.5 w-7 rounded-full bg-(--list-fg-muted)"
+                                                />
+                                            </div>
+                                            <p class="text-[13px] leading-snug font-medium">{{ card.title }}</p>
+                                            <div class="mt-3 flex justify-end -space-x-1">
+                                                <span
+                                                    v-for="member in card.members"
+                                                    :key="member"
+                                                    class="flex size-6 items-center justify-center rounded-full bg-blush text-[9px] font-semibold text-blush-foreground ring-2 ring-card"
+                                                >
+                                                    {{ member }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div
+                                            v-if="card.isDragging && list.hasDropTarget"
+                                            class="h-16 rounded-lg border-2 border-dashed border-(--list-fg-muted)/40"
+                                        />
+                                    </template>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </section>
-            <section class="relative overflow-hidden">
-                <div class="mx-auto max-w-6xl px-4 pt-12 pb-24">
-                    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                        <template v-for="(feature, index) in features" :key="index">
-                            <Card class="flex h-full flex-col gap-4 p-6">
-                                <div class="flex items-center gap-3">
-                                    <div
-                                        class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary"
-                                    >
-                                        <component :is="feature.icon" class="h-5 w-5" />
-                                    </div>
 
-                                    <CardTitle class="text-lg font-semibold">{{ feature.title }}</CardTitle>
-                                </div>
-
-                                <CardDescription class="text-base leading-relaxed text-muted-foreground">
-                                    {{ feature.description }}
-                                </CardDescription>
-                            </Card>
-                        </template>
+            <section class="border-t">
+                <div class="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:px-8">
+                    <h2 class="max-w-xl font-display text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
+                        Everything your team needs happens on the board.
+                    </h2>
+                    <div class="mt-12 grid gap-10 sm:grid-cols-2 lg:grid-cols-3 lg:gap-12">
+                        <div v-for="feature in features" :key="feature.title" class="flex flex-col gap-3">
+                            <div
+                                class="flex size-11 items-center justify-center rounded-xl bg-blush text-blush-foreground"
+                            >
+                                <component :is="feature.icon" class="size-5" />
+                            </div>
+                            <h3 class="text-lg font-semibold">{{ feature.title }}</h3>
+                            <p class="leading-relaxed text-muted-foreground">{{ feature.description }}</p>
+                            <div v-if="feature.showsListColors" aria-hidden="true" class="flex gap-1.5 pt-1">
+                                <span
+                                    v-for="color in listColors"
+                                    :key="color"
+                                    :class="color"
+                                    class="size-5 rounded-full bg-(--list-bg) ring-1 ring-(--list-fg-muted)/30"
+                                />
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
-            <section class="bg-gray-50 py-20 dark:bg-gray-900">
-                <div class="mx-auto max-w-3xl px-4 text-center">
-                    <h2 class="text-3xl font-extrabold text-gray-900 sm:text-4xl dark:text-white">
-                        Get Started with Afor
-                    </h2>
-                    <p class="mt-4 text-lg text-gray-600 dark:text-gray-400">
-                        Start organizing your work in minutes. Afor makes it simple and stress-free.
-                    </p>
-                    <div class="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-                        <Input
-                            class="w-full max-w-md rounded-md border border-gray-300 px-4 py-3 text-gray-900 placeholder-gray-400 focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder-gray-500"
-                            placeholder="Enter your email"
-                            type="email"
-                        />
-                        <Button class="px-8 font-semibold" size="lg">Get Started</Button>
+
+            <section class="px-4 pb-20 sm:px-6 lg:px-8">
+                <div
+                    class="mx-auto flex max-w-6xl flex-col items-start gap-8 rounded-3xl bg-primary px-6 py-12 text-primary-foreground sm:px-12 md:flex-row md:items-center md:justify-between"
+                >
+                    <div class="max-w-lg">
+                        <h2 class="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
+                            <template v-if="$page.props.auth.user">Your boards are waiting</template>
+                            <template v-else>Start your first board</template>
+                        </h2>
+                        <p class="mt-3 text-lg leading-relaxed text-primary-foreground/85">
+                            Create an account, set up a workspace, and add your first list. It takes about a minute.
+                        </p>
                     </div>
-                    <p class="mt-4 text-sm text-gray-500 dark:text-gray-400">
-                        No credit card required. Start organizing your workflow today.
-                    </p>
+                    <Button
+                        as-child
+                        class="bg-primary-foreground px-8 text-primary hover:bg-primary-foreground/90"
+                        size="lg"
+                    >
+                        <Link v-if="$page.props.auth.user" :href="dashboard()">Go to your dashboard</Link>
+                        <Link v-else :href="register()">Create your account</Link>
+                    </Button>
                 </div>
             </section>
         </main>
-        <footer class="border-t border-gray-200 dark:border-gray-800">
-            <div class="mx-auto max-w-6xl px-4 py-10">
-                <div class="flex flex-col items-center justify-between gap-6 sm:flex-row">
-                    <div class="text-center sm:text-left">
-                        <p class="text-base font-semibold text-primary">Afor</p>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Plan better. Work smarter.</p>
-                    </div>
-                    <div class="flex items-center gap-5">
+
+        <footer class="border-t">
+            <div
+                class="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-10 sm:px-6 md:flex-row md:items-end md:justify-between lg:px-8"
+            >
+                <div>
+                    <p class="font-display text-xl font-semibold text-primary">Afor</p>
+                    <p class="mt-1 text-sm text-muted-foreground">A kanban board for the work you share.</p>
+                    <nav class="mt-5 flex flex-wrap gap-x-5 gap-y-2">
+                        <Link
+                            v-for="link in footerLinks"
+                            :key="link.label"
+                            :href="link.route"
+                            class="rounded-sm text-sm text-muted-foreground transition-colors hover:text-primary focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
+                        >
+                            {{ link.label }}
+                        </Link>
+                    </nav>
+                </div>
+                <div class="flex flex-col gap-4 md:items-end">
+                    <div class="flex items-center gap-4">
                         <a
-                            aria-label="GitHub Profile"
-                            class="text-gray-500 transition hover:text-primary"
+                            aria-label="GitHub profile"
+                            class="rounded-sm text-muted-foreground transition-colors hover:text-primary focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
                             href="https://github.com/msllagas"
                             rel="noopener noreferrer"
                             target="_blank"
                         >
-                            <Github class="h-5 w-5" />
+                            <Github class="size-5" />
                         </a>
                         <a
-                            aria-label="GitHub Repository"
-                            class="text-gray-500 transition hover:text-primary dark:hover:text-primary"
+                            aria-label="Source code on GitHub"
+                            class="rounded-sm text-muted-foreground transition-colors hover:text-primary focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
                             href="https://github.com/msllagas/afor"
                             rel="noopener noreferrer"
                             target="_blank"
                         >
-                            <Code class="h-5 w-5" />
+                            <Code class="size-5" />
                         </a>
                     </div>
-                </div>
-
-                <div class="mt-6 flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
-                    <nav class="flex flex-wrap justify-center gap-x-5 gap-y-1 sm:justify-start">
-                        <a
-                            class="text-sm text-gray-500 transition hover:text-primary dark:text-gray-400 dark:hover:text-primary"
-                            href="/about"
-                            >About</a
-                        >
-                        <a
-                            class="text-sm text-gray-500 transition hover:text-primary dark:text-gray-400 dark:hover:text-primary"
-                            href="/privacy-policy"
-                            >Privacy Policy</a
-                        >
-                        <a
-                            class="text-sm text-gray-500 transition hover:text-primary dark:text-gray-400 dark:hover:text-primary"
-                            href="/terms-of-use"
-                            >Terms of Use</a
-                        >
-                        <a
-                            class="text-sm text-gray-500 transition hover:text-primary dark:text-gray-400 dark:hover:text-primary"
-                            href="/contact"
-                            >Contact</a
-                        >
-                    </nav>
-                    <div class="text-sm text-gray-500 dark:text-gray-400">© {{ new Date().getFullYear() }} Afor</div>
+                    <p class="text-sm text-muted-foreground">© {{ new Date().getFullYear() }} Afor</p>
                 </div>
             </div>
         </footer>
