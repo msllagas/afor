@@ -77,6 +77,13 @@ class WorkspaceController extends Controller
                 ->withExists([
                     'favoritedByUsers as is_favorited' => fn ($query) => $query->whereKey($user->id),
                 ])
+                ->with([
+                    'boardLists' => fn ($query) => $query
+                        ->select('id', 'board_id', 'color', 'order')
+                        ->active()
+                        ->withCount('cards'),
+                ])
+                ->oldest()
                 ->get()),
             'inviteLink' => Inertia::defer(fn () => $this->workspaceService->generateInvitationLink($workspace, $user)),
         ]);

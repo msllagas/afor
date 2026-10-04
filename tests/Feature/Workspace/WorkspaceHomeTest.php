@@ -1,5 +1,8 @@
 <?php
 
+use App\Models\Board;
+use App\Models\BoardList;
+use App\Models\Card;
 use App\Models\User;
 use App\Models\Workspace;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -78,4 +81,50 @@ test('user that is not a member or owner of the workspace are redirected to dash
         ]));
 
     $response->assertRedirect(route('dashboard'));
+});
+
+test('workspace home lists unarchived boards with the user stars', function () {
+    $user = User::factory()->create();
+    $workspace = Workspace::factory()->forUser($user)->create();
+    $starredBoard = Board::factory()->for($workspace)->create(['created_at' => now()->subDay()]);
+    $otherBoard = Board::factory()->for($workspace)->create();
+    Board::factory()->for($workspace)->archived($user)->create();
+    $user->favoriteBoards()->attach($starredBoard);
+    User::factory()->create()->favoriteBoards()->attach($otherBoard);
+
+    $response = $this->actingAs($user)
+        ->get(route('workspaces.home', $workspace));
+
+    $response->assertInertia(fn (Assert $page) => $page
+        ->loadDeferredProps(fn (Assert $reload) => $reload
+            ->has('boards', 2)
+            ->where('boards.0.id', $starredBoard->id)
+            ->where('boards.0.is_favorited', true)
+            ->where('boards.1.id', $otherBoard->id)
+            ->where('boards.1.is_favorited', false)
+        )
+    );
+});
+
+test('workspace home previews each board with its active lists and card counts', function () {
+    $user = User::factory()->create();
+    $workspace = Workspace::factory()->forUser($user)->create();
+    $board = Board::factory()->for($workspace)->create();
+    $activeList = BoardList::factory()->for($board)->create(['color' => 'angel']);
+    BoardList::factory()->for($board)->create(['is_archived' => true]);
+    Card::factory()->count(3)->for($activeList)->create();
+
+    $response = $this->actingAs($user)
+        ->get(route('workspaces.home', $workspace));
+
+    $response->assertInertia(fn (Assert $page) => $page
+        ->loadDeferredProps(fn (Assert $reload) => $reload
+            ->has('boards.0.board_lists', 1, fn (Assert $list) => $list
+                ->where('id', $activeList->id)
+                ->where('color', 'angel')
+                ->where('cards_count', 3)
+                ->etc()
+            )
+        )
+    );
 });

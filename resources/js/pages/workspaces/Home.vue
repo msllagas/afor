@@ -1,28 +1,30 @@
 <script lang="ts" setup>
 import BoardCard from '@/components/board/BoardCard.vue';
 import BoardCardPopover from '@/components/board/BoardCardPopover.vue';
+import SeoHead from '@/components/SeoHead.vue';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import ArchivedBoardsDialog from '@/components/workspace/ArchivedBoardsDialog.vue';
+import { useInitials } from '@/composables/useInitials';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { cn } from '@/lib/utils';
-import workspaceRoutes from '@/routes/workspaces';
-import type { BreadcrumbItem, Workspace, WorkspaceMember } from '@/types';
-import { Board } from '@/types';
-import { Deferred, Head, useHttp, usePage } from '@inertiajs/vue3';
+import { home, members as workspaceMembers } from '@/routes/workspaces';
+import { favorite } from '@/routes/workspaces/boards';
+import type { Board, BreadcrumbItem, Workspace, WorkspaceMember } from '@/types';
+import { Deferred, Head, Link, useHttp } from '@inertiajs/vue3';
 import { useEcho } from '@laravel/echo-vue';
-import { ArchiveXIcon, Link } from 'lucide-vue-next';
-import { computed, ref } from 'vue';
+import { Archive, Check, Link as LinkIcon, Star } from 'lucide-vue-next';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { toast } from 'vue-sonner';
 
+const AVATAR_CAP = 4;
+const COPIED_RESET_MS = 2500;
+
 const props = defineProps<{
-    boards: Board[];
     workspace: Workspace;
     members: WorkspaceMember[];
-    inviteLink: string;
+    boards?: Board[];
+    inviteLink?: string;
 }>();
 
 type BoardData = {
@@ -30,35 +32,61 @@ type BoardData = {
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'Workspace',
-        href: workspaceRoutes.home(props.workspace.id).url,
-    },
-    {
-        title: 'Home',
-        href: workspaceRoutes.home(props.workspace.id).url,
-    },
+    { title: 'Workspace', href: home(props.workspace.id).url },
+    { title: 'Home', href: home(props.workspace.id).url },
 ];
 
-const page = usePage();
+const { getInitials } = useInitials();
 const http = useHttp();
 
-const user = page.props.auth.user;
-const AVATAR_CAP = 5;
-const copied = ref(false);
+const boards = ref<Board[]>(props.boards ?? []);
+const isInviteLinkCopied = ref(false);
 const showArchivedBoardsDialog = ref(false);
+let copiedResetTimer: ReturnType<typeof setTimeout> | undefined;
 
-const boards = computed(() => props.boards); // created to push the newly created boards from the echo websocket event
-const favoritedBoards = computed(() => props.boards?.filter((board) => board.is_favorited));
+watch(
+    () => props.boards,
+    (value) => {
+        boards.value = value ?? [];
+    },
+);
 
-function copyInviteLink() {
-    navigator.clipboard.writeText(props?.inviteLink);
-    copied.value = true;
-    setTimeout(() => (copied.value = false), 2500);
+const starredBoards = computed(() => boards.value.filter((board) => board.is_favorited));
+
+const visibleMembers = computed(() => props.members.slice(0, AVATAR_CAP));
+
+const hiddenMemberCount = computed(() => Math.max(props.members.length - AVATAR_CAP, 0));
+
+const memberSummary = computed(() => {
+    const count = props.members.length;
+
+    return count === 0 ? 'No members yet' : `${count} ${count === 1 ? 'member' : 'members'}`;
+});
+
+const seoDescription = computed(
+    () => props.workspace.description || `Boards and members of the ${props.workspace.name} workspace on Afor.`,
+);
+
+async function copyInviteLink() {
+    if (!props.inviteLink) {
+        return;
+    }
+
+    try {
+        await navigator.clipboard.writeText(props.inviteLink);
+    } catch {
+        toast.error('Could not copy the invite link. Allow clipboard access and try again.');
+
+        return;
+    }
+
+    isInviteLinkCopied.value = true;
+    clearTimeout(copiedResetTimer);
+    copiedResetTimer = setTimeout(() => (isInviteLinkCopied.value = false), COPIED_RESET_MS);
 }
 
 function handleUnarchiveBoard(board: Board) {
-    const index = boards.value.findIndex((b) => new Date(b.created_at) > new Date(board.created_at));
+    const index = boards.value.findIndex((existing) => new Date(existing.created_at) > new Date(board.created_at));
 
     if (index === -1) {
         boards.value.push(board);
@@ -67,200 +95,165 @@ function handleUnarchiveBoard(board: Board) {
     }
 }
 
-function handleStarBoard(board: Board) {
-    // optimistically toggle locally
-    board.is_favorited = !board.is_favorited;
+function handleStarBoard(board: Board, isStarred: boolean) {
+    board.is_favorited = isStarred;
 
-    http.post(
-        workspaceRoutes.boards.favorite({
-            workspace: props.workspace,
-            board: board,
-        }).url,
-        {
-            onError: () => {
-                toast.error('Failed to star board. Please try again.');
-                // revert if fails
-                board.is_favorited = !board.is_favorited;
-            },
+    http.post(favorite({ workspace: props.workspace.id, board: board.id }).url, {
+        onError: () => {
+            toast.error('Could not update the star. Try again.');
+            board.is_favorited = !isStarred;
         },
-    );
+    });
 }
 
-useEcho<BoardData>(`workspace.${props.workspace.id}`, 'BoardAddedToWorkspace', (e) => {
-    boards.value.push(e.board);
+useEcho<BoardData>(`workspace.${props.workspace.id}`, 'BoardAddedToWorkspace', ({ board }) => {
+    if (!boards.value.some((existing) => existing.id === board.id)) {
+        boards.value.push(board);
+    }
 });
+
+onBeforeUnmount(() => clearTimeout(copiedResetTimer));
 </script>
 
 <template>
-    <Head :title="workspace.name + ' - Home'" />
-
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="px-6 pb-14 sm:px-10">
-            <section>
-                <header class="mt-10">
-                    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-5">
-                        <div class="shrink-0">
-                            <div
-                                class="h-16 w-16 overflow-hidden rounded-2xl border border-border/50 shadow-md sm:h-20 sm:w-20"
-                            >
-                                <img :alt="workspace.name" :src="workspace.logo" class="h-full w-full object-cover" />
-                            </div>
-                        </div>
-                        <div class="min-w-0 space-y-1">
-                            <h1 class="truncate text-xl font-semibold tracking-tight">{{ workspace.name }}</h1>
-                            <p class="line-clamp-2 text-sm text-muted-foreground">{{ workspace.description }}</p>
-                        </div>
-                    </div>
+        <SeoHead :title="workspace.name" :description="seoDescription" is-hidden-from-search />
+        <Head>
+            <link
+                head-key="font-fraunces"
+                href="https://fonts.bunny.net/css?family=fraunces:500,600"
+                rel="stylesheet"
+            />
+        </Head>
 
-                    <div class="mt-5 flex flex-wrap items-center justify-between gap-3">
-                        <div class="flex items-center gap-3">
-                            <div class="flex -space-x-2">
-                                <template v-for="member in members.slice(0, AVATAR_CAP)" :key="member.id">
-                                    <TooltipProvider>
-                                        <Tooltip>
-                                            <TooltipTrigger as-child>
-                                                <Avatar
-                                                    class="h-8 w-8 border-2 border-background shadow-sm transition-all duration-200 hover:z-10 hover:-translate-y-0.5 hover:scale-110 hover:shadow-md"
-                                                >
-                                                    <AvatarImage
-                                                        :alt="member.name"
-                                                        :src="member.avatar ?? ''"
-                                                        class="object-cover"
-                                                    />
-                                                    <AvatarFallback class="bg-muted text-xs font-medium">
-                                                        {{ member.name.charAt(0) }}
-                                                    </AvatarFallback>
-                                                </Avatar>
-                                            </TooltipTrigger>
-                                            <TooltipContent side="bottom">
-                                                <p>{{ user.id === member.id ? 'You' : member.name }}</p>
-                                            </TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
-                                </template>
-                                <Avatar
-                                    v-if="members.length > AVATAR_CAP"
-                                    class="h-8 w-8 border-2 border-background shadow-sm"
-                                >
-                                    <AvatarFallback class="bg-muted text-xs font-medium text-muted-foreground">
-                                        +{{ members.length - AVATAR_CAP }}
-                                    </AvatarFallback>
-                                </Avatar>
-                            </div>
-                            <span class="text-xs text-muted-foreground">
-                                {{ members.length }} member{{ members.length === 1 ? '' : 's' }}
+        <div class="mx-auto w-full max-w-7xl px-4 pt-8 pb-16 sm:px-6 sm:pt-10 lg:px-10">
+            <header class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+                <div
+                    class="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-3 sm:gap-x-5 sm:gap-y-1.5"
+                >
+                    <Avatar class="size-12 rounded-xl ring-1 ring-border sm:row-span-2 sm:size-16 sm:rounded-2xl">
+                        <AvatarImage :src="workspace.logo ?? ''" alt="" class="object-cover" />
+                        <AvatarFallback
+                            class="rounded-xl bg-blush font-display text-lg font-semibold text-blush-foreground sm:rounded-2xl sm:text-xl"
+                        >
+                            {{ getInitials(workspace.name) }}
+                        </AvatarFallback>
+                    </Avatar>
+                    <h1 class="font-display text-2xl font-semibold tracking-tight break-words sm:self-end sm:text-4xl">
+                        {{ workspace.name }}
+                    </h1>
+                    <p
+                        v-if="workspace.description"
+                        class="col-span-2 line-clamp-3 max-w-prose text-sm text-muted-foreground sm:col-span-1 sm:col-start-2 sm:self-start"
+                    >
+                        {{ workspace.description }}
+                    </p>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+                    <Link
+                        :href="workspaceMembers(workspace.id)"
+                        class="flex min-h-8 items-center gap-2 rounded-full py-0.5 pr-3 pl-0.5 text-xs font-medium transition-colors duration-200 outline-none hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/50 sm:min-h-9 sm:text-sm"
+                    >
+                        <span v-if="members.length" aria-hidden="true" class="flex -space-x-2">
+                            <Avatar
+                                v-for="member in visibleMembers"
+                                :key="member.id"
+                                class="size-7 ring-2 ring-background sm:size-8"
+                            >
+                                <AvatarImage :src="member.avatar ?? ''" alt="" class="object-cover" />
+                                <AvatarFallback class="bg-blush text-xs font-semibold text-blush-foreground">
+                                    {{ getInitials(member.name) }}
+                                </AvatarFallback>
+                            </Avatar>
+                            <span
+                                v-if="hiddenMemberCount"
+                                class="flex size-7 items-center justify-center rounded-full bg-muted text-[10px] font-semibold text-muted-foreground tabular-nums ring-2 ring-background sm:size-8 sm:text-xs"
+                            >
+                                +{{ hiddenMemberCount }}
                             </span>
-                        </div>
+                        </span>
+                        <span :class="{ 'pl-2.5': !members.length }" class="tabular-nums">{{ memberSummary }}</span>
+                    </Link>
 
-                        <div class="relative flex flex-col items-end gap-1">
-                            <Transition
-                                enter-active-class="transition-all duration-300"
-                                enter-from-class="opacity-0 translate-y-1"
-                                enter-to-class="opacity-100 translate-y-0"
-                                leave-active-class="transition-all duration-200"
-                                leave-from-class="opacity-100 translate-y-0"
-                                leave-to-class="opacity-0 translate-y-1"
-                            >
-                                <p
-                                    v-if="copied"
-                                    class="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-medium whitespace-nowrap text-emerald-500"
-                                >
-                                    ✓ Link copied to clipboard!
-                                </p>
-                            </Transition>
-
-                            <Button
-                                class="cursor-pointer gap-2 shadow-sm"
-                                size="sm"
-                                variant="outline"
-                                @click="copyInviteLink"
-                            >
-                                <Link class="h-3.5 w-3.5" />
-                                Invite with link
-                            </Button>
-                        </div>
-                    </div>
-                </header>
-            </section>
-
-            <!-- Starred Boards -->
-            <section v-if="favoritedBoards?.length">
-                <div class="my-8 flex items-center gap-3">
-                    <h3 class="text-base font-semibold tracking-tight">Starred Boards</h3>
-                    <span class="rounded-md bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary tabular-nums">
-                        {{ favoritedBoards?.length ?? 0 }}
-                    </span>
-                    <div class="h-px flex-1 bg-border/50" />
-                </div>
-                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                    <Deferred data="boards">
-                        <template #fallback>
-                            <template v-for="i in 4" :key="i">
-                                <Card class="w-full gap-2 overflow-hidden rounded-2xl pt-0 pb-2 shadow-lg">
-                                    <CardContent class="h-24 p-0">
-                                        <Skeleton class="h-full w-full rounded-none" />
-                                    </CardContent>
-                                    <CardFooter class="m-0.5 px-6">
-                                        <Skeleton
-                                            :class="
-                                                cn(
-                                                    'h-3.5 rounded-md',
-                                                    i % 3 === 0 ? 'w-1/2' : i % 2 === 0 ? 'w-3/4' : 'w-2/3',
-                                                )
-                                            "
-                                        />
-                                    </CardFooter>
-                                </Card>
-                            </template>
-                        </template>
-                        <BoardCard
-                            v-for="board in favoritedBoards"
-                            :key="board.id"
-                            :board="board"
-                            @star-board="handleStarBoard"
-                        />
-                    </Deferred>
-                </div>
-            </section>
-
-            <section>
-                <div class="my-8 flex items-center gap-3">
-                    <h3 class="text-base font-semibold tracking-tight">Boards</h3>
-                    <span class="rounded-md bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary tabular-nums">
-                        {{ boards?.length ?? 0 }}
-                    </span>
-                    <div class="h-px flex-1 bg-border/50" />
                     <Button
-                        class="cursor-pointer"
+                        :disabled="!inviteLink"
+                        class="cursor-pointer rounded-full text-xs sm:h-9 sm:px-4 sm:text-sm"
                         size="sm"
                         variant="outline"
-                        @click="showArchivedBoardsDialog = !showArchivedBoardsDialog"
+                        @click="copyInviteLink"
                     >
-                        <ArchiveXIcon class="h-3.5 w-3.5" />
-                        View Archived Boards
+                        <Check v-if="isInviteLinkCopied" class="size-3.5 text-primary" aria-hidden="true" />
+                        <LinkIcon v-else class="size-3.5" aria-hidden="true" />
+                        {{ isInviteLinkCopied ? 'Link copied' : 'Copy invite link' }}
+                    </Button>
+                    <span aria-live="polite" class="sr-only">
+                        {{ isInviteLinkCopied ? 'Invite link copied to clipboard' : '' }}
+                    </span>
+                </div>
+            </header>
+
+            <section v-if="starredBoards.length" aria-labelledby="starred-heading" class="mt-10">
+                <h2 id="starred-heading" class="mb-4 flex items-center gap-2 text-base font-semibold">
+                    <Star class="size-4 fill-primary text-primary" aria-hidden="true" />
+                    Starred
+                </h2>
+                <div class="grid grid-cols-1 gap-4 min-[480px]:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+                    <BoardCard
+                        v-for="board in starredBoards"
+                        :key="board.id"
+                        :board="board"
+                        @star-board="handleStarBoard"
+                    />
+                </div>
+            </section>
+
+            <section aria-labelledby="boards-heading" class="mt-12">
+                <div class="mb-6 flex items-center justify-between gap-3 border-b pb-3">
+                    <h2
+                        id="boards-heading"
+                        class="flex items-baseline gap-2 font-display text-xl font-semibold tracking-tight sm:text-2xl"
+                    >
+                        Boards
+                        <span
+                            v-if="boards.length"
+                            class="font-sans text-sm font-medium text-muted-foreground tabular-nums"
+                        >
+                            {{ boards.length }}
+                        </span>
+                    </h2>
+                    <Button
+                        class="cursor-pointer text-muted-foreground"
+                        size="sm"
+                        variant="ghost"
+                        @click="showArchivedBoardsDialog = true"
+                    >
+                        <Archive aria-hidden="true" />
+                        Archived<span class="sr-only"> boards</span>
                     </Button>
                 </div>
-                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                    <Deferred data="boards">
-                        <template #fallback>
-                            <template v-for="i in 4" :key="i">
-                                <Card class="w-full gap-2 overflow-hidden rounded-2xl pt-0 pb-2 shadow-lg">
-                                    <CardContent class="h-24 p-0">
-                                        <Skeleton class="h-full w-full rounded-none" />
-                                    </CardContent>
-                                    <CardFooter class="m-0.5 px-6">
-                                        <Skeleton
-                                            :class="
-                                                cn(
-                                                    'h-3.5 rounded-md',
-                                                    i % 3 === 0 ? 'w-1/2' : i % 2 === 0 ? 'w-3/4' : 'w-2/3',
-                                                )
-                                            "
-                                        />
-                                    </CardFooter>
-                                </Card>
-                            </template>
-                        </template>
+
+                <Deferred data="boards">
+                    <template #fallback>
+                        <div
+                            aria-busy="true"
+                            aria-label="Loading boards"
+                            class="grid grid-cols-1 gap-4 min-[480px]:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4"
+                        >
+                            <div v-for="i in 4" :key="i" class="overflow-hidden rounded-2xl border bg-card">
+                                <Skeleton class="h-24 rounded-none bg-blush/60" />
+                                <div class="space-y-2 px-4 py-3">
+                                    <Skeleton :class="i % 2 ? 'w-2/3' : 'w-1/2'" class="h-3.5" />
+                                    <Skeleton class="h-3 w-1/3" />
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <p v-if="!boards.length" class="mb-4 text-sm text-muted-foreground">
+                        No boards yet. Create the first one to start planning.
+                    </p>
+                    <div class="grid grid-cols-1 gap-4 min-[480px]:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
                         <BoardCard
                             v-for="board in boards"
                             :key="board.id"
@@ -268,16 +261,15 @@ useEcho<BoardData>(`workspace.${props.workspace.id}`, 'BoardAddedToWorkspace', (
                             @star-board="handleStarBoard"
                         />
                         <BoardCardPopover :workspace-id="workspace.id" />
-                    </Deferred>
-                </div>
+                    </div>
+                </Deferred>
             </section>
         </div>
-    </AppLayout>
-    <ArchivedBoardsDialog
-        v-model:open="showArchivedBoardsDialog"
-        :workspace="workspace"
-        @unarchive-board="handleUnarchiveBoard"
-    />
-</template>
 
-<style scoped></style>
+        <ArchivedBoardsDialog
+            v-model:open="showArchivedBoardsDialog"
+            :workspace="workspace"
+            @unarchive-board="handleUnarchiveBoard"
+        />
+    </AppLayout>
+</template>
