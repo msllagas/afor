@@ -14,8 +14,10 @@ use App\Services\FileUploadService;
 use App\Services\WorkspaceService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
+use InvalidArgumentException;
 
 class WorkspaceController extends Controller
 {
@@ -125,10 +127,12 @@ class WorkspaceController extends Controller
 
     public function removeMember(Workspace $workspace, User $user): RedirectResponse
     {
+        Gate::authorize('manageMembers', $workspace);
+
         try {
             $this->workspaceService->removeMember($workspace, $user);
-        } catch (\InvalidArgumentException $e) {
-            abort(403, $e->getMessage());
+        } catch (InvalidArgumentException $exception) {
+            abort(403, $exception->getMessage());
         }
 
         return back();

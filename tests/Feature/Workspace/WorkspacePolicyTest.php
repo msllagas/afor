@@ -18,3 +18,14 @@ test('users outside the workspace cannot view it', function () {
 
     expect(User::factory()->create()->can('view', $workspace))->toBeFalse();
 });
+
+test('only the workspace creator can manage members', function () {
+    $owner = User::factory()->create();
+    $member = User::factory()->create();
+    $workspace = Workspace::factory()->forUser($owner)->create();
+    $workspace->users()->attach($member);
+
+    expect($owner->can('manageMembers', $workspace))->toBeTrue()
+        ->and($member->can('manageMembers', $workspace))->toBeFalse()
+        ->and(User::factory()->create()->can('manageMembers', $workspace))->toBeFalse();
+});
