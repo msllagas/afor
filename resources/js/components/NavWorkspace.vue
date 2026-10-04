@@ -43,22 +43,25 @@ const page = usePage();
             >
                 <SidebarMenuItem>
                     <CollapsibleTrigger as-child>
-                        <SidebarMenuButton :tooltip="item.title">
+                        <SidebarMenuButton
+                            :tooltip="item.title"
+                            class="h-auto min-h-8 group-data-[collapsible=icon]:p-0!"
+                        >
                             <img
                                 v-if="item.logo"
                                 :alt="item.title"
                                 :src="item.logo"
-                                class="h-5 w-5 rounded-md object-cover ring-1 ring-border/50"
+                                class="size-5 shrink-0 rounded-md object-cover ring-1 ring-border/50 group-data-[collapsible=icon]:size-8"
                             />
                             <div
                                 v-else
-                                class="flex h-5 w-5 items-center justify-center rounded-md bg-linear-to-br from-primary/20 to-accent/20 text-[10px] font-bold text-primary ring-1 ring-border/50"
+                                class="flex size-5 shrink-0 items-center justify-center rounded-md bg-linear-to-br from-primary/20 to-accent/20 text-[10px] font-bold text-primary ring-1 ring-border/50 group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:text-sm"
                             >
                                 {{ item.title.charAt(0).toUpperCase() }}
                             </div>
-                            <span>{{ item.title }}</span>
+                            <span class="min-w-0 leading-snug group-data-[collapsible=icon]:hidden">{{ item.title }}</span>
                             <ChevronRight
-                                class="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90"
+                                class="ml-auto group-data-[collapsible=icon]:hidden transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90"
                             />
                         </SidebarMenuButton>
                     </CollapsibleTrigger>
