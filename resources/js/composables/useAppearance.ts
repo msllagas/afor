@@ -40,7 +40,12 @@ const getStoredAppearance = () => {
         return null;
     }
 
-    return localStorage.getItem('appearance') as Appearance | null;
+    try {
+        return localStorage.getItem('appearance') as Appearance | null;
+    } catch {
+        // Storage can be blocked (private mode, disabled site data); fall back to the system theme.
+        return null;
+    }
 };
 
 const handleSystemThemeChange = () => {
@@ -66,7 +71,7 @@ const appearance = ref<Appearance>('system');
 
 export function useAppearance() {
     onMounted(() => {
-        const savedAppearance = localStorage.getItem('appearance') as Appearance | null;
+        const savedAppearance = getStoredAppearance();
 
         if (savedAppearance) {
             appearance.value = savedAppearance;
@@ -77,7 +82,11 @@ export function useAppearance() {
         appearance.value = value;
 
         // Store in localStorage for client-side persistence...
-        localStorage.setItem('appearance', value);
+        try {
+            localStorage.setItem('appearance', value);
+        } catch {
+            // Ignore so the theme still changes for this visit.
+        }
 
         // Store in cookie for SSR...
         setCookie('appearance', value);
