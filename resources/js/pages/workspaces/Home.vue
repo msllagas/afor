@@ -36,7 +36,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
     {
         title: 'Home',
-        href: workspaceRoutes.members(props.workspace.id).url,
+        href: workspaceRoutes.home(props.workspace.id).url,
     },
 ];
 
