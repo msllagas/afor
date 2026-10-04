@@ -205,7 +205,7 @@ import SeoHead from '@/components/SeoHead.vue';
                                 in accordance with their
                                 <a
                                     class="text-primary underline underline-offset-2 transition-opacity hover:opacity-75"
-                                    href="aws.amazon.com/privacy"
+                                    href="https://aws.amazon.com/privacy/"
                                     target="_blank"
                                     >privacy policy</a
                                 >.
