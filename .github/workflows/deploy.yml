@@ -120,7 +120,8 @@ jobs:
     name: Deploy to Prod
     runs-on: ubuntu-latest
     needs: test  # blocked if lint or test fails
-    if: github.event_name == 'push'
+    # Temporarily disabled: remove `false &&` to re-enable deploys
+    if: false && github.event_name == 'push'
 
     steps:
       - name: Deploy to EC2
