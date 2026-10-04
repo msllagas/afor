@@ -52,44 +52,33 @@ class WorkspaceController extends Controller
         return back();
     }
 
-    public function home(Workspace $workspace)
+    public function home(Workspace $workspace): Response|RedirectResponse
     {
         $user = auth()->user();
 
-        $isOwner = $workspace->owner_id === $user->id;
+        $canAccess = $workspace->owner_id === $user->id
+            || $workspace->users()->whereKey($user->id)->exists();
 
-        $isMember = $workspace->users()
-            ->where('user_id', $user->id)
-            ->exists();
-
-        if (!$isOwner && !$isMember) {
+        if (!$canAccess) {
             return redirect()->route('dashboard');
         }
 
-        $members = UserResource::collection(
-            $workspace->users()
-                ->with('avatarFile')
-                ->select('users.id', 'users.name', 'users.email', 'users.email_verified_at')
-                ->get()
-        )->resolve();
-
-        $workspace->load([
-            'logoFile',
-        ]);
-
         return Inertia::render('workspaces/Home', [
-            'boards' => Inertia::defer(function () use ($workspace, $user) {
-                return $workspace->boards()
-                    ->unarchived()
-                    ->withExists([
-                        'favoritedByUsers as is_favorited' => fn ($query) => $query->where('user_id', $user->id),
-                    ])
-                    ->get();
-            }, 'boards'),
-            'workspace'  => new WorkspaceResource($workspace),
-            'members'    => $members,
-            'inviteLink' => Inertia::defer(fn () => $this->workspaceService->generateInvitationLink($workspace,
-                auth()->user()), 'inviteLink'),
+            'workspace' => fn () => new WorkspaceResource($workspace->load('logoFile')),
+            'members'   => fn () => UserResource::collection(
+                $workspace->users()
+                    ->select('users.id', 'users.name', 'users.email', 'users.email_verified_at')
+                    ->with('avatarFile')
+                    ->get()
+            )->resolve(),
+            'boards' => Inertia::defer(fn () => $workspace->boards()
+                ->select('id', 'name', 'workspace_id', 'created_at')
+                ->unarchived()
+                ->withExists([
+                    'favoritedByUsers as is_favorited' => fn ($query) => $query->whereKey($user->id),
+                ])
+                ->get()),
+            'inviteLink' => Inertia::defer(fn () => $this->workspaceService->generateInvitationLink($workspace, $user)),
         ]);
     }
 

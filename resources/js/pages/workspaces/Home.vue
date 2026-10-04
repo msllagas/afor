@@ -9,13 +9,13 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import ArchivedBoardsDialog from '@/components/workspace/ArchivedBoardsDialog.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { cn } from '@/lib/utils';
-import { default as workspaceRoutes, default as workspaces } from '@/routes/workspaces';
+import workspaceRoutes from '@/routes/workspaces';
 import type { BreadcrumbItem, Workspace, WorkspaceMember } from '@/types';
 import { Board } from '@/types';
-import { Deferred, Head, router, useHttp, usePage } from '@inertiajs/vue3';
+import { Deferred, Head, useHttp, usePage } from '@inertiajs/vue3';
 import { useEcho } from '@laravel/echo-vue';
 import { ArchiveXIcon, Link } from 'lucide-vue-next';
-import { computed, onMounted, ref } from 'vue';
+import { computed, ref } from 'vue';
 import { toast } from 'vue-sonner';
 
 const props = defineProps<{
@@ -85,14 +85,6 @@ function handleStarBoard(board: Board) {
         },
     );
 }
-
-onMounted(() => {
-    router.visit(workspaces.home(props.workspace.id).url, {
-        only: ['workspace'],
-        preserveScroll: true,
-        preserveState: true,
-    });
-});
 
 useEcho<BoardData>(`workspace.${props.workspace.id}`, 'BoardAddedToWorkspace', (e) => {
     boards.value.push(e.board);
