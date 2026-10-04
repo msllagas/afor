@@ -32,7 +32,9 @@ class BoardController extends Controller
             ->orWhereHas('users', fn ($query) => $query->whereKey($user->id))
             ->with([
                 'logoFile',
-                'boards:id,name,workspace_id',
+                'boards' => fn ($query) => $query
+                    ->select('id', 'name', 'workspace_id')
+                    ->unarchived(),
             ])
             ->get()
             ->partition(fn (Workspace $workspace) => $workspace->owner_id === $user->id);

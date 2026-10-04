@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Board;
 use App\Models\User;
 use App\Models\Workspace;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -79,5 +80,20 @@ test('boards index lists every shared workspace as a list', function () {
         ->has('ownedWorkspaces', 1)
         ->has('sharedWorkspaces', 2)
         ->where('sharedWorkspaces', fn ($workspaces) => array_is_list($workspaces->all()))
+    );
+});
+
+test('boards index hides archived boards', function () {
+    $user = User::factory()->create();
+    $workspace = Workspace::factory()->forUser($user)->create();
+    $activeBoard = Board::factory()->for($workspace)->create();
+    Board::factory()->for($workspace)->archived($user)->create();
+
+    $response = $this->actingAs($user)
+        ->get(route('boards.index'));
+
+    $response->assertInertia(fn (Assert $page) => $page
+        ->has('ownedWorkspaces.0.boards', 1)
+        ->where('ownedWorkspaces.0.boards.0.id', $activeBoard->id)
     );
 });
