@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\User;
 use App\Models\Workspace;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -20,8 +21,17 @@ return new class extends Migration
                 ->constrained()
                 ->cascadeOnDelete();
 
+            $table->foreignIdFor(User::class, 'archived_by')
+                ->nullable()
+                ->constrained()
+                ->nullOnDelete();
+
+            $table->timestamp('archived_at')->nullable();
+
             $table->timestamps();
             $table->softDeletes();
+
+            $table->index(['workspace_id', 'archived_at', 'archived_by']);
         });
     }
 
