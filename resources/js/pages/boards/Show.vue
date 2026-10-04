@@ -282,8 +282,8 @@ onMounted(() => {
         </nav>
         <div class="mt-20">
             <ol
-                v-if="board?.board_lists?.length > 0"
-                class="absolute flex h-full max-h-[calc(100vh-128px)] gap-4 overflow-x-hidden overflow-y-hidden px-4"
+                :class="{ 'gap-4': boardLists.length }"
+                class="absolute flex h-full max-h-[calc(100vh-128px)] overflow-x-hidden overflow-y-hidden px-4"
             >
                 <draggable
                     :component-data="{
@@ -350,7 +350,7 @@ onMounted(() => {
                             @click="onAddNewBoardList"
                         >
                             <Plus />
-                            Add another list
+                            {{ boardLists.length ? 'Add another list' : 'Add a list' }}
                         </Button>
                     </div>
                 </li>
