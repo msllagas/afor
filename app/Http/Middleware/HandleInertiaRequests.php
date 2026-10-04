@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Http\Resources\UserResource;
 use App\Http\Resources\WorkspaceResource;
+use App\Models\Board;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -64,6 +65,17 @@ class HandleInertiaRequests extends Middleware
             'currentWorkspaceId' => fn () => $user
                 ? RememberLastWorkspace::workspaceIdFromRoute($request) ?? $user->last_workspace_id
                 : null,
+            'starredBoards' => fn () => $user
+                ? $user->favoriteBoards()
+                    ->select('boards.id', 'boards.name', 'boards.workspace_id')
+                    ->unarchived()
+                    ->whereHas('workspace', fn ($query) => $query
+                        ->where('owner_id', $user->id)
+                        ->orWhereHas('users', fn ($query) => $query->whereKey($user->id)))
+                    ->orderBy('boards.name')
+                    ->get()
+                    ->map(fn (Board $board) => $board->only('id', 'name', 'workspace_id'))
+                : [],
         ];
     }
 }
