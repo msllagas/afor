@@ -1,7 +1,7 @@
 export interface Card {
     id: string;
     name: string;
-    description?: string;
+    description?: string | null;
     order: number;
     board_list_id: string;
 }
@@ -13,7 +13,7 @@ export interface BoardList {
     board_id: string;
     cards: Card[];
     cards_count?: number;
-    color?: string;
+    color?: string | null;
 }
 
 export interface Board {
@@ -25,6 +25,13 @@ export interface Board {
     created_at: string;
     archived_at?: number | null;
     archiver?: { id: string; name: string } | null;
+}
+
+/** The payload of vuedraggable's `change` event. */
+export interface SortableChangeEvent<T> {
+    moved?: { element: T; oldIndex: number; newIndex: number };
+    added?: { element: T; newIndex: number };
+    removed?: { element: T; oldIndex: number };
 }
 
 export type StarredBoard = Pick<Board, 'id' | 'name' | 'workspace_id'>;

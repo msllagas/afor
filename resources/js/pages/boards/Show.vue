@@ -1,369 +1,1089 @@
 <script lang="ts" setup>
 import BoardListController from '@/actions/App/Http/Controllers/BoardListController';
-import AppLogo from '@/components/AppLogo.vue';
 import BoardList from '@/components/board/board-list/BoardList.vue';
-import CardDialog from '@/components/board/board-list/card/CardDialog.vue';
 import BoardDropdownMenu from '@/components/board/BoardDropdownMenu.vue';
+import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import WorkspaceAvatar from '@/components/workspace/WorkspaceAvatar.vue';
+import AppLayout from '@/layouts/AppLayout.vue';
+import { cn } from '@/lib/utils';
 import cardRoutes from '@/routes/board-lists/cards';
 import boardRoutes from '@/routes/boards';
 import boardListRoutes from '@/routes/boards/board-lists';
 import { home } from '@/routes/workspaces';
-import type { Board, Card } from '@/types';
-import { Form, Head, Link, router } from '@inertiajs/vue3';
-import { Plus, X } from 'lucide-vue-next';
-import { computed, nextTick, onMounted, provide, ref, useTemplateRef, watch } from 'vue';
+import { favorite } from '@/routes/workspaces/boards';
+import type { Board, BoardList as BoardListType, BreadcrumbItem, Card, SortableChangeEvent } from '@/types';
+import type { RequestPayload } from '@inertiajs/core';
+import { Form, Head, Link, router, useHttp, usePage } from '@inertiajs/vue3';
+import { onClickOutside, useMediaQuery } from '@vueuse/core';
+import { Plus, Star, X } from 'lucide-vue-next';
+import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, provide, ref, useTemplateRef, watch } from 'vue';
+import { toast } from 'vue-sonner';
 import draggable from 'vuedraggable';
+
+// The card dialog carries the rich text editor, so it loads the first time a card opens.
+const CardDialog = defineAsyncComponent(() => import('@/components/board/board-list/card/CardDialog.vue'));
 
 const props = defineProps<{
     board: Board;
-    selectedCard?: Card;
+    selectedCard?: Card | null;
     colors: Array<string>;
 }>();
+
+// The card description editor reads the list colours for its highlighter.
 provide('colors', props.colors);
 
-const isDialogOpen = ref(false);
-const isFetching = ref(false);
-const isAddingNewBoardList = ref(false);
-const headerTitle = ref(props.board.name);
-const drag = ref(false);
-const boardLists = ref([...props.board.board_lists]);
-const input = useTemplateRef('add-new-list-input');
+const page = usePage();
+const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
+
+/*
+|--------------------------------------------------------------------------
+| Local board state
+|--------------------------------------------------------------------------
+| Lists and cards are edited optimistically on a local copy. Server
+| snapshots replace it only when nothing is being dragged or saved,
+| so a slow response can't snap a card back mid-move.
+*/
+
+function cloneLists(boardLists: BoardListType[]): BoardListType[] {
+    return boardLists.map((list) => ({ ...list, cards: list.cards.map((card) => ({ ...card })) }));
+}
+
+const lists = ref<BoardListType[]>(cloneLists(props.board.board_lists));
 const boardName = ref(props.board.name);
-const isEditingBoardName = ref(false);
-const editedBoardName = ref(props.board.name);
-const mirrorRef = ref<HTMLDivElement | null>(null);
-const inputWidth = ref(0);
-const inputRef = ref<HTMLInputElement | null>(null);
+const isDragging = ref(false);
+let pendingRequests = 0;
+let hasPendingSync = false;
+let lastDragEndedAt = 0;
 
-const dragOptions = computed(() => ({
-    animation: 200,
-    group: {
-        name: 'boardList',
-        pull: true,
-        put: false,
-    },
-    ghostClass: 'ghost',
-    dragClass: 'drag',
-    forceFallback: true,
-    disabled: false,
-    scrollSensitivity: 100,
-    scrollSpeed: 20,
-}));
+function applyServerBoard() {
+    if (isDragging.value || pendingRequests > 0) {
+        hasPendingSync = true;
 
-function onCardClick(boardListId: string, card: Card) {
-    isFetching.value = true;
-    isDialogOpen.value = true;
-
-    const url = cardRoutes.show({
-        board_list: boardListId,
-        card: card.id,
-    }).url;
-    headerTitle.value = card.name;
-
-    window.history.pushState({}, '', url);
-
-    router.visit(url, {
-        only: ['selectedCard'],
-        preserveScroll: true,
-        preserveState: true,
-        replace: true,
-        onSuccess: () => {
-            isFetching.value = false;
-        },
-    });
-}
-
-function onDialogClose(value: boolean) {
-    if (!value) {
-        headerTitle.value = props.board.name;
-        isDialogOpen.value = false;
-
-        window.history.pushState({}, '', boardRoutes.show(props.board.id).url);
-    }
-}
-
-function onChange(boardId: string, event: any) {
-    if (event.moved) {
-        const { oldIndex, newIndex } = event.moved;
-        const start = Math.min(oldIndex, newIndex);
-        const end = Math.max(oldIndex, newIndex);
-
-        // vue-draggable already reordered the array
-        // so just reassign orders for the affected slice only
-        const changed = boardLists.value.slice(start, end + 1).map((list, i) => ({ id: list.id, order: start + i }));
-
-        router.patch(
-            boardListRoutes.reorder(boardId).url,
-            {
-                boardLists: changed,
-            },
-            {
-                replace: true,
-            },
-        );
-    }
-}
-
-async function onAddNewBoardList() {
-    isAddingNewBoardList.value = true;
-    await nextTick();
-    input.value?.focus();
-}
-function handleArchive(boardListId: string) {
-    boardLists.value = boardLists.value.filter((list) => {
-        return list.id !== boardListId;
-    });
-
-    router.patch(
-        boardListRoutes.update({
-            board: props.board.id,
-            board_list: boardListId,
-        }).url,
-        {
-            is_archived: true,
-        },
-    );
-}
-
-function handleDeleteCard(boardListId: string, cardId: string) {
-    boardLists.value.forEach((list) => {
-        if (list.id === boardListId) {
-            list.cards = list.cards.filter((card) => card.id !== cardId);
-        }
-    });
-    onDialogClose(false);
-
-    router.delete(
-        cardRoutes.destroy({
-            board_list: boardListId,
-            card: cardId,
-        }).url,
-        {
-            preserveScroll: true,
-            preserveState: true,
-            onSuccess: () => {
-                headerTitle.value = props.board.name;
-            },
-        },
-    );
-}
-
-function startEditingBoardName() {
-    editedBoardName.value = boardName.value;
-    isEditingBoardName.value = true;
-    nextTick(() => {
-        if (mirrorRef.value) inputWidth.value = mirrorRef.value.offsetWidth;
-        inputRef.value?.select();
-        const input = inputRef.value;
-        if (input) {
-            input.focus();
-            input.setSelectionRange(input.value.length, input.value.length);
-            input.scrollLeft = 999999;
-        }
-    });
-}
-
-function saveBoardName() {
-    const sanitizedName = editedBoardName.value.trim();
-    isEditingBoardName.value = false;
-
-    if (!sanitizedName) {
-        editedBoardName.value = boardName.value;
         return;
     }
 
-    if (sanitizedName === boardName.value) return;
+    hasPendingSync = false;
+    lists.value = cloneLists(props.board.board_lists);
 
-    boardName.value = sanitizedName;
-    editedBoardName.value = sanitizedName;
-
-    router.patch(
-        boardRoutes.update({
-            board: props.board.id,
-        }).url,
-        {
-            name: sanitizedName,
-        },
-        {
-            preserveScroll: true,
-            preserveState: true,
-            onSuccess: () => {
-                headerTitle.value = sanitizedName;
-            },
-        },
-    );
+    if (!isEditingName.value) {
+        boardName.value = props.board.name;
+    }
 }
 
-function handleArchiveBoard() {
-    router.patch(
-        boardRoutes.archive({
-            board: props.board.id,
-        }).url,
-        {},
-        {
-            onSuccess: () => {
-                router.visit(home(props.board.workspace_id).url, {
-                    only: ['board'],
-                    replace: true,
-                });
-            },
-        },
-    );
+watch(() => props.board, applyServerBoard);
+
+/*
+|--------------------------------------------------------------------------
+| Workspace context
+|--------------------------------------------------------------------------
+*/
+
+const workspace = computed(
+    () =>
+        [...page.props.ownedWorkspaces, ...page.props.sharedWorkspaces].find(
+            ({ id }) => id === props.board.workspace_id,
+        ) ?? null,
+);
+const workspaceName = computed(() => workspace.value?.name ?? 'Workspace');
+const workspaceHomeUrl = computed(() => home(props.board.workspace_id).url);
+
+const breadcrumbs = computed<BreadcrumbItem[]>(() => [
+    { title: workspaceName.value, href: workspaceHomeUrl.value },
+    { title: boardName.value, href: boardRoutes.show(props.board.id).url },
+]);
+
+const cardCount = computed(() => lists.value.reduce((total, list) => total + list.cards.length, 0));
+const summary = computed(() => {
+    const listLabel = `${lists.value.length} ${lists.value.length === 1 ? 'list' : 'lists'}`;
+
+    return `${listLabel} · ${cardCount.value} ${cardCount.value === 1 ? 'card' : 'cards'}`;
+});
+
+/*
+|--------------------------------------------------------------------------
+| Screen reader announcements
+|--------------------------------------------------------------------------
+*/
+
+const announcement = ref('');
+
+async function announce(message: string) {
+    announcement.value = '';
+    await nextTick();
+    announcement.value = message;
 }
+
+/*
+|--------------------------------------------------------------------------
+| Saving changes
+|--------------------------------------------------------------------------
+| Every change runs as an async visit so they never cancel each other,
+| and only the board prop comes back. On any failure the board falls
+| back to the last server snapshot and re-fetches it.
+*/
+
+function rollback(message: string) {
+    toast.error(message);
+    lists.value = cloneLists(props.board.board_lists);
+    boardName.value = props.board.name;
+    router.reload({ only: ['board'], async: true, onHttpException: () => false, onNetworkError: () => false });
+}
+
+function send(
+    method: 'patch' | 'delete',
+    url: string,
+    data: RequestPayload,
+    failureMessage: string,
+    onSuccess?: () => void,
+) {
+    pendingRequests++;
+
+    router.visit(url, {
+        method,
+        data,
+        async: true,
+        replace: true,
+        preserveScroll: true,
+        preserveState: true,
+        only: ['board'],
+        onSuccess: () => onSuccess?.(),
+        onError: (errors) => rollback(Object.values(errors)[0] ?? failureMessage),
+        onHttpException: () => {
+            rollback(failureMessage);
+
+            return false;
+        },
+        onNetworkError: () => {
+            rollback(`${failureMessage} Check your connection.`);
+
+            return false;
+        },
+        onFinish: () => {
+            pendingRequests = Math.max(pendingRequests - 1, 0);
+
+            if (hasPendingSync) {
+                applyServerBoard();
+            }
+        },
+    });
+}
+
+/*
+|--------------------------------------------------------------------------
+| Board name
+|--------------------------------------------------------------------------
+*/
+
+const isEditingName = ref(false);
+const draftName = ref(boardName.value);
+const nameInput = useTemplateRef<HTMLInputElement>('board-name-input');
+const nameButton = useTemplateRef<HTMLButtonElement>('board-name-button');
+
+async function startEditingName() {
+    draftName.value = boardName.value;
+    isEditingName.value = true;
+    await nextTick();
+    nameInput.value?.select();
+}
+
+/** Keyboard saves and cancels hand focus back to the name; a blur leaves it where the user clicked. */
+async function stopEditingName(shouldRestoreFocus: boolean) {
+    isEditingName.value = false;
+
+    if (shouldRestoreFocus) {
+        await nextTick();
+        nameButton.value?.focus();
+    }
+}
+
+function saveName(shouldRestoreFocus = false) {
+    if (!isEditingName.value) {
+        return;
+    }
+
+    stopEditingName(shouldRestoreFocus);
+    const name = draftName.value.trim();
+
+    if (!name || name === boardName.value) {
+        return;
+    }
+
+    boardName.value = name;
+    send('patch', boardRoutes.update(props.board.id).url, { name }, 'Could not rename the board.');
+}
+
+/*
+|--------------------------------------------------------------------------
+| Star and archive
+|--------------------------------------------------------------------------
+*/
+
+const starHttp = useHttp();
+const isStarred = ref(false);
+const isArchiving = ref(false);
 
 watch(
-    () => props.board,
-    (newBoard) => (boardLists.value = [...newBoard.board_lists]),
+    () => page.props.starredBoards,
+    (starredBoards) => {
+        if (!starHttp.processing) {
+            isStarred.value = starredBoards.some(({ id }) => id === props.board.id);
+        }
+    },
+    { immediate: true },
 );
 
-watch(editedBoardName, () => {
-    nextTick(() => {
-        if (mirrorRef.value) {
-            inputWidth.value = mirrorRef.value.offsetWidth;
+function toggleStar() {
+    if (starHttp.processing) {
+        return;
+    }
+
+    const shouldStar = !isStarred.value;
+    isStarred.value = shouldStar;
+
+    const undoStar = () => {
+        isStarred.value = !shouldStar;
+        toast.error('Could not update the star. Try again.');
+    };
+
+    starHttp
+        .post(favorite({ workspace: props.board.workspace_id, board: props.board.id }).url, {
+            // Refresh the sidebar's Starred section; if that fails it catches up on the next visit.
+            onSuccess: () =>
+                router.reload({
+                    only: ['starredBoards'],
+                    async: true,
+                    onHttpException: () => false,
+                    onNetworkError: () => false,
+                }),
+            onError: undoStar,
+            onHttpException: undoStar,
+            onNetworkError: undoStar,
+        })
+        .catch(() => {});
+}
+
+function archiveBoard() {
+    if (isArchiving.value) {
+        return;
+    }
+
+    isArchiving.value = true;
+    const archivedName = boardName.value;
+
+    const fail = () => {
+        isArchiving.value = false;
+        toast.error('Could not archive the board. Try again.');
+
+        return false;
+    };
+
+    router.patch(
+        boardRoutes.archive(props.board.id).url,
+        {},
+        {
+            only: ['board'],
+            preserveScroll: true,
+            preserveState: true,
+            onSuccess: () =>
+                router.visit(workspaceHomeUrl.value, {
+                    replace: true,
+                    onSuccess: () =>
+                        toast.success(`Archived “${archivedName}”`, {
+                            description: 'You can restore it from Archived boards.',
+                        }),
+                }),
+            onError: fail,
+            onHttpException: fail,
+            onNetworkError: fail,
+        },
+    );
+}
+
+/*
+|--------------------------------------------------------------------------
+| Canvas: scrolling, mobile list navigation
+|--------------------------------------------------------------------------
+*/
+
+const canvas = useTemplateRef<HTMLElement>('canvas');
+const listNav = useTemplateRef<HTMLElement>('list-nav');
+const activeListIndex = ref(0);
+let scrollFrame = 0;
+
+function columnElements() {
+    return Array.from(canvas.value?.querySelectorAll<HTMLElement>('[data-list-id]') ?? []);
+}
+
+function updateActiveList() {
+    scrollFrame = 0;
+    const scroller = canvas.value;
+
+    if (!scroller) {
+        return;
+    }
+
+    const center = scroller.scrollLeft + scroller.clientWidth / 2;
+    let closestIndex = 0;
+    let closestDistance = Infinity;
+
+    columnElements().forEach((column, index) => {
+        const distance = Math.abs(column.offsetLeft + column.offsetWidth / 2 - center);
+
+        if (distance < closestDistance) {
+            closestDistance = distance;
+            closestIndex = index;
         }
     });
+
+    activeListIndex.value = closestIndex;
+}
+
+function onCanvasScroll() {
+    if (!scrollFrame) {
+        scrollFrame = requestAnimationFrame(updateActiveList);
+    }
+}
+
+// Turn vertical wheel movement into horizontal scrolling, except over a list that scrolls itself.
+function onCanvasWheel(event: WheelEvent) {
+    const scroller = canvas.value;
+
+    if (!scroller || event.ctrlKey || Math.abs(event.deltaY) <= Math.abs(event.deltaX)) {
+        return;
+    }
+
+    const cardScroller = (event.target as HTMLElement).closest<HTMLElement>('[data-card-scroller]');
+
+    if (cardScroller && cardScroller.scrollHeight > cardScroller.clientHeight) {
+        return;
+    }
+
+    // Line-based wheels (mostly Firefox) report rows rather than pixels.
+    const distance = event.deltaMode === WheelEvent.DOM_DELTA_LINE ? event.deltaY * WHEEL_LINE_HEIGHT : event.deltaY;
+
+    // Trackpads already send a smooth stream of small steps, and phones snap list by list.
+    const isTrackpad = event.deltaMode === WheelEvent.DOM_DELTA_PIXEL && Math.abs(distance) < 50;
+
+    if (prefersReducedMotion.value || isTrackpad) {
+        stopWheelScroll();
+        scroller.scrollLeft += distance;
+
+        return;
+    }
+
+    if (getComputedStyle(scroller).scrollSnapType !== 'none') {
+        scroller.scrollBy({ left: distance, behavior: 'smooth' });
+
+        return;
+    }
+
+    // Glide towards a target that each notch pushes further, so fast scrolling stays fluid.
+    const maxScrollLeft = scroller.scrollWidth - scroller.clientWidth;
+    wheelTarget = Math.min(Math.max((wheelTarget ?? scroller.scrollLeft) + distance, 0), maxScrollLeft);
+
+    if (!wheelFrame) {
+        wheelFrame = requestAnimationFrame(stepWheelScroll);
+    }
+}
+
+const WHEEL_LINE_HEIGHT = 40;
+const WHEEL_EASING = 0.18;
+let wheelTarget: number | null = null;
+let wheelFrame = 0;
+
+function stepWheelScroll() {
+    const scroller = canvas.value;
+
+    if (!scroller || wheelTarget === null) {
+        stopWheelScroll();
+
+        return;
+    }
+
+    const remaining = wheelTarget - scroller.scrollLeft;
+
+    if (Math.abs(remaining) < 1) {
+        scroller.scrollLeft = wheelTarget;
+        stopWheelScroll();
+
+        return;
+    }
+
+    // Move at least a pixel per frame so rounding can't stall the glide.
+    scroller.scrollLeft += Math.sign(remaining) * Math.max(Math.abs(remaining) * WHEEL_EASING, 1);
+    wheelFrame = requestAnimationFrame(stepWheelScroll);
+}
+
+/** Hand control back to the user or to another scroll, such as jumping to a list. */
+function stopWheelScroll() {
+    cancelAnimationFrame(wheelFrame);
+    wheelFrame = 0;
+    wheelTarget = null;
+}
+
+function scrollBehavior(): ScrollBehavior {
+    return prefersReducedMotion.value ? 'auto' : 'smooth';
+}
+
+function jumpToList(index: number) {
+    stopWheelScroll();
+    columnElements()[index]?.scrollIntoView({ behavior: scrollBehavior(), block: 'nearest', inline: 'center' });
+}
+
+function scrollListIntoView(listId: string) {
+    stopWheelScroll();
+    columnElements()
+        .find((column) => column.dataset.listId === listId)
+        ?.scrollIntoView({ behavior: scrollBehavior(), block: 'nearest', inline: 'nearest' });
+}
+
+watch(activeListIndex, (index) => {
+    listNav.value
+        ?.querySelectorAll('button')
+        [index]?.scrollIntoView({ behavior: scrollBehavior(), block: 'nearest', inline: 'nearest' });
 });
 
-onMounted(() => {
-    if (props.selectedCard) {
-        isDialogOpen.value = true;
+onBeforeUnmount(() => {
+    cancelAnimationFrame(scrollFrame);
+    stopWheelScroll();
+});
+
+/*
+|--------------------------------------------------------------------------
+| Drag and drop
+|--------------------------------------------------------------------------
+| Touch drags start after a short press so swiping still scrolls the
+| board. The fallback renderer keeps mouse and touch drags identical
+| and lets SortableJS auto-scroll the board and lists near their edges.
+*/
+
+const sharedDragOptions = computed(() => ({
+    animation: prefersReducedMotion.value ? 0 : 180,
+    forceFallback: true,
+    fallbackOnBody: true,
+    fallbackTolerance: 4,
+    delay: 200,
+    delayOnTouchOnly: true,
+    touchStartThreshold: 6,
+    ghostClass: 'board-drag-ghost',
+    dragClass: 'board-drag-active',
+    scroll: true,
+    bubbleScroll: true,
+    scrollSensitivity: 80,
+    scrollSpeed: 16,
+    filter: 'input, textarea, select, [contenteditable]',
+    preventOnFilter: false,
+}));
+
+const listDragOptions = computed(() => ({
+    ...sharedDragOptions.value,
+    group: 'board-lists',
+    handle: '[data-list-handle]',
+    draggable: '.board-column',
+}));
+
+const cardDragOptions = computed(() => ({
+    ...sharedDragOptions.value,
+    group: 'board-cards',
+    draggable: '.board-card',
+    emptyInsertThreshold: 24,
+}));
+
+function onDragStart() {
+    isDragging.value = true;
+}
+
+function onDragEnd() {
+    isDragging.value = false;
+    lastDragEndedAt = Date.now();
+
+    if (hasPendingSync) {
+        applyServerBoard();
+    }
+}
+
+/*
+|--------------------------------------------------------------------------
+| Lists
+|--------------------------------------------------------------------------
+*/
+
+function persistListOrder() {
+    send(
+        'patch',
+        boardListRoutes.reorder(props.board.id).url,
+        { boardLists: lists.value.map((list, index) => ({ id: list.id, order: index })) },
+        'Could not save the list order.',
+    );
+}
+
+function onListsChange(event: SortableChangeEvent<BoardListType>) {
+    if (!event.moved) {
+        return;
+    }
+
+    persistListOrder();
+    announce(
+        `Moved list ${event.moved.element.name} to position ${event.moved.newIndex + 1} of ${lists.value.length}.`,
+    );
+}
+
+async function moveList(list: BoardListType, direction: -1 | 1) {
+    const from = lists.value.indexOf(list);
+    const to = from + direction;
+
+    if (from === -1 || to < 0 || to >= lists.value.length) {
+        return;
+    }
+
+    // Remember where every column sits, so they can glide from there to their new places.
+    const previousLefts = new Map(
+        columnElements().map((column) => [column.dataset.listId, column.getBoundingClientRect().left]),
+    );
+
+    lists.value.splice(to, 0, ...lists.value.splice(from, 1));
+    persistListOrder();
+    announce(`Moved list ${list.name} to position ${to + 1} of ${lists.value.length}.`);
+
+    await nextTick();
+    animateColumnsFrom(previousLefts, list.id);
+    scrollListIntoView(list.id);
+}
+
+const LIST_MOVE_DURATION_MS = 280;
+
+/** FLIP: play each column from its old position to its new one, with the moved list on top. */
+function animateColumnsFrom(previousLefts: Map<string | undefined, number>, movedListId: string) {
+    if (prefersReducedMotion.value) {
+        return;
+    }
+
+    for (const column of columnElements()) {
+        const previousLeft = previousLefts.get(column.dataset.listId);
+        const offset = previousLeft === undefined ? 0 : previousLeft - column.getBoundingClientRect().left;
+
+        if (!offset) {
+            continue;
+        }
+
+        const isMovedList = column.dataset.listId === movedListId;
+
+        if (isMovedList) {
+            column.style.zIndex = '10';
+        }
+
+        column
+            .animate(
+                isMovedList
+                    ? [
+                          { transform: `translateX(${offset}px)` },
+                          { transform: `translateX(${offset / 2}px) translateY(-6px) scale(1.02)`, offset: 0.5 },
+                          { transform: 'none' },
+                      ]
+                    : [{ transform: `translateX(${offset}px)` }, { transform: 'none' }],
+                { duration: LIST_MOVE_DURATION_MS, easing: 'cubic-bezier(0.2, 0, 0, 1)' },
+            )
+            .finished.catch(() => {})
+            .finally(() => {
+                if (isMovedList) {
+                    column.style.zIndex = '';
+                }
+            });
+    }
+}
+
+function updateListUrl(list: BoardListType) {
+    return boardListRoutes.update({ board: props.board.id, board_list: list.id }).url;
+}
+
+function renameList(list: BoardListType, name: string) {
+    list.name = name;
+    send('patch', updateListUrl(list), { name }, 'Could not rename the list.');
+}
+
+function recolorList(list: BoardListType, color: string | null) {
+    list.color = color;
+    send('patch', updateListUrl(list), { color }, 'Could not change the list colour.');
+}
+
+function archiveList(list: BoardListType) {
+    const index = lists.value.indexOf(list);
+
+    if (index === -1) {
+        return;
+    }
+
+    lists.value.splice(index, 1);
+    send('patch', updateListUrl(list), { is_archived: true }, 'Could not archive the list.');
+
+    toast(`Archived “${list.name}”`, {
+        action: { label: 'Undo', onClick: () => restoreList(list, index) },
+    });
+}
+
+function restoreList(list: BoardListType, index: number) {
+    if (lists.value.some(({ id }) => id === list.id)) {
+        return;
+    }
+
+    lists.value.splice(Math.min(index, lists.value.length), 0, list);
+    send('patch', updateListUrl(list), { is_archived: false }, 'Could not restore the list.');
+    announce(`Restored list ${list.name}.`);
+}
+
+const isAddingList = ref(lists.value.length === 0);
+const listInput = useTemplateRef<HTMLInputElement>('list-input');
+const listComposer = useTemplateRef<HTMLElement>('list-composer');
+
+async function openListComposer() {
+    isAddingList.value = true;
+    await nextTick();
+    listInput.value?.focus({ preventScroll: true });
+    stopWheelScroll();
+    canvas.value?.scrollTo({ left: canvas.value.scrollWidth, behavior: scrollBehavior() });
+}
+
+function closeListComposer() {
+    isAddingList.value = false;
+}
+
+// Clicking anywhere else on the page puts the composer away, like pressing Escape.
+onClickOutside(listComposer, closeListComposer);
+
+async function onListAdded() {
+    announce('List added.');
+    await nextTick();
+    stopWheelScroll();
+    canvas.value?.scrollTo({ left: canvas.value.scrollWidth, behavior: scrollBehavior() });
+    listInput.value?.focus({ preventScroll: true });
+}
+
+function onFormRequestFailed() {
+    toast.error('Could not save. Check your connection and try again.');
+
+    return false;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Cards
+|--------------------------------------------------------------------------
+| The open card lives in the URL so it can be shared, but opening and
+| closing it are client-side visits: the board already has the card.
+*/
+
+const activeCard = computed<Card | null>(() => {
+    const id = props.selectedCard?.id;
+
+    if (!id) {
+        return null;
+    }
+
+    for (const list of lists.value) {
+        const card = list.cards.find((candidate) => candidate.id === id);
+
+        if (card) {
+            return card;
+        }
+    }
+
+    return props.selectedCard ?? null;
+});
+
+// Stays true after the first card opens so the dialog can animate closed.
+const hasOpenedCard = ref(!!props.selectedCard);
+
+watch(activeCard, (card) => {
+    if (card) {
+        hasOpenedCard.value = true;
     }
 });
+
+const pageTitle = computed(() =>
+    activeCard.value ? `${activeCard.value.name} · ${boardName.value}` : boardName.value,
+);
+
+function cardUrl(card: Pick<Card, 'id' | 'board_list_id'>) {
+    return cardRoutes.show({ board_list: card.board_list_id, card: card.id }).url;
+}
+
+function showCard(card: Card | null, url: string, onFinish?: () => void) {
+    router.replace({
+        url,
+        props: (currentProps) => ({ ...currentProps, selectedCard: card ? { ...card } : null }),
+        preserveScroll: true,
+        preserveState: true,
+        onFinish,
+    });
+}
+
+function openCard(card: Card) {
+    // A drop can fire a click on the card that was just dragged.
+    if (isDragging.value || Date.now() - lastDragEndedAt < 250) {
+        return;
+    }
+
+    showCard(card, cardUrl(card));
+}
+
+function closeCard(onFinish?: () => void) {
+    showCard(null, boardRoutes.show(props.board.id).url, onFinish);
+}
+
+function persistCardOrder(list: BoardListType) {
+    list.cards.forEach((card, index) => (card.order = index));
+
+    send(
+        'patch',
+        cardRoutes.reorder(list.id).url,
+        { cards: list.cards.map(({ id, order }) => ({ id, order })) },
+        'Could not save the card order.',
+    );
+}
+
+function onCardsChange(list: BoardListType, event: SortableChangeEvent<Card>) {
+    if (event.moved) {
+        persistCardOrder(list);
+        announce(`Moved card ${event.moved.element.name} to position ${event.moved.newIndex + 1} in ${list.name}.`);
+    }
+
+    if (event.added) {
+        const card = event.added.element;
+        const fromListId = card.board_list_id;
+        card.board_list_id = list.id;
+
+        send(
+            'patch',
+            cardRoutes.update({ board_list: fromListId, card: card.id }).url,
+            { board_list_id: list.id, order: event.added.newIndex },
+            'Could not move the card.',
+        );
+        persistCardOrder(list);
+        announce(`Moved card ${card.name} to ${list.name}.`);
+    }
+}
+
+function renameCard(card: Card, name: string) {
+    card.name = name;
+    send(
+        'patch',
+        cardRoutes.update({ board_list: card.board_list_id, card: card.id }).url,
+        { name },
+        'Could not rename the card.',
+    );
+}
+
+function describeCard(card: Card, description: string) {
+    card.description = description;
+    send(
+        'patch',
+        cardRoutes.update({ board_list: card.board_list_id, card: card.id }).url,
+        { description },
+        'Could not save the description.',
+    );
+}
+
+function moveCard(card: Card, boardListId: string) {
+    const fromList = lists.value.find(({ id }) => id === card.board_list_id);
+    const toList = lists.value.find(({ id }) => id === boardListId);
+
+    if (!fromList || !toList) {
+        return;
+    }
+
+    const order = toList.cards.reduce((highest, { order }) => Math.max(highest, order), -1) + 1;
+
+    fromList.cards = fromList.cards.filter(({ id }) => id !== card.id);
+    card.board_list_id = toList.id;
+    card.order = order;
+    toList.cards.push(card);
+    announce(`Moved card ${card.name} to ${toList.name}.`);
+
+    // Point the URL at the card's new list first: the server redirects back to it after saving.
+    showCard(card, cardUrl(card), () =>
+        send(
+            'patch',
+            cardRoutes.update({ board_list: fromList.id, card: card.id }).url,
+            { board_list_id: toList.id, order },
+            'Could not move the card.',
+        ),
+    );
+}
+
+function deleteCard(card: Card) {
+    const list = lists.value.find(({ id }) => id === card.board_list_id);
+
+    if (list) {
+        list.cards = list.cards.filter(({ id }) => id !== card.id);
+    }
+
+    // Leave the card's URL before deleting it, or the redirect back would land on a missing card.
+    closeCard(() =>
+        send(
+            'delete',
+            cardRoutes.destroy({ board_list: card.board_list_id, card: card.id }).url,
+            {},
+            'Could not delete the card.',
+            () => toast.success(`Deleted “${card.name}”`),
+        ),
+    );
+}
 </script>
 
 <template>
-    <Head :title="headerTitle" />
-    <div
-        class="relative h-screen max-h-screen overflow-y-auto select-none"
-        style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
-    >
-        <nav
-            class="fixed top-0 right-0 left-0 z-10 h-16 bg-[rgba(0,0,0,0.3)] shadow-[0_4px_30px_rgba(0,0,0,0.1)] backdrop-blur-sm"
-        >
-            <div class="flex h-full items-center gap-3 px-4">
-                <Link :href="home(board.workspace_id)">
-                    <AppLogo :show-name="false" />
-                </Link>
-                <div class="min-w-0 flex-1 overflow-hidden">
-                    <h1
-                        v-if="!isEditingBoardName"
-                        class="mt-1.5 inline-block max-w-full cursor-pointer truncate rounded-md px-2 py-1 text-lg font-semibold tracking-tight text-white transition-colors hover:bg-white/30 dark:hover:bg-white/30"
-                        @click="startEditingBoardName"
-                    >
-                        {{ boardName }}
-                    </h1>
+    <AppLayout :breadcrumbs="breadcrumbs" content-class="h-dvh md:h-[calc(100dvh-1rem)]">
+        <Head :title="pageTitle">
+            <link
+                head-key="font-fraunces"
+                href="https://fonts.bunny.net/css?family=fraunces:500,600"
+                rel="stylesheet"
+            />
+        </Head>
 
-                    <template v-else>
+        <div class="flex min-h-0 flex-1 flex-col">
+            <header class="flex items-center gap-3 border-b px-4 py-3 sm:px-6">
+                <Link
+                    :aria-label="`${workspaceName} home`"
+                    :href="workspaceHomeUrl"
+                    class="shrink-0 rounded-lg outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                >
+                    <WorkspaceAvatar
+                        :workspace="workspace ?? { name: workspaceName }"
+                        class="size-9 rounded-lg sm:size-11 sm:rounded-xl"
+                    />
+                </Link>
+
+                <div class="min-w-0 flex-1">
+                    <Link
+                        :href="workspaceHomeUrl"
+                        class="block max-w-full truncate text-xs font-medium text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:underline sm:text-sm"
+                    >
+                        {{ workspaceName }}
+                    </Link>
+                    <h1 v-if="!isEditingName" class="flex min-w-0">
+                        <button
+                            class="-mx-1.5 max-w-full cursor-pointer truncate rounded-md px-1.5 text-left font-display text-lg leading-tight font-semibold tracking-tight transition-colors outline-none hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/50 sm:text-2xl"
+                            title="Rename board"
+                            type="button"
+                            ref="board-name-button"
+                            @click="startEditingName"
+                        >
+                            {{ boardName }}
+                        </button>
+                    </h1>
+                    <div v-else class="-mx-1.5 inline-grid max-w-full grid-cols-1">
                         <span
-                            ref="mirrorRef"
-                            class="invisible absolute px-2 py-1 text-lg font-semibold tracking-tight whitespace-pre"
-                            >{{ editedBoardName || ' ' }}</span
+                            aria-hidden="true"
+                            class="invisible col-start-1 row-start-1 overflow-hidden px-1.5 font-display text-lg leading-tight font-semibold tracking-tight whitespace-pre sm:text-2xl"
+                            >{{ draftName || ' ' }}</span
                         >
                         <input
-                            ref="inputRef"
-                            v-model="editedBoardName"
-                            :style="{ width: inputWidth + 'px' }"
-                            class="max-w-full rounded-md border border-blue-400 bg-white px-2 py-1 text-lg font-semibold tracking-tight outline-none dark:bg-gray-800"
+                            ref="board-name-input"
+                            v-model="draftName"
+                            aria-label="Board name"
+                            class="col-start-1 row-start-1 w-full min-w-24 rounded-md border border-ring bg-background px-1.5 font-display text-lg leading-tight font-semibold tracking-tight ring-[3px] ring-ring/50 outline-none sm:text-2xl"
                             maxlength="255"
-                            @blur="saveBoardName"
-                            @keydown.enter.prevent="saveBoardName"
-                            @keydown.esc.prevent="saveBoardName"
-                            @keydown.tab.prevent="saveBoardName"
+                            @blur="saveName()"
+                            @keydown.enter.prevent="saveName(true)"
+                            @keydown.esc.prevent="stopEditingName(true)"
                         />
-                    </template>
+                    </div>
                 </div>
 
-                <div class="flex shrink-0 items-center gap-2">
-                    <BoardDropdownMenu @archive-board="handleArchiveBoard" />
+                <p class="hidden shrink-0 text-sm text-muted-foreground tabular-nums lg:block">{{ summary }}</p>
+
+                <div class="flex shrink-0 items-center gap-1">
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger as-child>
+                                <Button
+                                    :aria-label="isStarred ? 'Unstar board' : 'Star board'"
+                                    :aria-pressed="isStarred"
+                                    class="cursor-pointer"
+                                    size="icon"
+                                    variant="ghost"
+                                    @click="toggleStar"
+                                >
+                                    <Star
+                                        :class="
+                                            cn(
+                                                'transition-colors',
+                                                isStarred
+                                                    ? 'fill-current text-primary'
+                                                    : 'fill-transparent text-muted-foreground',
+                                            )
+                                        "
+                                    />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>{{ isStarred ? 'Unstar' : 'Star' }} this board</TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                    <Button class="hidden cursor-pointer sm:inline-flex" variant="outline" @click="openListComposer">
+                        <Plus />
+                        Add list
+                    </Button>
+                    <BoardDropdownMenu
+                        :is-archiving="isArchiving"
+                        @add-list="openListComposer"
+                        @archive-board="archiveBoard"
+                    />
                 </div>
-            </div>
-        </nav>
-        <div class="mt-20">
-            <ol
-                :class="{ 'gap-4': boardLists.length }"
-                class="absolute flex h-full max-h-[calc(100vh-128px)] overflow-x-hidden overflow-y-hidden px-4"
+            </header>
+
+            <nav v-if="lists.length > 1" aria-label="Jump to list" class="border-b sm:hidden">
+                <ul ref="list-nav" class="flex [scrollbar-width:none] gap-1.5 overflow-x-auto px-4 py-2">
+                    <li v-for="(list, index) in lists" :key="list.id" class="shrink-0">
+                        <button
+                            :aria-current="index === activeListIndex ? 'true' : undefined"
+                            :class="
+                                cn(
+                                    'flex h-8 cursor-pointer items-center gap-1.5 rounded-full border px-3 text-sm transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50',
+                                    index === activeListIndex
+                                        ? 'border-primary/40 bg-blush font-medium text-blush-foreground'
+                                        : 'border-border bg-background text-muted-foreground',
+                                )
+                            "
+                            type="button"
+                            @click="jumpToList(index)"
+                        >
+                            <span
+                                :class="list.color ? `list-${list.color}` : 'list-default'"
+                                aria-hidden="true"
+                                class="size-2.5 rounded-full ring-1 ring-black/10 [background:var(--list-bg)] dark:ring-white/15"
+                            />
+                            <span class="max-w-36 truncate">{{ list.name }}</span>
+                            <span class="text-xs tabular-nums opacity-70">{{ list.cards.length }}</span>
+                        </button>
+                    </li>
+                </ul>
+            </nav>
+
+            <div
+                ref="canvas"
+                :class="isDragging ? 'snap-none' : 'snap-x snap-mandatory sm:snap-none'"
+                class="board-canvas relative min-h-0 flex-1 scroll-px-4 overflow-x-auto overflow-y-hidden overscroll-x-contain"
+                @scroll.passive="onCanvasScroll"
+                @pointerdown="stopWheelScroll"
+                @wheel.passive="onCanvasWheel"
             >
                 <draggable
-                    :component-data="{
-                        tag: 'li',
-                        type: 'transition-group',
-                        name: !drag ? 'flip-list' : null,
-                    }"
-                    :list="boardLists"
-                    class="flex gap-4"
-                    handle=".handle"
+                    :list="lists"
+                    class="flex h-full w-max items-start gap-3 p-4 sm:gap-4 sm:px-6"
                     item-key="id"
-                    v-bind="dragOptions"
-                    @change="onChange(board.id, $event)"
-                    @end="drag = false"
-                    @start="drag = true"
+                    tag="ol"
+                    v-bind="listDragOptions"
+                    @change="onListsChange"
+                    @end="onDragEnd"
+                    @start="onDragStart"
                 >
-                    <template #item="{ element }">
-                        <li>
+                    <template #item="{ element, index }">
+                        <li
+                            :data-list-id="element.id"
+                            class="board-column relative flex max-h-full w-[calc(100vw-3rem)] max-w-80 shrink-0 snap-center list-none flex-col self-start sm:w-72"
+                        >
                             <BoardList
-                                :key="element.id"
                                 :board-list="element"
+                                :can-move-left="index > 0"
+                                :can-move-right="index < lists.length - 1"
+                                :card-drag-options="cardDragOptions"
                                 :colors="colors"
-                                :is-moving-board-list="drag"
-                                @on-card-click="onCardClick"
-                                @on-list-archive="handleArchive"
+                                :is-dragging="isDragging"
+                                @archive="archiveList(element)"
+                                @cards-change="onCardsChange"
+                                @drag-end="onDragEnd"
+                                @drag-start="onDragStart"
+                                @move="moveList(element, $event)"
+                                @open-card="openCard"
+                                @recolor="recolorList(element, $event)"
+                                @rename="renameList(element, $event)"
+                                @request-failed="toast.error($event)"
                             />
                         </li>
                     </template>
-                </draggable>
-                <li v-if="isAddingNewBoardList" class="block h-full shrink-0 self-start rounded-lg whitespace-nowrap">
-                    <div class="w-[272px] rounded-lg bg-black p-2">
-                        <Form
-                            v-slot="{ processing }"
-                            class="space-y-6"
-                            reset-on-success
-                            v-bind="BoardListController.store.form(board.id)"
-                        >
-                            <Input
-                                id="name"
-                                ref="add-new-list-input"
-                                class="mb-2 w-full rounded-lg p-2 shadow"
-                                name="name"
-                            />
-                            <div class="flex items-center gap-2">
-                                <Button :disabled="processing" class="cursor-pointer" data-test="update-profile-button">
-                                    Add list
-                                </Button>
-                                <Button
-                                    class="cursor-pointer"
-                                    size="sm"
-                                    variant="ghost"
-                                    @click="isAddingNewBoardList = false"
-                                >
-                                    <X />
-                                </Button>
-                            </div>
-                        </Form>
-                    </div>
-                </li>
-                <li v-else class="block h-full shrink-0 self-start whitespace-nowrap">
-                    <div class="w-[272px]">
-                        <Button
-                            class="h-[40px] w-full cursor-pointer !justify-start rounded-lg bg-[#ffffff4d] font-bold text-white hover:bg-[#ffffff33]!"
-                            @click="onAddNewBoardList"
-                        >
-                            <Plus />
-                            {{ boardLists.length ? 'Add another list' : 'Add a list' }}
-                        </Button>
-                    </div>
-                </li>
-            </ol>
-        </div>
-    </div>
-    <CardDialog
-        :is-fetching="isFetching"
-        :model-value="isDialogOpen"
-        :selected-card="selectedCard"
-        @update-open="onDialogClose"
-        @delete-card="handleDeleteCard"
-    />
-</template>
 
-<style scoped></style>
+                    <template #footer>
+                        <li class="w-[calc(100vw-3rem)] max-w-80 shrink-0 snap-center sm:w-72">
+                            <div
+                                v-if="isAddingList"
+                                ref="list-composer"
+                                class="rounded-2xl border bg-card p-3 shadow-sm"
+                            >
+                                <p v-if="!lists.length" class="mb-3 text-sm text-muted-foreground">
+                                    Lists are the columns of your board, like
+                                    <span class="font-medium text-foreground">To do</span>,
+                                    <span class="font-medium text-foreground">Doing</span> and
+                                    <span class="font-medium text-foreground">Done</span>.
+                                </p>
+                                <Form
+                                    v-slot="{ errors, processing }"
+                                    :options="{ preserveScroll: true, preserveState: true, only: ['board'] }"
+                                    class="space-y-2"
+                                    reset-on-success
+                                    v-bind="BoardListController.store.form(board.id)"
+                                    @http-exception="onFormRequestFailed"
+                                    @network-error="onFormRequestFailed"
+                                    @success="onListAdded"
+                                >
+                                    <input
+                                        ref="list-input"
+                                        :aria-invalid="!!errors.name"
+                                        aria-label="List name"
+                                        autocomplete="off"
+                                        class="flex h-9 w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive sm:text-sm dark:bg-input/30"
+                                        maxlength="255"
+                                        name="name"
+                                        placeholder="Enter list name"
+                                        required
+                                        @keydown.esc.prevent="closeListComposer"
+                                    />
+                                    <InputError :message="errors.name" />
+                                    <div class="flex items-center gap-1.5">
+                                        <Button :disabled="processing" class="cursor-pointer" size="sm" type="submit">
+                                            {{ processing ? 'Adding…' : 'Add list' }}
+                                        </Button>
+                                        <Button
+                                            aria-label="Stop adding lists"
+                                            class="size-8 cursor-pointer"
+                                            size="icon"
+                                            type="button"
+                                            variant="ghost"
+                                            @click="closeListComposer"
+                                        >
+                                            <X />
+                                        </Button>
+                                    </div>
+                                </Form>
+                            </div>
+                            <button
+                                v-else
+                                class="flex h-11 w-full cursor-pointer items-center gap-2 rounded-2xl border border-dashed border-primary/30 bg-background/70 px-4 text-sm font-medium text-muted-foreground backdrop-blur-sm transition-colors outline-none hover:border-primary/50 hover:bg-blush/60 hover:text-blush-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                type="button"
+                                @click="openListComposer"
+                            >
+                                <Plus class="size-4" />
+                                {{ lists.length ? 'Add another list' : 'Add a list' }}
+                            </button>
+                        </li>
+                    </template>
+                </draggable>
+            </div>
+        </div>
+
+        <CardDialog
+            v-if="hasOpenedCard"
+            :board-lists="lists"
+            :board-name="boardName"
+            :card="activeCard"
+            @close="closeCard()"
+            @delete="deleteCard"
+            @describe="describeCard"
+            @move="moveCard"
+            @rename="renameCard"
+        />
+
+        <p aria-live="polite" class="sr-only" role="status">{{ announcement }}</p>
+    </AppLayout>
+</template>

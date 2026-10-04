@@ -1,135 +1,192 @@
 <script lang="ts" setup>
+import CardActionsMenu from '@/components/board/board-list/card/CardActionsMenu.vue';
 import Tiptap from '@/components/Tiptap.vue';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
+import { X } from 'lucide-vue-next';
 import { useTextAreaAutoResize } from '@/composables/useTextAreaAutoResize';
-import cardRoutes from '@/routes/board-lists/cards';
-import type { Card } from '@/types';
-import { router } from '@inertiajs/vue3';
-import { MoreHorizontal, Trash2 } from 'lucide-vue-next';
+import type { BoardList, Card } from '@/types';
+import { nextTick, ref, useTemplateRef, watch } from 'vue';
 
-defineProps<{
-    selectedCard?: Card | null;
-    isFetching: boolean;
+const props = defineProps<{
+    card: Card | null;
+    boardLists: BoardList[];
+    boardName: string;
 }>();
 
 const emit = defineEmits<{
-    updateOpen: [value: boolean];
-    deleteCard: [boardListId: string, cardId: string];
+    close: [];
+    rename: [card: Card, name: string];
+    describe: [card: Card, description: string];
+    move: [card: Card, boardListId: string];
+    delete: [card: Card];
 }>();
-
-const isDialogOpen = defineModel<boolean>({ required: true });
 
 const { autoResize } = useTextAreaAutoResize();
 
-function onSubmit(boardListId: string, cardId: string, event: Event) {
-    const target = event.target;
-    if (!(target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement)) return;
+// Keeps the last card on screen while the dialog animates closed.
+const displayedCard = ref<Card | null>(props.card);
+const draftName = ref(props.card?.name ?? '');
+const isConfirmingDelete = ref(false);
+const nameInput = useTemplateRef<HTMLTextAreaElement>('name-input');
+const cancelDeleteButton = useTemplateRef<{ $el: HTMLElement }>('cancel-delete-button');
 
-    const name = target.name;
-    const value = target.value;
+watch(
+    () => props.card,
+    async (card, previousCard) => {
+        if (!card) {
+            return;
+        }
 
-    router.patch(
-        cardRoutes.update({
-            board_list: boardListId,
-            card: cardId,
-        }).url,
-        {
-            [name]: value,
-        },
-    );
+        displayedCard.value = card;
+
+        if (card.id !== previousCard?.id) {
+            isConfirmingDelete.value = false;
+        }
+
+        // Don't overwrite what the user is typing when the card refreshes from the server.
+        if (document.activeElement !== nameInput.value) {
+            draftName.value = card.name;
+        }
+
+        await nextTick();
+        autoResize(nameInput.value);
+    },
+    { immediate: true },
+);
+
+const listName = (card: Card) => props.boardLists.find((list) => list.id === card.board_list_id)?.name ?? 'a list';
+
+function saveName(card: Card) {
+    const name = draftName.value.trim();
+
+    if (!name || name === card.name) {
+        draftName.value = card.name;
+        autoResize(nameInput.value);
+
+        return;
+    }
+
+    emit('rename', card, name);
 }
 
-function onSubmitDescription(boardListId: string, cardId: string, value: string) {
-    router.patch(
-        cardRoutes.update({
-            board_list: boardListId,
-            card: cardId,
-        }).url,
-        {
-            description: value,
-        },
-    );
+function cancelName(card: Card) {
+    draftName.value = card.name;
+    nameInput.value?.blur();
+}
+
+function saveDescription(card: Card, description: string) {
+    if (description !== (card.description ?? '')) {
+        emit('describe', card, description);
+    }
+}
+
+async function confirmDelete() {
+    isConfirmingDelete.value = true;
+    await nextTick();
+    // Start on the safe choice.
+    cancelDeleteButton.value?.$el.focus();
+}
+
+// Focus the dialog itself rather than the title field, so phones don't pop the keyboard open.
+function focusDialog(event: Event) {
+    event.preventDefault();
+    (event.target as HTMLElement | null)?.focus({ preventScroll: true });
+}
+
+function onOpenChange(isOpen: boolean) {
+    if (!isOpen) {
+        emit('close');
+    }
 }
 </script>
 
 <template>
-    <Dialog v-model:open="isDialogOpen" @update:open="(value: boolean) => emit('updateOpen', value)">
+    <Dialog :open="!!card" @update:open="onOpenChange">
         <DialogContent
-            :class="{ '[&>button:first-of-type]:hidden': isFetching }"
-            class="max-h-[90dvh] grid-rows-[auto_minmax(0,1fr)_auto] sm:max-w-[600px]"
+            class="flex max-h-[calc(100dvh-5rem)] flex-col gap-0 overflow-hidden p-0 outline-none max-sm:inset-0 max-sm:top-0 max-sm:left-0 max-sm:h-dvh max-sm:max-h-dvh max-sm:max-w-none max-sm:translate-x-0 max-sm:rounded-none max-sm:border-0 sm:max-w-2xl [&>button:last-child]:hidden"
+            @open-auto-focus="focusDialog"
         >
-            <DialogHeader>
-                <DialogTitle></DialogTitle>
-                <DialogDescription> </DialogDescription>
-            </DialogHeader>
-            <div v-if="isFetching" class="[&>button:first-of-type]:hidden"></div>
-            <div v-else-if="!isFetching && selectedCard" class="overflow-y-auto">
-                <div class="space-y-6">
-                    <div class="grid gap-4 overflow-y-auto py-4">
-                        <div class="flex items-start gap-2">
-                            <div class="min-w-0 flex-1">
-                                <h2 class="sr-only">{{ selectedCard.name }}</h2>
-                                <Textarea
-                                    id="name"
-                                    :model-value="selectedCard.name"
-                                    class="w-full resize-none overflow-hidden border-none p-0 text-2xl leading-tight font-semibold focus:ring-0 focus:outline-none"
-                                    name="name"
-                                    rows="1"
-                                    un-styled
-                                    @blur="onSubmit(selectedCard.board_list_id, selectedCard.id, $event)"
-                                    @focus="autoResize"
-                                    @input="autoResize"
-                                    @keydown.enter.prevent="$event.target.blur()"
-                                    @keydown.esc.prevent="$event.target.blur()"
-                                />
-                            </div>
-
-                            <!-- Dropdown menu -->
-                            <DropdownMenu>
-                                <DropdownMenuTrigger
-                                    class="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                                    aria-label="Card options"
-                                >
-                                    <MoreHorizontal class="h-4 w-4" />
-                                </DropdownMenuTrigger>
-
-                                <DropdownMenuContent align="end" class="w-40">
-                                    <DropdownMenuLabel>Card Actions</DropdownMenuLabel>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem
-                                        class="cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive"
-                                        @click="emit('deleteCard', selectedCard.board_list_id, selectedCard.id)"
-                                    >
-                                        <Trash2 class="mr-2 h-4 w-4" />
-                                        Delete card
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        </div>
+            <template v-if="displayedCard">
+                <header class="flex items-start gap-3 border-b py-4 pr-3 pl-5 sm:pr-4 sm:pl-6">
+                    <div class="min-w-0 flex-1">
+                        <DialogTitle class="sr-only">{{ displayedCard.name }}</DialogTitle>
+                        <textarea
+                            ref="name-input"
+                            v-model="draftName"
+                            aria-label="Card title"
+                            class="-ml-2 block w-full resize-none overflow-hidden rounded-lg border border-transparent bg-transparent px-2 py-1 font-display text-xl leading-snug font-semibold outline-none hover:bg-muted focus-visible:border-ring focus-visible:bg-background focus-visible:ring-[3px] focus-visible:ring-ring/50 sm:text-2xl"
+                            maxlength="255"
+                            rows="1"
+                            @blur="saveName(displayedCard)"
+                            @input="autoResize"
+                            @keydown.enter.prevent="($event.target as HTMLTextAreaElement).blur()"
+                            @keydown.esc.stop.prevent="cancelName(displayedCard)"
+                        />
+                        <DialogDescription class="mt-1 text-sm text-muted-foreground">
+                            In <span class="font-medium text-foreground">{{ listName(displayedCard) }}</span> on
+                            {{ boardName }}
+                        </DialogDescription>
                     </div>
-                    <div class="space-y-4 py-2">
-                        <h3 class="text-sm font-medium">Description</h3>
-                        <div class="w-full rounded-lg border transition-colors focus-within:border-pink-100">
-                            <Tiptap
-                                :model-value="selectedCard.description"
-                                name="description"
-                                @blur="onSubmitDescription(selectedCard.board_list_id, selectedCard.id, $event)"
-                            />
-                        </div>
+                    <div class="mt-1.5 flex shrink-0 items-center gap-1">
+                        <CardActionsMenu
+                            :board-lists="boardLists"
+                            :current-list-id="displayedCard.board_list_id"
+                            @delete="confirmDelete"
+                            @move="emit('move', displayedCard, $event)"
+                        />
+                        <DialogClose as-child>
+                            <Button
+                                aria-label="Close"
+                                class="size-8 cursor-pointer text-muted-foreground hover:text-foreground"
+                                size="icon"
+                                variant="ghost"
+                            >
+                                <X />
+                            </Button>
+                        </DialogClose>
+                    </div>
+                </header>
+
+                <div
+                    v-if="isConfirmingDelete"
+                    class="flex flex-wrap items-center gap-2 border-b bg-destructive/10 px-5 py-3 sm:px-6"
+                    role="alert"
+                >
+                    <p class="mr-auto text-sm">Delete this card? This can't be undone.</p>
+                    <Button
+                        ref="cancel-delete-button"
+                        class="cursor-pointer"
+                        size="sm"
+                        variant="outline"
+                        @click="isConfirmingDelete = false"
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        class="cursor-pointer"
+                        size="sm"
+                        variant="destructive"
+                        @click="emit('delete', displayedCard)"
+                    >
+                        Delete card
+                    </Button>
+                </div>
+
+                <div class="min-h-0 flex-1 space-y-2 overflow-y-auto px-5 py-5 sm:px-6">
+                    <h3 class="text-sm font-medium">Description</h3>
+                    <div
+                        class="w-full overflow-clip rounded-lg border border-input transition-colors focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50"
+                    >
+                        <Tiptap
+                            :key="displayedCard.id"
+                            :model-value="displayedCard.description ?? ''"
+                            name="description"
+                            @blur="saveDescription(displayedCard, $event)"
+                        />
                     </div>
                 </div>
-            </div>
+            </template>
         </DialogContent>
     </Dialog>
 </template>
-
-<style scoped></style>

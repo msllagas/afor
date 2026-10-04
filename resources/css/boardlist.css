@@ -120,14 +120,57 @@
 }
 
 .list-neutral {
-    --list-bg: oklch(0.92 0.005 264);
-    --list-fg: #292a2e;
-    --list-bg-hovered: #d1d2d3;
-    --list-fg-muted: #505258;
+    --list-bg: oklch(0.92 0.008 350);
+    --list-bg-hovered: oklch(0.87 0.012 350);
+    --list-fg: oklch(0.27 0.02 350);
+    --list-fg-muted: oklch(0.45 0.025 350);
 }
 .dark .list-neutral {
-    --list-bg: oklch(0.1752 0.0285 115.46);
-    --list-fg: #cecfd2;
-    --list-bg-hovered: #2a2b20;
-    --list-fg-muted: #a9abaf;
+    --list-bg: oklch(0.26 0.018 340);
+    --list-bg-hovered: oklch(0.32 0.022 340);
+    --list-fg: oklch(0.93 0.01 350);
+    --list-fg-muted: oklch(0.74 0.02 350);
+}
+
+/* Lists without a colour follow the app theme. */
+.list-default {
+    --list-bg: var(--draggable-list-card);
+    --list-bg-hovered: color-mix(in oklch, var(--foreground) 8%, var(--draggable-list-card));
+    --list-fg: var(--foreground);
+    --list-fg-muted: var(--muted-foreground);
+}
+
+/*
+  Board canvas and drag-and-drop feedback. These are global because
+  SortableJS appends its fallback clone outside the component tree.
+*/
+.board-canvas {
+    background-image: radial-gradient(color-mix(in oklch, var(--foreground) 10%, transparent) 1px, transparent 1px);
+    background-size: 18px 18px;
+}
+
+.board-drag-ghost {
+    opacity: 0.45;
+}
+
+.board-drag-ghost > * {
+    box-shadow: none !important;
+    outline: 2px dashed var(--primary);
+    outline-offset: -2px;
+}
+
+.board-drag-active {
+    opacity: 1 !important;
+    rotate: 2deg;
+    cursor: grabbing !important;
+}
+
+.board-drag-active > * {
+    box-shadow: 0 18px 40px -12px rgb(0 0 0 / 0.35);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .board-drag-active {
+        rotate: none;
+    }
 }

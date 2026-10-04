@@ -1,335 +1,310 @@
 <script lang="ts" setup>
 import CardController from '@/actions/App/Http/Controllers/CardController';
 import BoardListDropdownMenu from '@/components/board/board-list/BoardListDropdownMenu.vue';
+import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { useTextAreaAutoResize } from '@/composables/useTextAreaAutoResize';
-import cardRoutes from '@/routes/board-lists/cards';
-import boardListRoutes from '@/routes/boards/board-lists';
-import type { BoardList as BoardListType, Card as CardType } from '@/types';
-import { Form, router } from '@inertiajs/vue3';
-import { Plus, X } from 'lucide-vue-next';
-import { computed, nextTick, onMounted, ref, useTemplateRef } from 'vue';
+import type { BoardList, Card, SortableChangeEvent } from '@/types';
+import { Form } from '@inertiajs/vue3';
+import { AlignLeft, Plus, X } from 'lucide-vue-next';
+import { nextTick, ref, useTemplateRef, watch } from 'vue';
 import draggable from 'vuedraggable';
 
 const props = defineProps<{
-    boardList: BoardListType;
-    isMovingBoardList: boolean;
+    boardList: BoardList;
     colors: Array<string>;
+    cardDragOptions: Record<string, unknown>;
+    canMoveLeft: boolean;
+    canMoveRight: boolean;
+    isDragging: boolean;
 }>();
 
 const emit = defineEmits<{
-    onCardClick: [boardListId: string, card: CardType];
-    onListArchive: [boardListId: string];
+    openCard: [card: Card];
+    cardsChange: [boardList: BoardList, event: SortableChangeEvent<Card>];
+    dragStart: [];
+    dragEnd: [];
+    rename: [name: string];
+    recolor: [color: string | null];
+    move: [direction: -1 | 1];
+    archive: [];
+    requestFailed: [message: string];
 }>();
 
 const { autoResize } = useTextAreaAutoResize();
 
-const drag = ref(false);
+const isEditingName = ref(false);
+const draftName = ref(props.boardList.name);
+const nameInput = useTemplateRef<HTMLTextAreaElement>('name-input');
+const nameButton = useTemplateRef<HTMLButtonElement>('name-button');
+
 const isAddingCard = ref(false);
-const selectedColor = ref<string | null>('');
-const addCardInput = useTemplateRef('add-card-input');
-const gradientColors = ['sunset', 'aurora'];
+const cardInput = useTemplateRef<HTMLTextAreaElement>('card-input');
+const cardScroller = useTemplateRef<HTMLElement>('card-scroller');
 
-const boardListName = ref(props.boardList.name);
-const isEditingBoardListName = ref(false);
-const editedBoardListName = ref(props.boardList.name);
-const boardListNameTextareaRef = ref<HTMLTextAreaElement | null>(null);
-
-const dragOptions = computed(() => ({
-    animation: 200,
-    group: {
-        name: 'boardCard',
-        pull: true,
-        put: !props.isMovingBoardList,
+watch(
+    () => props.boardList.name,
+    (name) => {
+        if (!isEditingName.value) {
+            draftName.value = name;
+        }
     },
-    ghostClass: 'ghost',
-    dragClass: 'drag',
-    forceFallback: true,
-    disabled: false,
-    scrollSensitivity: 100,
-    scrollSpeed: 20,
-}));
-const isGradient = computed(() => gradientColors.includes(selectedColor.value ?? ''));
+);
 
-function onChange(boardListId: string, event: any) {
-    if (event.moved) {
-        handleCardMove(boardListId);
-    }
+const descriptionText = (card: Card) => card.description?.replace(/<[^>]*>/g, '').trim() ?? '';
 
-    if (event.added) {
-        handleCardMoveToBoardList(boardListId, event.added);
-    }
+async function startEditingName() {
+    draftName.value = props.boardList.name;
+    isEditingName.value = true;
+    await nextTick();
+    autoResize(nameInput.value);
+    nameInput.value?.select();
 }
 
-function handleCardMove(boardListId: string) {
-    props.boardList.cards.forEach((card, index) => {
-        card.order = index;
-    });
+/** Keyboard saves and cancels hand focus back to the name; a blur leaves it where the user clicked. */
+async function stopEditingName(shouldRestoreFocus: boolean) {
+    isEditingName.value = false;
 
-    router.patch(
-        cardRoutes.reorder(boardListId).url,
-        {
-            cards: props.boardList.cards.map((c) => ({
-                id: c.id,
-                order: c.order,
-            })),
-        },
-        {
-            replace: true,
-        },
-    );
-}
-
-function handleCardMoveToBoardList(boardListId: string, added: any) {
-    if (!added?.element) return;
-
-    const card = added.element as CardType;
-
-    router.patch(
-        cardRoutes.update({
-            board_list: card.board_list_id,
-            card: card.id,
-        }).url,
-        {
-            board_list_id: boardListId,
-            order: added.newIndex,
-        },
-    );
-}
-
-function onArchiveList() {
-    emit('onListArchive', props.boardList.id);
-}
-
-function onColorSelection(color: string | null) {
-    // do nothing if it's the same color has been picked, preventing spam.
-    if (props.boardList.color !== color && selectedColor.value !== color) {
-        selectedColor.value = color;
-
-        router.patch(
-            boardListRoutes.update({
-                board: props.boardList.board_id,
-                board_list: props.boardList.id,
-            }).url,
-            {
-                color,
-            },
-        );
+    if (shouldRestoreFocus) {
+        await nextTick();
+        nameButton.value?.focus();
     }
 }
 
-async function onAddCard() {
+function saveName(shouldRestoreFocus = false) {
+    if (!isEditingName.value) {
+        return;
+    }
+
+    stopEditingName(shouldRestoreFocus);
+    const name = draftName.value.trim();
+
+    if (!name || name === props.boardList.name) {
+        draftName.value = props.boardList.name;
+
+        return;
+    }
+
+    emit('rename', name);
+}
+
+function cancelEditingName() {
+    draftName.value = props.boardList.name;
+    stopEditingName(true);
+}
+
+async function openCardComposer() {
     isAddingCard.value = true;
     await nextTick();
-    scrollToCard();
+    focusCardComposer();
 }
 
-function scrollToCard() {
-    addCardInput.value?.focus();
-
-    const objDiv = document.getElementById(`board-${props.boardList.id}`);
-    if (objDiv) {
-        objDiv.scrollIntoView({ behavior: 'smooth' });
-    }
+function focusCardComposer() {
+    cardInput.value?.focus({ preventScroll: true });
+    cardInput.value?.scrollIntoView({ block: 'nearest' });
 }
 
-function onEnter(event: KeyboardEvent) {
-    const target = event.target as HTMLTextAreaElement | null;
-
-    if (!target?.form) return;
-
-    target.form.requestSubmit();
+function closeCardComposer() {
+    isAddingCard.value = false;
 }
 
-function startEditingBoardListName() {
-    editedBoardListName.value = boardListName.value;
-    isEditingBoardListName.value = true;
-    nextTick(() => {
-        if (!boardListNameTextareaRef.value) return;
-        autoResize(boardListNameTextareaRef.value);
-        boardListNameTextareaRef.value.focus();
-        boardListNameTextareaRef.value.setSelectionRange(
-            boardListNameTextareaRef.value.value.length,
-            boardListNameTextareaRef.value.value.length,
-        );
-    });
-}
+function onCardComposerBlur(event: FocusEvent) {
+    const nextFocus = event.relatedTarget as Node | null;
+    const composer = (event.currentTarget as HTMLElement).closest('form');
 
-function saveBoardListName() {
-    const sanitizedName = editedBoardListName.value.trim();
-    isEditingBoardListName.value = false;
-
-    if (!sanitizedName) {
-        editedBoardListName.value = boardListName.value;
+    // Stay open while focus moves to the form's own buttons, or when there's a draft to keep.
+    if (composer?.contains(nextFocus) || cardInput.value?.value.trim()) {
         return;
     }
 
-    if (sanitizedName === boardListName.value) {
+    closeCardComposer();
+}
+
+function submitOnEnter(event: KeyboardEvent) {
+    // Let IME composition (e.g. Japanese input) confirm with Enter without submitting.
+    if (event.isComposing) {
         return;
     }
 
-    boardListName.value = sanitizedName;
-    editedBoardListName.value = sanitizedName;
-
-    router.patch(
-        boardListRoutes.update({
-            board: props.boardList.board_id,
-            board_list: props.boardList.id,
-        }).url,
-        { name: sanitizedName },
-        {
-            preserveScroll: true,
-            preserveState: true,
-        },
-    );
+    (event.target as HTMLTextAreaElement).form?.requestSubmit();
 }
 
-onMounted(() => {
-    selectedColor.value = props.boardList.color ?? null;
-});
+async function onCardAdded() {
+    await nextTick();
+    autoResize(cardInput.value);
+    focusCardComposer();
+    cardScroller.value?.scrollTo({ top: cardScroller.value.scrollHeight });
+}
+
+function onRequestFailed() {
+    emit('requestFailed', 'Could not add the card. Check your connection and try again.');
+
+    return false;
+}
 </script>
 
 <template>
-    <Card
-        class="space-between relative flex max-h-full w-[272px] scroll-m-2 flex-col rounded-2xl border-none! bg-(--list-bg) pb-2 whitespace-normal shadow-lg"
-        :class="selectedColor ? `list-${selectedColor}` : 'bg-draggable-list-card'"
-        :style="isGradient ? { background: `var(--list-bg)` } : {}"
+    <section
+        :aria-label="`List ${boardList.name}`"
+        :class="boardList.color ? `list-${boardList.color}` : 'list-default'"
+        class="flex min-h-0 w-full flex-col rounded-2xl text-(--list-fg) shadow-sm ring-1 ring-black/5 [background:var(--list-bg)] dark:ring-white/5"
     >
-        <CardHeader
-            class="relative flex grow-0 cursor-grab items-start justify-between gap-1 px-2 pt-2"
-            :class="{ handle: !isEditingBoardListName }"
-        >
-            <div class="relative min-h-[20px] min-w-0 flex-1">
-                <h2
-                    v-if="!isEditingBoardListName"
-                    class="overflow-wrap-anywhere w-full cursor-text border border-transparent px-2 py-1 text-sm leading-5 font-semibold tracking-tight wrap-break-word text-(--list-fg)"
-                    @click="startEditingBoardListName"
-                >
-                    {{ boardListName }}
+        <header class="flex cursor-grab items-start gap-1 px-2 pt-2 pb-1 active:cursor-grabbing" data-list-handle>
+            <div class="min-w-0 flex-1">
+                <h2 v-if="!isEditingName">
+                    <button
+                        class="w-full cursor-pointer rounded-lg px-2 py-1.5 text-left text-sm leading-5 font-semibold break-words transition-colors outline-none hover:bg-(--list-bg-hovered) focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                        title="Rename list"
+                        type="button"
+                        ref="name-button"
+                        @click="startEditingName"
+                    >
+                        {{ boardList.name }}
+                    </button>
                 </h2>
                 <textarea
                     v-else
-                    ref="boardListNameTextareaRef"
-                    v-model="editedBoardListName"
-                    rows="1"
-                    class="w-full resize-none overflow-hidden rounded-md border border-blue-400 bg-white px-2 py-1 text-sm leading-5 font-semibold tracking-tight outline-none dark:bg-gray-800"
+                    ref="name-input"
+                    v-model="draftName"
+                    aria-label="List name"
+                    class="block w-full resize-none overflow-hidden rounded-lg border border-input bg-background px-2 py-1.5 text-base leading-5 font-semibold text-foreground outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 sm:text-sm"
                     maxlength="255"
+                    rows="1"
+                    @blur="saveName()"
                     @input="autoResize"
-                    @blur="saveBoardListName"
-                    @keydown.enter.prevent="saveBoardListName"
-                    @keydown.esc.prevent="saveBoardListName"
-                    @keydown.tab.prevent="saveBoardListName"
+                    @keydown.enter.prevent="saveName(true)"
+                    @keydown.esc.stop.prevent="cancelEditingName"
                 />
             </div>
+            <span
+                :aria-label="`${boardList.cards.length} ${boardList.cards.length === 1 ? 'card' : 'cards'}`"
+                class="mt-1.5 shrink-0 rounded-full bg-(--list-bg-hovered) px-2 py-0.5 text-xs font-medium text-(--list-fg-muted) tabular-nums"
+                role="img"
+            >
+                {{ boardList.cards.length }}
+            </span>
             <BoardListDropdownMenu
-                class="text-(--list-fg-muted) hover:bg-(--list-bg-hovered)! hover:text-(--list-fg)"
-                :board-list-id="boardList.id"
+                :can-move-left="canMoveLeft"
+                :can-move-right="canMoveRight"
+                :color="boardList.color ?? null"
                 :colors="colors"
-                @archive-list="onArchiveList"
-                @color-selected="onColorSelection"
+                :list-name="boardList.name"
+                class="text-(--list-fg-muted) hover:bg-(--list-bg-hovered)! hover:text-(--list-fg)!"
+                @add-card="openCardComposer"
+                @archive-list="emit('archive')"
+                @color-selected="emit('recolor', $event)"
+                @move="emit('move', $event)"
             />
-        </CardHeader>
-        <CardContent class="h-full overflow-x-hidden overflow-y-auto p-2 pb-0">
+        </header>
+
+        <div
+            ref="card-scroller"
+            data-card-scroller
+            class="relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain px-2 pt-1 pb-2"
+        >
             <draggable
-                :component-data="{
-                    tag: 'ol',
-                    type: 'transition-group',
-                    name: !drag ? 'flip-list' : null,
-                }"
+                :class="{ 'min-h-16': !boardList.cards.length && (isDragging || !isAddingCard) }"
                 :list="boardList.cards"
+                class="peer flex flex-col gap-2"
                 item-key="id"
-                v-bind="dragOptions"
-                @change="onChange(boardList.id, $event)"
-                @end="drag = false"
-                @start="drag = true"
+                tag="ol"
+                v-bind="cardDragOptions"
+                @change="emit('cardsChange', boardList, $event)"
+                @end="emit('dragEnd')"
+                @start="emit('dragStart')"
             >
                 <template #item="{ element }">
-                    <li>
-                        <div
-                            :key="element.id"
-                            :class="[
-                                'mb-2 rounded-lg border border-neutral-400 bg-draggable-card p-2 shadow dark:border-transparent',
-                                drag
-                                    ? 'cursor-grabbing'
-                                    : 'cursor-pointer hover:shadow-md hover:outline-2 hover:outline-primary',
-                            ]"
-                            @click="emit('onCardClick', boardList.id, element)"
+                    <li
+                        :data-card-id="element.id"
+                        class="board-card list-none select-none [-webkit-touch-callout:none]"
+                    >
+                        <button
+                            class="w-full cursor-pointer rounded-xl border border-border/60 bg-card px-3 py-2.5 text-left text-sm text-card-foreground shadow-xs transition-[border-color,box-shadow] outline-none hover:border-primary/40 hover:shadow-sm focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                            type="button"
+                            @click="emit('openCard', element)"
                         >
-                            <span class="text-sm wrap-break-word">{{ element.name }}</span>
-                        </div>
+                            <span class="block break-words">{{ element.name }}</span>
+                            <span
+                                v-if="descriptionText(element)"
+                                class="mt-1.5 flex items-center gap-1 text-xs text-muted-foreground"
+                            >
+                                <AlignLeft aria-hidden="true" class="size-3.5" />
+                                <span class="sr-only">Has a description</span>
+                            </span>
+                        </button>
                     </li>
                 </template>
             </draggable>
-            <div v-if="isAddingCard">
-                <Form
-                    v-slot="{ processing }"
-                    class="space-y-6"
-                    reset-on-success
-                    v-bind="CardController.store.form(boardList.id)"
-                    @success="scrollToCard"
-                >
-                    <textarea
-                        ref="add-card-input"
-                        autocomplete="off"
-                        class="mb-2 w-full resize-none overflow-hidden rounded-lg bg-draggable-card p-2.25 text-sm leading-5 shadow outline-2 outline-primary placeholder:text-gray-400 hover:outline-none focus:outline-primary"
-                        name="name"
-                        placeholder="Enter card title"
-                        @input="autoResize"
-                        @keydown.enter.exact.prevent="onEnter"
-                    />
-                    <div class="flex items-center gap-2">
-                        <Button :disabled="processing" class="cursor-pointer" data-test="update-profile-button">
-                            Add card
-                        </Button>
-                        <Button class="cursor-pointer" size="sm" variant="ghost" @click="isAddingCard = false">
-                            <X />
-                        </Button>
-                    </div>
-                </Form>
-            </div>
-            <div :id="`board-${boardList.id}`"></div>
-        </CardContent>
-        <div v-if="!isAddingCard" class="px-2 pt-1.5">
-            <Button
-                class="group flex w-full cursor-pointer items-center justify-start gap-2 rounded-lg p-2 text-(--list-fg-muted) transition-all duration-150 hover:bg-(--list-bg-hovered)! hover:text-(--list-fg)"
-                size="lg"
-                variant="ghost"
-                @click="onAddCard"
+            <!-- While a card is dragged, empty lists become drop zones; the hint steps aside once the card is over it. -->
+            <p
+                v-if="!boardList.cards.length && (isDragging || !isAddingCard)"
+                :class="
+                    isDragging
+                        ? 'border-2 border-current/40 bg-(--list-bg-hovered) font-medium text-(--list-fg)'
+                        : 'border border-current/25 text-(--list-fg-muted)'
+                "
+                class="pointer-events-none absolute inset-x-2 top-1 flex h-16 items-center justify-center rounded-xl border-dashed text-xs transition-colors peer-has-[.board-drag-ghost]:hidden"
             >
-                <Plus class="h-4 w-4" />
-                <span class="font-medium">Add card</span>
+                {{ isDragging ? 'Drop a card here' : 'No cards yet' }}
+            </p>
+
+            <Form
+                v-if="isAddingCard"
+                v-slot="{ errors, processing }"
+                :options="{ preserveScroll: true, preserveState: true, only: ['board'] }"
+                :class="boardList.cards.length ? 'mt-2' : 'mt-1'"
+                class="space-y-2"
+                reset-on-success
+                v-bind="CardController.store.form(boardList.id)"
+                @http-exception="onRequestFailed"
+                @network-error="onRequestFailed"
+                @success="onCardAdded"
+            >
+                <textarea
+                    ref="card-input"
+                    :aria-invalid="!!errors.name"
+                    aria-label="Card title"
+                    autocomplete="off"
+                    class="block w-full resize-none overflow-hidden rounded-xl border border-input bg-card px-3 py-2.5 text-base text-card-foreground shadow-xs outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive sm:text-sm"
+                    maxlength="255"
+                    name="name"
+                    placeholder="Enter a title for this card"
+                    required
+                    rows="2"
+                    @blur="onCardComposerBlur"
+                    @input="autoResize"
+                    @keydown.enter.exact.prevent="submitOnEnter"
+                    @keydown.esc.stop.prevent="closeCardComposer"
+                />
+                <InputError :message="errors.name" />
+                <div class="flex items-center gap-1.5">
+                    <Button :disabled="processing" class="cursor-pointer" size="sm" type="submit">
+                        {{ processing ? 'Adding…' : 'Add card' }}
+                    </Button>
+                    <Button
+                        aria-label="Stop adding cards"
+                        class="size-8 cursor-pointer text-(--list-fg-muted) hover:bg-(--list-bg-hovered)! hover:text-(--list-fg)!"
+                        size="icon"
+                        type="button"
+                        variant="ghost"
+                        @click="closeCardComposer"
+                    >
+                        <X />
+                    </Button>
+                </div>
+            </Form>
+        </div>
+
+        <div v-if="!isAddingCard" class="px-2 pb-2">
+            <Button
+                class="h-9 w-full cursor-pointer justify-start gap-2 rounded-lg px-2 text-(--list-fg-muted) hover:bg-(--list-bg-hovered)! hover:text-(--list-fg)!"
+                type="button"
+                variant="ghost"
+                @click="openCardComposer"
+            >
+                <Plus />
+                Add a card
             </Button>
         </div>
-    </Card>
+    </section>
 </template>
-
-<style scoped>
-.ghost {
-    background: var(--list-bg) !important;
-    position: relative;
-    border-radius: 8px;
-}
-
-.ghost::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.25);
-    border-radius: inherit;
-    pointer-events: none;
-}
-
-.ghost > div {
-    visibility: hidden;
-}
-
-.drag {
-    transform: rotate(5deg);
-}
-
-.handle,
-.handle * {
-    cursor: pointer;
-}
-</style>
