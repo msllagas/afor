@@ -13,18 +13,18 @@ Route::get('/', function () {
 
 Route::get('/about', function () {
     return Inertia::render('About');
-});
+})->name('about');
 Route::get('/privacy-policy', function () {
     return Inertia::render('PrivacyPolicy');
-});
+})->name('privacy-policy');
 
 Route::get('/terms-of-use', function () {
     return Inertia::render('TermsOfUse');
-});
+})->name('terms-of-use');
 
 Route::get('/contact', function () {
     return Inertia::render('Contact');
-});
+})->name('contact');
 
 Route::middleware(['auth', 'verified'])->group(function () {
 
