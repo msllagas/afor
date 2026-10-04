@@ -6,9 +6,8 @@ import { useInitials } from '@/composables/useInitials';
 import AppLayout from '@/layouts/AppLayout.vue';
 import boardsRoutes from '@/routes/boards';
 import type { BreadcrumbItem, Workspace } from '@/types';
-import { Head, router } from '@inertiajs/vue3';
+import { Head } from '@inertiajs/vue3';
 import { Crown, Users } from 'lucide-vue-next';
-import { onMounted } from 'vue';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -23,14 +22,6 @@ const props = defineProps<{
 }>();
 
 const { getInitials } = useInitials();
-
-onMounted(() => {
-    router.visit(boardsRoutes.index().url, {
-        only: ['ownedWorkspaces', 'sharedWorkspaces'],
-        preserveScroll: true,
-        preserveState: true,
-    });
-});
 </script>
 
 <template>
