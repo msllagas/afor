@@ -48,6 +48,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::patch('/{workspace}', [WorkspaceController::class, 'update'])
                 ->name('update');
 
+            Route::delete('/{workspace}', [WorkspaceController::class, 'destroy'])
+                ->name('destroy');
+
             Route::get('/{workspace}/home', [WorkspaceController::class, 'home'])
                 ->name('home');
 

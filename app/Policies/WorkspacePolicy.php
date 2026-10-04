@@ -27,6 +27,14 @@ class WorkspacePolicy
     }
 
     /**
+     * Determine whether the user can delete the workspace.
+     */
+    public function delete(User $user, Workspace $workspace): Response
+    {
+        return $this->ownerOnly($user, $workspace, 'Only the workspace owner can delete it.');
+    }
+
+    /**
      * Determine whether the user can remove members from the workspace.
      *
      * Only the workspace creator (its owner) can remove members for now,

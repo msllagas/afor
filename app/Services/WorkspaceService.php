@@ -2,12 +2,17 @@
 
 namespace App\Services;
 
+use App\Enums\FileCollection;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceInvitation;
 
 class WorkspaceService
 {
+    public function __construct(
+        private readonly FileUploadService $fileUploadService
+    ) {}
+
     public function generateInvitationLink(Workspace $workspace, User $user): string
     {
 
@@ -35,5 +40,17 @@ class WorkspaceService
 
         $workspace->users()->detach($user->id);
 
+    }
+
+    /**
+     * Permanently delete the workspace. Its boards, lists, cards, memberships
+     * and invitations cascade at the database level; the logo file is removed
+     * from storage once the workspace is gone.
+     */
+    public function deleteWorkspace(Workspace $workspace): void
+    {
+        $workspace->delete();
+
+        $this->fileUploadService->delete($workspace, FileCollection::WORKSPACE_LOGO);
     }
 }

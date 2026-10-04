@@ -45,6 +45,15 @@ class WorkspaceController extends Controller
         return back();
     }
 
+    public function destroy(Workspace $workspace): RedirectResponse
+    {
+        Gate::authorize('delete', $workspace);
+
+        $this->workspaceService->deleteWorkspace($workspace);
+
+        return redirect()->route('dashboard');
+    }
+
     public function home(Workspace $workspace): Response|RedirectResponse
     {
         $user = auth()->user();
