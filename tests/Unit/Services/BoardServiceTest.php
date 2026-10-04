@@ -12,23 +12,6 @@ beforeEach(function () {
     $this->service = app(BoardService::class);
 });
 
-test('create board with default lists', function () {
-    $data = [
-        'name' => 'Test Board',
-    ];
-
-    $this->service->create($data, $this->workspace);
-
-    $this->assertDatabaseHas('boards', $data);
-    $this->assertDatabaseCount('board_lists', 3);
-
-    $board = Board::where('name', 'Test Board')->first();
-
-    $this->assertDatabaseHas('board_lists', ['board_id' => $board->id, 'name' => 'To Do']);
-    $this->assertDatabaseHas('board_lists', ['board_id' => $board->id, 'name' => 'In Progress']);
-    $this->assertDatabaseHas('board_lists', ['board_id' => $board->id, 'name' => 'Done']);
-});
-
 test('archive board', function () {
     $board = Board::factory()->for($this->workspace)->create();
 

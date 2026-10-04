@@ -8,22 +8,12 @@ use App\Models\Workspace;
 
 class BoardService
 {
-    private const array DEFAULT_LISTS = [
-        ['name' => 'To Do', 'order' => 0],
-        ['name' => 'In Progress', 'order' => 1],
-        ['name' => 'Done', 'order' => 2],
-    ];
-
-    public function create(array $data, Workspace $workspace)
+    public function create(array $data, Workspace $workspace): Board
     {
-        $board = Board::create([
+        return Board::create([
             ...$data,
             'workspace_id' => $workspace->id,
         ]);
-
-        $this->createDefaultLists($board);
-
-        return $board->load('boardLists.cards');
     }
 
     public function archive(Board $board, User $archiver): Board
@@ -55,10 +45,5 @@ class BoardService
         ]);
 
         return $board;
-    }
-
-    private function createDefaultLists(Board $board): void
-    {
-        $board->boardLists()->createMany(self::DEFAULT_LISTS);
     }
 }
