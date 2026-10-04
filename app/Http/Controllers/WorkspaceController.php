@@ -28,19 +28,18 @@ class WorkspaceController extends Controller
     {
         $workspace->update($request->safe()->only(['name', 'description']));
 
+        $fileUploadService = app(FileUploadService::class);
+
         if ($request->hasFile('logo')) {
-
-            $path = "workspaces/{$workspace->id}/logo";
-
-            $fileUploadData = new FileUploadData(
+            $fileUploadService->replace(new FileUploadData(
                 model: $workspace,
                 file: $request->file('logo'),
                 collection: FileCollection::WORKSPACE_LOGO,
-                path: $path,
-                uploadedBy: auth()->user()
-            );
-
-            app(FileUploadService::class)->replace($fileUploadData);
+                path: "workspaces/{$workspace->id}/logo",
+                uploadedBy: $request->user()
+            ));
+        } elseif ($request->boolean('remove_logo')) {
+            $fileUploadService->delete($workspace, FileCollection::WORKSPACE_LOGO);
         }
 
         return back();

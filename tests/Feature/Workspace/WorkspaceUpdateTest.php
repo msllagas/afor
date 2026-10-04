@@ -128,6 +128,25 @@ test('workspace members cannot update their workspace logo', function () {
     $this->assertDatabaseEmpty('files'); // not uploaded
 });
 
+test('workspace members cannot remove the workspace logo', function () {
+    $this->actingAs($this->user)
+        ->patchJson(route('workspaces.update', $this->workspace), [
+            'logo' => UploadedFile::fake()->image('logo.png'),
+        ])
+        ->assertStatus(302);
+
+    $member = User::factory()->create();
+    $this->workspace->users()->attach($member->id);
+
+    $this->actingAs($member)
+        ->patchJson(route('workspaces.update', $this->workspace), [
+            'remove_logo' => true,
+        ])
+        ->assertForbidden();
+
+    $this->assertDatabaseCount('files', 1);
+});
+
 test('non-members cannot update the workspace logo they are not member of', function () {
     $nonMember = User::factory()->create();
 
@@ -142,6 +161,26 @@ test('non-members cannot update the workspace logo they are not member of', func
     $response->assertNotFound();
 
     $this->assertDatabaseEmpty('files'); // not uploaded
+});
+
+test('workspace owner can remove their workspace logo', function () {
+    $this->actingAs($this->user)
+        ->patchJson(route('workspaces.update', $this->workspace), [
+            'logo' => UploadedFile::fake()->image('logo.png'),
+        ])
+        ->assertStatus(302);
+
+    $file = $this->workspace->logoFile()->first();
+
+    $this->actingAs($this->user)
+        ->patchJson(route('workspaces.update', $this->workspace), [
+            'name'        => $this->workspace->name,
+            'remove_logo' => true,
+        ])
+        ->assertStatus(302);
+
+    Storage::disk('public')->assertMissing($file->path);
+    $this->assertDatabaseEmpty('files');
 });
 
 test('workspace name cannot be blank', function () {

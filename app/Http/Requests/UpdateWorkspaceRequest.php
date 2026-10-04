@@ -30,6 +30,7 @@ class UpdateWorkspaceRequest extends FormRequest
             'name'        => 'sometimes|required|string|max:65',
             'description' => 'sometimes|nullable|string|max:255',
             'logo'        => 'sometimes|nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'remove_logo' => 'sometimes|boolean',
         ];
     }
 }
