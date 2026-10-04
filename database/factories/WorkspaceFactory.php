@@ -30,7 +30,7 @@ class WorkspaceFactory extends Factory
         $user ??= User::factory()->create();
 
         return $this->state([
-            'name'     => $user->name.' Workspace',
+            'name'     => $user->name,
             'owner_id' => $user->id,
         ]);
     }

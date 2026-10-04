@@ -33,7 +33,7 @@ test('registering a user automatically creates a default workspace with a board,
     $this->assertAuthenticated();
 
     assertDatabaseHas('workspaces', [
-        'name'     => 'Test User Workspace',
+        'name'     => 'Test User',
         'owner_id' => auth()->id(),
     ]);
 

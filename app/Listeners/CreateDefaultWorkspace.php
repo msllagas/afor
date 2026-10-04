@@ -10,7 +10,7 @@ class CreateDefaultWorkspace
     public function handle(Registered $event): void
     {
         $workspace = $event->user?->ownedWorkspaces()->create([
-            'name' => $event->user->name.' Workspace',
+            'name' => $event->user->name,
         ]);
 
         $board = $workspace->boards()->create([
