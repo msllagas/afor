@@ -1,7 +1,13 @@
-<script lang="ts" setup></script>
+<script lang="ts" setup>
+import SeoHead from '@/components/SeoHead.vue';
+</script>
 
 <template>
     <div class="min-h-screen bg-background text-foreground">
+        <SeoHead
+            title="Terms of Use"
+            description="The terms for using Afor, covering accounts, workspaces, your content, and acceptable use."
+        />
         <div class="mx-auto max-w-3xl px-6 py-16">
             <!-- Header -->
             <div class="mb-12">

@@ -1,7 +1,13 @@
-<script lang="ts" setup></script>
+<script lang="ts" setup>
+import SeoHead from '@/components/SeoHead.vue';
+</script>
 
 <template>
     <div class="min-h-screen bg-background text-foreground">
+        <SeoHead
+            title="Privacy Policy"
+            description="How Afor collects, uses, stores, and protects your personal information."
+        />
         <div class="mx-auto max-w-3xl px-6 py-16">
             <!-- Header -->
             <div class="mb-12">

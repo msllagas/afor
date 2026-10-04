@@ -13,3 +13,11 @@ export function urlIsActive(urlToCheck: NonNullable<InertiaLinkProps['href']>, c
 export function toUrl(href: NonNullable<InertiaLinkProps['href']>) {
     return typeof href === 'string' ? href : href?.url;
 }
+
+export function formatPageTitle(title: string, appName: string) {
+    if (!title) {
+        return appName;
+    }
+
+    return title.startsWith(appName) ? title : `${title} - ${appName}`;
+}

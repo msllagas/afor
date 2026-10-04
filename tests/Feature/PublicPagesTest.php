@@ -12,3 +12,11 @@ test('guests can view the public pages', function (string $routeName, string $co
     'terms of use'   => ['terms-of-use', 'TermsOfUse'],
     'contact'        => ['contact', 'Contact'],
 ]);
+
+test('public pages receive the application url for canonical links', function () {
+    config(['app.url' => 'https://afor.test']);
+
+    $response = $this->get(route('about'));
+
+    $response->assertInertia(fn (Assert $page) => $page->where('appUrl', 'https://afor.test'));
+});

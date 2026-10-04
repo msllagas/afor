@@ -1,7 +1,13 @@
-<script lang="ts" setup></script>
+<script lang="ts" setup>
+import SeoHead from '@/components/SeoHead.vue';
+</script>
 
 <template>
     <div class="flex min-h-screen items-center justify-center bg-background text-foreground">
+        <SeoHead
+            title="Contact"
+            description="Questions or feedback about Afor? Email the Afor team at afor@mandyllagas.com."
+        />
         <div class="space-y-3 text-center">
             <p class="text-sm font-medium tracking-widest text-primary uppercase">Contact</p>
             <h1 class="text-3xl font-bold text-foreground">Get in Touch</h1>
