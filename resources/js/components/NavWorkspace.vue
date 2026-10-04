@@ -51,11 +51,11 @@ const page = usePage();
                                 v-if="item.logo"
                                 :alt="item.title"
                                 :src="item.logo"
-                                class="size-5 shrink-0 rounded-md object-cover ring-1 ring-border/50 group-data-[collapsible=icon]:size-8"
+                                class="size-8 shrink-0 rounded-md object-cover ring-1 ring-border/50"
                             />
                             <div
                                 v-else
-                                class="flex size-5 shrink-0 items-center justify-center rounded-md bg-linear-to-br from-primary/20 to-accent/20 text-[10px] font-bold text-primary ring-1 ring-border/50 group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:text-sm"
+                                class="flex size-8 shrink-0 items-center justify-center rounded-md bg-linear-to-br from-primary/20 to-accent/20 text-sm font-bold text-primary ring-1 ring-border/50"
                             >
                                 {{ item.title.charAt(0).toUpperCase() }}
                             </div>
