@@ -1,6 +1,8 @@
 <?php
 
 use App\Models\Board;
+use App\Models\BoardList;
+use App\Models\Card;
 use App\Models\User;
 use App\Models\Workspace;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -113,5 +115,26 @@ test('boards index marks the boards the user starred', function () {
         ->where('ownedWorkspaces.0.boards.0.id', $starredBoard->id)
         ->where('ownedWorkspaces.0.boards.0.is_favorited', true)
         ->where('ownedWorkspaces.0.boards.1.is_favorited', false)
+    );
+});
+
+test('boards index previews each board with its active lists and card counts', function () {
+    $user = User::factory()->create();
+    $workspace = Workspace::factory()->forUser($user)->create();
+    $board = Board::factory()->for($workspace)->create();
+    $activeList = BoardList::factory()->for($board)->create(['color' => 'angel']);
+    BoardList::factory()->for($board)->create(['is_archived' => true]);
+    Card::factory()->count(3)->for($activeList)->create();
+
+    $response = $this->actingAs($user)
+        ->get(route('boards.index'));
+
+    $response->assertInertia(fn (Assert $page) => $page
+        ->has('ownedWorkspaces.0.boards.0.board_lists', 1, fn (Assert $list) => $list
+            ->where('id', $activeList->id)
+            ->where('color', 'angel')
+            ->where('cards_count', 3)
+            ->etc()
+        )
     );
 });

@@ -12,6 +12,7 @@ export interface BoardList {
     order: number;
     board_id: string;
     cards: Card[];
+    cards_count?: number;
     color?: string;
 }
 

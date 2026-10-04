@@ -33,11 +33,18 @@ class BoardController extends Controller
             ->with([
                 'logoFile',
                 'boards' => fn ($query) => $query
-                    ->select('id', 'name', 'workspace_id')
+                    ->select('id', 'name', 'workspace_id', 'created_at')
                     ->unarchived()
                     ->withExists([
                         'favoritedByUsers as is_favorited' => fn ($query) => $query->whereKey($user->id),
-                    ]),
+                    ])
+                    ->with([
+                        'boardLists' => fn ($query) => $query
+                            ->select('id', 'board_id', 'color', 'order')
+                            ->active()
+                            ->withCount('cards'),
+                    ])
+                    ->oldest(),
             ])
             ->get()
             ->partition(fn (Workspace $workspace) => $workspace->owner_id === $user->id);

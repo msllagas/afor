@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { Form } from '@inertiajs/vue3';
+import { Plus } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 const props = defineProps<{
@@ -23,18 +24,19 @@ const inputId = computed(() => `board-name-${props.workspaceId}`);
                 type="button"
                 :class="
                     cn(
-                        'flex w-full cursor-pointer flex-col overflow-hidden rounded-2xl border bg-sidebar pt-0 pb-2 text-card-foreground shadow-lg outline-none hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50',
+                        'flex h-full min-h-36 w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-primary/25 text-sm font-medium text-muted-foreground transition-colors duration-200 outline-none hover:border-primary/60 hover:bg-blush/50 hover:text-blush-foreground focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-ring/50 data-[state=open]:border-primary/60 data-[state=open]:bg-blush/50 data-[state=open]:text-blush-foreground',
                         $attrs.class ?? '',
                     )
                 "
             >
-                <span class="relative flex h-32 items-center justify-center overflow-hidden px-6">Create new board</span>
+                <Plus class="size-5" />
+                New board
             </button>
         </PopoverTrigger>
-        <PopoverContent class="rounded-xl bg-sidebar">
+        <PopoverContent class="rounded-xl">
             <Form
                 v-slot="{ errors, processing }"
-                class="space-y-6"
+                class="space-y-4"
                 v-bind="
                     BoardController.store.form({
                         workspace: workspaceId,
@@ -42,16 +44,12 @@ const inputId = computed(() => `board-name-${props.workspaceId}`);
                 "
             >
                 <div class="grid gap-2">
-                    <Label class="test-sm" :for="inputId">Board Name</Label>
-                    <Input :id="inputId" class="mt-1 block w-full" name="name" required />
-                    <InputError :message="errors.name" class="mt-2" />
+                    <Label :for="inputId">Board name</Label>
+                    <Input :id="inputId" class="block w-full" name="name" placeholder="Launch week" required />
+                    <InputError :message="errors.name" />
                 </div>
-                <div class="flex items-center gap-4">
-                    <Button :disabled="processing" data-test="add-board-button">Create </Button>
-                </div>
+                <Button :disabled="processing" class="w-full" data-test="add-board-button">Create board</Button>
             </Form>
         </PopoverContent>
     </Popover>
 </template>
-
-<style scoped></style>
