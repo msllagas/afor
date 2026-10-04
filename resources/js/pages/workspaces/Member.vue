@@ -48,8 +48,9 @@ function removeMember(memberId: string) {
 </script>
 
 <template>
-    <Head :title="workspace.name + ' - Members'" />
     <AppLayout :breadcrumbs="breadcrumbs">
+        <Head :title="workspace.name + ' - Members'" />
+
         <div class="px-10 py-12">
             <div class="max-w-2xl space-y-8">
                 <!-- Header -->

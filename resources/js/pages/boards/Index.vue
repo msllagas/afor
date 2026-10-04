@@ -34,9 +34,9 @@ onMounted(() => {
 </script>
 
 <template>
-    <Head title="Boards" />
-
     <AppLayout :breadcrumbs="breadcrumbs">
+        <Head title="Boards" />
+
         <div class="px-6 pb-16 sm:px-10">
             <div class="mt-10 space-y-14">
                 <section>
