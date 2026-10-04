@@ -12,7 +12,6 @@ use App\Models\User;
 use App\Models\Workspace;
 use App\Services\FileUploadService;
 use App\Services\WorkspaceService;
-use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
@@ -27,13 +26,6 @@ class WorkspaceController extends Controller
 
     public function update(UpdateWorkspaceRequest $request, Workspace $workspace): RedirectResponse
     {
-        $isMember = $workspace->users()->where('user_id', $request->user()->id)->exists();
-        $isOwner = $workspace->owner_id === $request->user()->id;
-
-        if (!$isMember && !$isOwner) {
-            throw new AuthorizationException('You are not authorized to update this workspace.', 403);
-        }
-
         $workspace->update($request->safe()->only(['name', 'description']));
 
         if ($request->hasFile('logo')) {
@@ -129,8 +121,12 @@ class WorkspaceController extends Controller
         return back();
     }
 
-    public function settings(Workspace $workspace): Response
+    public function settings(Workspace $workspace): Response|RedirectResponse
     {
+        if (auth()->user()->cannot('update', $workspace)) {
+            return redirect()->route('dashboard');
+        }
+
         $workspace->load('logoFile');
 
         return Inertia::render('workspaces/Settings', [

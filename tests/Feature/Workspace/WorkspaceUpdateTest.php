@@ -34,7 +34,7 @@ test('workspace owner can update the name and description of their workspace', f
 
 });
 
-test('workspace members can update the name and description of the workspace', function () {
+test('workspace members cannot update the name and description of the workspace', function () {
     $member = User::factory()->create();
     $this->workspace->users()->attach($member->id);
 
@@ -46,12 +46,12 @@ test('workspace members can update the name and description of the workspace', f
             'description' => 'Updated Workspace Description',
         ]);
 
-    $response->assertStatus(302);
+    $response->assertForbidden();
     $this->assertDatabaseHas('workspaces', [
         'id'          => $this->workspace->id,
-        'name'        => 'Updated Workspace Name',
-        'description' => 'Updated Workspace Description',
-    ]);
+        'name'        => $this->workspace->name,
+        'description' => $this->workspace->description,
+    ]); // nothing changes
 });
 
 test('non-members cannot update the workspace they are not member of', function () {
@@ -65,7 +65,7 @@ test('non-members cannot update the workspace they are not member of', function 
             'description' => 'Updated Workspace Description',
         ]);
 
-    $response->assertStatus(403);
+    $response->assertNotFound();
 
     $this->assertDatabaseHas('workspaces', [
         'id'          => $this->workspace->id,
@@ -112,35 +112,20 @@ test('workspace owner can update their workspace logo', function () {
     $this->assertEquals($expectedPath, $file->path);
 });
 
-test('workspace members can update their workspace logo', function () {
+test('workspace members cannot update their workspace logo', function () {
     $member = User::factory()->create();
     $this->workspace->users()->attach($member->id);
 
-    $fileUploaded = UploadedFile::fake()->create('logo.png', '500', 'image/png');
     $response = $this->actingAs($member)
         ->patchJson(route('workspaces.update', [
             'workspace' => $this->workspace->id,
         ]), [
-            'logo' => $fileUploaded,
+            'logo' => UploadedFile::fake()->image('logo.png'),
         ]);
 
-    $response->assertStatus(302);
+    $response->assertForbidden();
 
-    $file = $this->workspace->logoFile()->first();
-    Storage::disk('public')->assertExists($file->path);
-
-    $expectedPath = "workspaces/{$this->workspace->id}/logo/{$fileUploaded->hashName()}";
-
-    $this->assertDatabaseHas('files', [
-        'id'            => $file->id,
-        'collection'    => FileCollection::WORKSPACE_LOGO->value,
-        'fileable_id'   => $this->workspace->id,
-        'fileable_type' => Workspace::class,
-        'disk'          => 'public',
-        'path'          => $expectedPath,
-    ]);
-
-    $this->assertEquals($expectedPath, $file->path);
+    $this->assertDatabaseEmpty('files'); // not uploaded
 });
 
 test('non-members cannot update the workspace logo they are not member of', function () {
@@ -154,7 +139,7 @@ test('non-members cannot update the workspace logo they are not member of', func
             'logo' => $fileUploaded,
         ]);
 
-    $response->assertStatus(403);
+    $response->assertNotFound();
 
     $this->assertDatabaseEmpty('files'); // not uploaded
 });

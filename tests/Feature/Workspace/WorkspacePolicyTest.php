@@ -29,3 +29,14 @@ test('only the workspace creator can manage members', function () {
         ->and($member->can('manageMembers', $workspace))->toBeFalse()
         ->and(User::factory()->create()->can('manageMembers', $workspace))->toBeFalse();
 });
+
+test('only the workspace creator can update the workspace', function (string $ability) {
+    $owner = User::factory()->create();
+    $member = User::factory()->create();
+    $workspace = Workspace::factory()->forUser($owner)->create();
+    $workspace->users()->attach($member);
+
+    expect($owner->can($ability, $workspace))->toBeTrue()
+        ->and($member->can($ability, $workspace))->toBeFalse()
+        ->and(User::factory()->create()->can($ability, $workspace))->toBeFalse();
+})->with(['update']);

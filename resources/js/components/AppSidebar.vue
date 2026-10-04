@@ -59,6 +59,7 @@ const ownedWorkspaces = page.props?.ownedWorkspaces.map((workspace) => ({
     ],
 }));
 
+// Settings are owner-only, so shared workspaces don't link to them.
 const sharedWorkspaces = page.props?.sharedWorkspaces.map((workspace) => ({
     title: workspace.name,
     logo: workspace.logo,
@@ -72,10 +73,6 @@ const sharedWorkspaces = page.props?.sharedWorkspaces.map((workspace) => ({
         {
             title: 'Members',
             url: workspacesRoutes.members(workspace.id).url,
-        },
-        {
-            title: 'Settings',
-            url: workspacesRoutes.settings(workspace.id).url,
         },
     ],
 }));

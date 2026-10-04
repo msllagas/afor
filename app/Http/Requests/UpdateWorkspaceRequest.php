@@ -2,17 +2,21 @@
 
 namespace App\Http\Requests;
 
+use Illuminate\Auth\Access\Response;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Gate;
 
 class UpdateWorkspaceRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
+     *
+     * Only the workspace owner can change its settings; outsiders get a 404.
      */
-    public function authorize(): bool
+    public function authorize(): Response
     {
-        return \Auth::check();
+        return Gate::inspect('update', $this->route('workspace'));
     }
 
     /**
