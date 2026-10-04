@@ -9,6 +9,7 @@ use App\Http\Resources\WorkspaceResource;
 use App\Models\Board;
 use App\Models\Workspace;
 use App\Services\BoardService;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -145,9 +146,23 @@ class BoardController extends Controller
         return $this->boardService->unarchive($board);
     }
 
-    public function archived(Workspace $workspace)
+    public function archived(Workspace $workspace): Collection
     {
-        return $workspace->boards()->archived()->get();
+        return $workspace->boards()
+            ->select('id', 'name', 'workspace_id', 'created_at', 'archived_at', 'archived_by')
+            ->archived()
+            ->withExists([
+                'favoritedByUsers as is_favorited' => fn ($query) => $query->whereKey(auth()->id()),
+            ])
+            ->with([
+                'archiver:id,name',
+                'boardLists' => fn ($query) => $query
+                    ->select('id', 'board_id', 'color', 'order')
+                    ->active()
+                    ->withCount('cards'),
+            ])
+            ->latest('archived_at')
+            ->get();
     }
 
     public function toggleFavorite(Workspace $workspace, Board $board): Board

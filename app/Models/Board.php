@@ -29,6 +29,7 @@ use Illuminate\Support\Carbon;
  * @property-read Collection<int, User> $favoritedByUsers
  * @property-read int|null $favorited_by_users_count
  * @property-read Workspace $workspace
+ * @property-read User|null $archiver
  *
  * @method static Builder<static>|Board archived()
  * @method static BoardFactory factory($count = null, $state = [])
@@ -78,6 +79,11 @@ class Board extends Model
     public function workspace(): BelongsTo
     {
         return $this->belongsTo(Workspace::class);
+    }
+
+    public function archiver(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'archived_by');
     }
 
     public function boardLists(): HasMany
