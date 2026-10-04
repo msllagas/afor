@@ -18,6 +18,8 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->rememberToken();
+            // The foreign key is added in the workspaces migration, since that table doesn't exist yet.
+            $table->uuid('last_workspace_id')->nullable();
             $table->timestamps();
         });
 

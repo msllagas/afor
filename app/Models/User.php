@@ -31,6 +31,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property string|null $two_factor_recovery_codes
  * @property string|null $two_factor_confirmed_at
  * @property string|null $remember_token
+ * @property string|null $last_workspace_id
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read mixed $avatar
@@ -87,6 +88,15 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $hidden = [
         'password',
         'remember_token',
+    ];
+
+    /**
+     * The model's default values for attributes.
+     *
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'last_workspace_id' => null,
     ];
 
     /**

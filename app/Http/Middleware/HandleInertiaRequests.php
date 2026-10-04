@@ -61,6 +61,9 @@ class HandleInertiaRequests extends Middleware
                     $user->ownedWorkspaces()->with('logoFile')->get()
                 )->resolve()
                 : [],
+            'currentWorkspaceId' => fn () => $user
+                ? RememberLastWorkspace::workspaceIdFromRoute($request) ?? $user->last_workspace_id
+                : null,
         ];
     }
 }

@@ -24,6 +24,13 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
         });
+
+        Schema::table('users', function (Blueprint $table) {
+            $table->foreign('last_workspace_id')
+                ->references('id')
+                ->on('workspaces')
+                ->nullOnDelete();
+        });
     }
 
     /**
@@ -31,6 +38,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropForeign(['last_workspace_id']);
+        });
+
         Schema::dropIfExists('workspaces');
     }
 };
