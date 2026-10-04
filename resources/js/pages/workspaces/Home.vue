@@ -93,12 +93,16 @@ function handleUnarchiveBoard(board: Board) {
 function handleStarBoard(board: Board, isStarred: boolean) {
     board.is_favorited = isStarred;
 
+    const rollback = () => {
+        toast.error('Could not update the star. Try again.');
+        board.is_favorited = !isStarred;
+    };
+
     http.post(favorite({ workspace: props.workspace.id, board: board.id }).url, {
-        onError: () => {
-            toast.error('Could not update the star. Try again.');
-            board.is_favorited = !isStarred;
-        },
-    });
+        onError: rollback,
+        onHttpException: rollback,
+        onNetworkError: rollback,
+    }).catch(() => {});
 }
 
 useEcho<BoardData>(`workspace.${props.workspace.id}`, 'BoardAddedToWorkspace', ({ board }) => {
