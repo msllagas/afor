@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 import BoardCard from '@/components/board/BoardCard.vue';
 import BoardCardPopover from '@/components/board/BoardCardPopover.vue';
-import SeoHead from '@/components/SeoHead.vue';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -63,10 +62,6 @@ const memberSummary = computed(() => {
     return count === 0 ? 'No members yet' : `${count} ${count === 1 ? 'member' : 'members'}`;
 });
 
-const seoDescription = computed(
-    () => props.workspace.description || `Boards and members of the ${props.workspace.name} workspace on Afor.`,
-);
-
 async function copyInviteLink() {
     if (!props.inviteLink) {
         return;
@@ -117,8 +112,7 @@ onBeforeUnmount(() => clearTimeout(copiedResetTimer));
 
 <template>
     <AppLayout :breadcrumbs="breadcrumbs">
-        <SeoHead :title="workspace.name" :description="seoDescription" is-hidden-from-search />
-        <Head>
+        <Head :title="workspace.name">
             <link
                 head-key="font-fraunces"
                 href="https://fonts.bunny.net/css?family=fraunces:500,600"

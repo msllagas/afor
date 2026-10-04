@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 import BoardCard from '@/components/board/BoardCard.vue';
 import BoardCardPopover from '@/components/board/BoardCardPopover.vue';
-import SeoHead from '@/components/SeoHead.vue';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useInitials } from '@/composables/useInitials';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -67,12 +66,7 @@ function handleStarBoard(board: Board, isStarred: boolean) {
 
 <template>
     <AppLayout :breadcrumbs="breadcrumbs">
-        <SeoHead
-            title="Boards"
-            description="Every kanban board across your Afor workspaces, with the ones you starred up top."
-            is-hidden-from-search
-        />
-        <Head>
+        <Head title="Boards">
             <link
                 head-key="font-fraunces"
                 href="https://fonts.bunny.net/css?family=fraunces:500,600"
