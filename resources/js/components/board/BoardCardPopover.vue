@@ -10,9 +10,14 @@ import { Form } from '@inertiajs/vue3';
 import { Plus } from 'lucide-vue-next';
 import { computed } from 'vue';
 
-const props = defineProps<{
-    workspaceId: string;
-}>();
+const props = withDefaults(
+    defineProps<{
+        workspaceId: string;
+        /** A grid tile, or a slim row for the compact list. */
+        variant?: 'tile' | 'row';
+    }>(),
+    { variant: 'tile' },
+);
 
 const inputId = computed(() => `board-name-${props.workspaceId}`);
 </script>
@@ -24,12 +29,13 @@ const inputId = computed(() => `board-name-${props.workspaceId}`);
                 type="button"
                 :class="
                     cn(
-                        'flex h-full min-h-36 w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-primary/25 text-sm font-medium text-muted-foreground transition-colors duration-200 outline-none hover:border-primary/60 hover:bg-blush/50 hover:text-blush-foreground focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-ring/50 data-[state=open]:border-primary/60 data-[state=open]:bg-blush/50 data-[state=open]:text-blush-foreground',
+                        'flex w-full cursor-pointer items-center justify-center gap-2 border-2 border-dashed border-primary/25 text-sm font-medium text-muted-foreground transition-colors duration-200 outline-none hover:border-primary/60 hover:bg-blush/50 hover:text-blush-foreground focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-ring/50 data-[state=open]:border-primary/60 data-[state=open]:bg-blush/50 data-[state=open]:text-blush-foreground',
+                        variant === 'tile' ? 'h-full min-h-36 flex-col rounded-2xl' : 'min-h-11 rounded-xl',
                         $attrs.class ?? '',
                     )
                 "
             >
-                <Plus class="size-5" />
+                <Plus :class="variant === 'tile' ? 'size-5' : 'size-4'" aria-hidden="true" />
                 New board
             </button>
         </PopoverTrigger>

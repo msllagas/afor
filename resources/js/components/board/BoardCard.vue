@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import HighlightMatch from '@/components/HighlightMatch.vue';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { show } from '@/routes/boards';
@@ -17,6 +18,8 @@ const PLACEHOLDER_LISTS = [
 
 const props = defineProps<{
     board: Board;
+    /** Search text to highlight in the board name. */
+    query?: string;
 }>();
 
 defineEmits<{
@@ -78,7 +81,7 @@ const summary = computed(() => {
                 </p>
             </div>
             <div class="flex flex-1 flex-col gap-0.5 px-4 py-3">
-                <span class="truncate text-sm font-semibold">{{ board.name }}</span>
+                <HighlightMatch :query="query" :text="board.name" class="truncate text-sm font-semibold" />
                 <span v-if="hasListPreview" class="text-xs text-muted-foreground tabular-nums">{{ summary }}</span>
             </div>
         </Link>

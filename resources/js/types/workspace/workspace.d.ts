@@ -43,3 +43,20 @@ export interface Workspace {
     boards: Board[];
     logo?: string; // url path
 }
+
+/** A workspace and its boards that pass the boards page's search and scope. */
+export interface WorkspaceBoardsMatch {
+    workspace: Workspace;
+    boards: Board[];
+}
+
+export interface WorkspaceBoardsGroup {
+    id: 'current' | 'owned' | 'shared';
+    title: string;
+    matches: WorkspaceBoardsMatch[];
+}
+
+/** Which workspaces' boards the boards page shows. */
+export type BoardsScope = 'all' | 'owned' | 'shared' | 'starred';
+
+export type BoardsView = 'grid' | 'list';
