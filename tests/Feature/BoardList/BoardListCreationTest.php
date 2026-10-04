@@ -11,7 +11,7 @@ use function Pest\Laravel\post;
 test('users can create board list', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
-    $board = Board::factory()->create();
+    $board = Board::factory()->for(Workspace::factory()->forUser($user))->create();
 
     $response = $this->post(route('boards.board-lists.store', [
         'board' => $board,
@@ -30,7 +30,7 @@ test('adding a new board list assigns next order number', function () {
 
     $this->actingAs($user);
 
-    $workspace = Workspace::factory()->create();
+    $workspace = Workspace::factory()->forUser($user)->create();
     $board = Board::factory()->for($workspace)->create();
 
     BoardList::factory()->for($board)->create(

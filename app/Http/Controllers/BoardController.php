@@ -82,6 +82,8 @@ class BoardController extends Controller
      */
     public function show(Board $board): Response
     {
+        Gate::authorize('view', $board);
+
         $board->load([
             'boardLists' => function ($query) {
                 $query->with('cards')
@@ -176,6 +178,8 @@ class BoardController extends Controller
 
     public function toggleFavorite(Workspace $workspace, Board $board): Board
     {
+        Gate::authorize('view', $board);
+
         return $this->boardService->toggleFavorite($board, auth()->user());
     }
 }

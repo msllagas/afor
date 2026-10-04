@@ -105,3 +105,20 @@ test('users cannot update a card they do not own', function () {
             'message' => 'You do not own this card.',
         ]);
 })->skip();
+
+test('cards cannot be moved to a list on another board', function () {
+    $user = User::factory()->create();
+    $workspace = Workspace::factory()->forUser($user)->create();
+    $boardList = BoardList::factory()->for(Board::factory()->for($workspace))->create();
+    $card = Card::factory()->for($boardList)->create();
+    $listOnAnotherBoard = BoardList::factory()->for(Board::factory()->for(Workspace::factory()->forUser()))->create();
+
+    $response = $this->actingAs($user)->patchJson(route('board-lists.cards.update', [
+        'board_list' => $boardList,
+        'card'       => $card,
+    ]), ['board_list_id' => $listOnAnotherBoard->id]);
+
+    $response->assertUnprocessable()
+        ->assertJsonValidationErrors(['board_list_id' => 'The selected board list id is invalid.']);
+    expect($card->refresh()->board_list_id)->toBe($boardList->id);
+});

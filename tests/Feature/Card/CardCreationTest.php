@@ -38,7 +38,7 @@ test('adding a new card assigns next order number', function () {
 
     $this->actingAs($user);
 
-    $workspace = Workspace::factory()->create();
+    $workspace = Workspace::factory()->forUser($user)->create();
     $board = Board::factory()->for($workspace)->create();
     $boardList = BoardList::factory()->for($board)->create();
 

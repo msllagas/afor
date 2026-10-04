@@ -12,6 +12,7 @@ import cardRoutes from '@/routes/board-lists/cards';
 import boardRoutes from '@/routes/boards';
 import boardListRoutes from '@/routes/boards/board-lists';
 import { home } from '@/routes/workspaces';
+import { index as boardsIndex } from '@/routes/boards';
 import { favorite } from '@/routes/workspaces/boards';
 import type { Board, BoardList as BoardListType, BreadcrumbItem, Card, SortableChangeEvent } from '@/types';
 import type { RequestPayload } from '@inertiajs/core';
@@ -124,11 +125,67 @@ async function announce(message: string) {
 | back to the last server snapshot and re-fetches it.
 */
 
-function rollback(message: string) {
-    toast.error(message);
+let hasLostAccess = false;
+
+/** The board was deleted, or the user is no longer in its workspace (maybe they left it in another tab). */
+function leaveInaccessibleBoard() {
+    if (hasLostAccess) {
+        return;
+    }
+
+    hasLostAccess = true;
+    toast.error('You no longer have access to this board', {
+        description: 'It was deleted, or you’re no longer a member of its workspace.',
+    });
+    router.visit(boardsIndex().url, { replace: true });
+}
+
+/**
+ * A 404 means either one card or list is gone, or the whole board is out of reach.
+ * Re-fetching the board tells which: losing access sends the user away, anything else is an ordinary failure.
+ */
+function confirmBoardAccess(onStillAccessible: () => void) {
+    router.reload({
+        only: ['board'],
+        async: true,
+        onSuccess: onStillAccessible,
+        onHttpException: (response) => {
+            if (response.status === 404) {
+                leaveInaccessibleBoard();
+            } else {
+                onStillAccessible();
+            }
+
+            return false;
+        },
+        onNetworkError: () => {
+            onStillAccessible();
+
+            return false;
+        },
+    });
+}
+
+function rollback(message: string, status?: number) {
     lists.value = cloneLists(props.board.board_lists);
     boardName.value = props.board.name;
+
+    if (status === 404) {
+        confirmBoardAccess(() => toast.error(message));
+
+        return;
+    }
+
+    toast.error(message);
     router.reload({ only: ['board'], async: true, onHttpException: () => false, onNetworkError: () => false });
+}
+
+function onHttpFailure(response: { status: number }, showFailure: () => void) {
+    if (response.status === 404) {
+        confirmBoardAccess(showFailure);
+    } else {
+        showFailure();
+    }
 }
 
 function send(
@@ -150,8 +207,8 @@ function send(
         only: ['board'],
         onSuccess: () => onSuccess?.(),
         onError: (errors) => rollback(Object.values(errors)[0] ?? failureMessage),
-        onHttpException: () => {
-            rollback(failureMessage);
+        onHttpException: (response) => {
+            rollback(failureMessage, response.status);
 
             return false;
         },
@@ -258,7 +315,7 @@ function toggleStar() {
                     onNetworkError: () => false,
                 }),
             onError: undoStar,
-            onHttpException: undoStar,
+            onHttpException: (response) => onHttpFailure(response, undoStar),
             onNetworkError: undoStar,
         })
         .catch(() => {});
@@ -295,7 +352,11 @@ function archiveBoard() {
                         }),
                 }),
             onError: fail,
-            onHttpException: fail,
+            onHttpException: (response) => {
+                onHttpFailure(response, fail);
+
+                return false;
+            },
             onNetworkError: fail,
         },
     );
@@ -666,6 +727,20 @@ function onFormRequestFailed() {
     return false;
 }
 
+function onFormHttpException(response: { status: number }) {
+    onHttpFailure(response, onFormRequestFailed);
+
+    return false;
+}
+
+function onCardRequestFailed(message: string, status?: number) {
+    if (status === 404) {
+        confirmBoardAccess(() => toast.error(message));
+    } else {
+        toast.error(message);
+    }
+}
+
 /*
 |--------------------------------------------------------------------------
 | Cards
@@ -999,7 +1074,7 @@ function deleteCard(card: Card) {
                                 @open-card="openCard"
                                 @recolor="recolorList(element, $event)"
                                 @rename="renameList(element, $event)"
-                                @request-failed="toast.error($event)"
+                                @request-failed="onCardRequestFailed"
                             />
                         </li>
                     </template>
@@ -1023,7 +1098,7 @@ function deleteCard(card: Card) {
                                     class="space-y-2"
                                     reset-on-success
                                     v-bind="BoardListController.store.form(board.id)"
-                                    @http-exception="onFormRequestFailed"
+                                    @http-exception="onFormHttpException"
                                     @network-error="onFormRequestFailed"
                                     @success="onListAdded"
                                 >

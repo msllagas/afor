@@ -55,6 +55,8 @@ class CardController extends Controller
      */
     public function show(BoardList $boardList, Card $card): Response
     {
+        Gate::authorize('view', $card);
+
         $board = $boardList->board;
 
         $board->load([
@@ -76,6 +78,8 @@ class CardController extends Controller
      */
     public function edit(BoardList $boardList, Card $card): Response
     {
+        Gate::authorize('view', $card);
+
         $board = $boardList->board;
         $board->load('boardLists.cards');
 
@@ -91,8 +95,6 @@ class CardController extends Controller
      */
     public function update(UpdateCardRequest $request, BoardList $boardList, Card $card)
     {
-        //        Gate::authorize('update', $card);
-
         $card->update($request->validated());
 
         return back();
@@ -103,7 +105,8 @@ class CardController extends Controller
      */
     public function destroy(BoardList $boardList, Card $card): RedirectResponse
     {
-        // todo: prevent non-members from deleting cards
+        Gate::authorize('delete', $card);
+
         $card->delete();
 
         return back();
@@ -111,6 +114,8 @@ class CardController extends Controller
 
     public function reorder(Request $request, BoardList $boardList): RedirectResponse
     {
+        Gate::authorize('update', $boardList);
+
         $cards = $request->input('cards', []);
 
         foreach ($cards as $cardData) {

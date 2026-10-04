@@ -4,6 +4,7 @@ use App\Enums\BoardListColor;
 use App\Models\Board;
 use App\Models\BoardList;
 use App\Models\User;
+use App\Models\Workspace;
 
 use function Pest\Laravel\assertDatabaseHas;
 use function Pest\Laravel\patch;
@@ -12,7 +13,7 @@ test('users can archive a board list', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
 
-    $board = Board::factory()->create();
+    $board = Board::factory()->for(Workspace::factory()->forUser($user))->create();
     $boardList = BoardList::factory()->for($board)->create();
 
     expect($boardList->is_archived)->tobeFalse();
@@ -36,7 +37,7 @@ test('users can change board list color', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
 
-    $board = Board::factory()->create();
+    $board = Board::factory()->for(Workspace::factory()->forUser($user))->create();
     $boardList = BoardList::factory()->for($board)->create();
 
     $response = patch(route('boards.board-lists.update', [
@@ -58,7 +59,7 @@ test('users can change board list name', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
 
-    $board = Board::factory()->create();
+    $board = Board::factory()->for(Workspace::factory()->forUser($user))->create();
     $boardList = BoardList::factory()->for($board)->create(['name' => 'Initial name']);
 
     $response = patch(route('boards.board-lists.update', [

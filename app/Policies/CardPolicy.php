@@ -2,68 +2,45 @@
 
 namespace App\Policies;
 
+use App\Models\BoardList;
 use App\Models\Card;
 use App\Models\User;
+use App\Policies\Concerns\RequiresWorkspaceMembership;
 use Illuminate\Auth\Access\Response;
 
 class CardPolicy
 {
+    use RequiresWorkspaceMembership;
+
     /**
-     * Determine whether the user can view any models.
+     * Determine whether the user can open the card.
      */
-    public function viewAny(User $user): bool
+    public function view(User $user, Card $card): Response
     {
-        return false;
+        return $this->memberOf($user, $card->boardList->board->workspace);
     }
 
     /**
-     * Determine whether the user can view the model.
+     * Determine whether the user can add a card to the list.
      */
-    public function view(User $user, Card $card): bool
+    public function create(User $user, BoardList $boardList): Response
     {
-        return false;
+        return $this->memberOf($user, $boardList->board->workspace);
     }
 
     /**
-     * Determine whether the user can create models.
+     * Determine whether the user can update the card, including moving it to another list.
      */
-    public function create(User $user): bool
+    public function update(User $user, Card $card): Response
     {
-        return false;
+        return $this->memberOf($user, $card->boardList->board->workspace);
     }
 
     /**
-     * Determine whether the user can update the model.
+     * Determine whether the user can delete the card.
      */
-    public function update(User $user, Card $card): bool
+    public function delete(User $user, Card $card): Response
     {
-        return false;
-        /* return $card->boardList->board->workspace->user_id === $user->id
-             ? Response::allow()
-             : Response::deny('You do not own this card.');*/
-    }
-
-    /**
-     * Determine whether the user can delete the model.
-     */
-    public function delete(User $user, Card $card): bool
-    {
-        return false;
-    }
-
-    /**
-     * Determine whether the user can restore the model.
-     */
-    public function restore(User $user, Card $card): bool
-    {
-        return false;
-    }
-
-    /**
-     * Determine whether the user can permanently delete the model.
-     */
-    public function forceDelete(User $user, Card $card): bool
-    {
-        return false;
+        return $this->memberOf($user, $card->boardList->board->workspace);
     }
 }

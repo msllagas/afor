@@ -65,8 +65,25 @@ class WorkspaceService
             throw new \InvalidArgumentException('User is not a member of this workspace.');
         }
 
-        $workspace->users()->detach($user->id);
+        $this->endMembership($workspace, $user);
+    }
 
+    /**
+     * Take the user out of a workspace they're a member of, at their own request.
+     *
+     * @throws \InvalidArgumentException when the user owns the workspace or isn't a member of it
+     */
+    public function leaveWorkspace(Workspace $workspace, User $user): void
+    {
+        if ($workspace->owner_id === $user->id) {
+            throw new \InvalidArgumentException('The workspace owner cannot leave it.');
+        }
+
+        if (!$workspace->users()->whereKey($user->id)->exists()) {
+            throw new \InvalidArgumentException('User is not a member of this workspace.');
+        }
+
+        $this->endMembership($workspace, $user);
     }
 
     /**
@@ -79,6 +96,23 @@ class WorkspaceService
         $workspace->delete();
 
         $this->fileUploadService->delete($workspace, FileCollection::WORKSPACE_LOGO);
+    }
+
+    /**
+     * Remove the membership along with what the user kept from it: their stars on its boards,
+     * and the workspace as the one they last opened.
+     */
+    private function endMembership(Workspace $workspace, User $user): void
+    {
+        DB::transaction(function () use ($workspace, $user) {
+            $workspace->users()->detach($user->id);
+
+            $user->favoriteBoards()->detach($workspace->boards()->pluck('id'));
+
+            if ($user->last_workspace_id === $workspace->id) {
+                $user->forceFill(['last_workspace_id' => null])->saveQuietly();
+            }
+        });
     }
 
     private function newInvitationToken(): string

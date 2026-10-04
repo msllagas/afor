@@ -140,6 +140,18 @@ class WorkspaceController extends Controller
         return back();
     }
 
+    /**
+     * Leave a workspace the user is a member of, then land on the boards they can still reach.
+     */
+    public function leave(Workspace $workspace): RedirectResponse
+    {
+        Gate::authorize('leave', $workspace);
+
+        $this->workspaceService->leaveWorkspace($workspace, auth()->user());
+
+        return to_route('boards.index');
+    }
+
     public function settings(Workspace $workspace): Response|RedirectResponse
     {
         if (auth()->user()->cannot('update', $workspace)) {

@@ -62,6 +62,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->name('members.user.destroy')
                 ->scopeBindings();
 
+            Route::delete('/{workspace}/membership', [WorkspaceController::class, 'leave'])
+                ->name('leave');
+
             Route::post('/{workspace}/invite-link/reset', [WorkspaceInvitationController::class, 'reset'])
                 ->name('invite-link.reset');
 

@@ -2,18 +2,20 @@
 
 namespace App\Http\Requests;
 
-use Auth;
+use App\Models\BoardList;
+use Illuminate\Auth\Access\Response;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Gate;
 
 class StoreBoardListRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
-    public function authorize(): bool
+    public function authorize(): Response
     {
-        return Auth::check();
+        return Gate::inspect('create', [BoardList::class, $this->route('board')]);
     }
 
     /**

@@ -8,7 +8,17 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import workspaceRoutes from '@/routes/workspaces';
 import type { BreadcrumbItem, Workspace, WorkspaceMember } from '@/types';
 import { Deferred, Head, router, usePage } from '@inertiajs/vue3';
-import { Check, Crown, Link as LinkIcon, RotateCcw, Search, UserRoundMinus, UserRoundPlus } from 'lucide-vue-next';
+import { index as boardsIndex } from '@/routes/boards';
+import {
+    Check,
+    Crown,
+    Link as LinkIcon,
+    LogOut,
+    RotateCcw,
+    Search,
+    UserRoundMinus,
+    UserRoundPlus,
+} from 'lucide-vue-next';
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
 import { toast } from 'vue-sonner';
 
@@ -41,6 +51,8 @@ const confirmingRemovalId = ref<string | null>(null);
 const isInviteLinkCopied = ref(false);
 const isConfirmingReset = ref(false);
 const isResettingLink = ref(false);
+const isConfirmingLeave = ref(false);
+const isLeaving = ref(false);
 const announcement = ref('');
 const listRef = ref<HTMLElement | null>(null);
 let copiedResetTimer: ReturnType<typeof setTimeout> | undefined;
@@ -92,6 +104,14 @@ function isCurrentUser(person: WorkspaceMember) {
 
 function canRemove(person: WorkspaceMember) {
     return props.canManageMembers && !isOwner(person);
+}
+
+function canLeave(person: WorkspaceMember) {
+    return isCurrentUser(person) && !isOwner(person);
+}
+
+function isConfirmingAbout(person: WorkspaceMember) {
+    return confirmingRemovalId.value === person.id || (isConfirmingLeave.value && canLeave(person));
 }
 
 function formatJoinedAt(person: WorkspaceMember) {
@@ -186,6 +206,69 @@ function resetInviteLink() {
             return false;
         },
         onFinish: () => (isResettingLink.value = false),
+    });
+}
+
+function askToLeave() {
+    isConfirmingLeave.value = true;
+    focusById('cancel-leave');
+}
+
+function cancelLeave() {
+    isConfirmingLeave.value = false;
+    focusById('leave-workspace');
+}
+
+function handleLeaveFailure(workspaceName: string, status?: number) {
+    // Already out: the owner removed them, or they left in another tab.
+    if (status === 404) {
+        toast.info(`You’re no longer in ${workspaceName}`);
+        router.visit(boardsIndex().url, { replace: true });
+
+        return;
+    }
+
+    const descriptions: Record<number, string> = {
+        403: 'The workspace owner can’t leave it. Delete the workspace from its settings instead.',
+        419: 'Your session expired. Refresh the page, then try again.',
+    };
+    const canRetry = status === undefined || !(status in descriptions);
+
+    toast.error(`Couldn’t leave ${workspaceName}`, {
+        description:
+            status === undefined
+                ? 'Check your connection, then try again.'
+                : (descriptions[status] ?? 'Something went wrong on our end. Try again in a moment.'),
+        action: canRetry ? { label: 'Try again', onClick: leaveWorkspace } : undefined,
+    });
+}
+
+function leaveWorkspace() {
+    if (isLeaving.value) {
+        return;
+    }
+
+    const workspaceName = props.workspace.name;
+    const ownerName = props.owner.name;
+
+    router.delete(workspaceRoutes.leave(props.workspace.id).url, {
+        replace: true,
+        onStart: () => (isLeaving.value = true),
+        onSuccess: () =>
+            toast.success(`You left ${workspaceName}`, {
+                description: `To come back, ask ${ownerName} for an invite link.`,
+            }),
+        onHttpException: (response) => {
+            handleLeaveFailure(workspaceName, response.status);
+
+            return false;
+        },
+        onNetworkError: () => {
+            handleLeaveFailure(workspaceName);
+
+            return false;
+        },
+        onFinish: () => (isLeaving.value = false),
     });
 }
 
@@ -452,7 +535,7 @@ onBeforeUnmount(() => clearTimeout(copiedResetTimer));
                             v-for="person in visiblePeople"
                             :key="person.id"
                             :class="
-                                confirmingRemovalId === person.id
+                                isConfirmingAbout(person)
                                     ? 'border-destructive/40 bg-destructive/5'
                                     : isOwner(person)
                                       ? 'border-primary/20'
@@ -510,6 +593,55 @@ onBeforeUnmount(() => clearTimeout(copiedResetTimer));
                                     <UserRoundMinus aria-hidden="true" />
                                     <span class="hidden sm:inline">Remove</span>
                                 </Button>
+                                <Button
+                                    v-if="canLeave(person) && !isConfirmingLeave"
+                                    id="leave-workspace"
+                                    :aria-label="`Leave ${workspace.name}`"
+                                    class="cursor-pointer text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                                    size="sm"
+                                    variant="ghost"
+                                    @click="askToLeave"
+                                >
+                                    <LogOut aria-hidden="true" />
+                                    <span class="hidden sm:inline">Leave</span>
+                                </Button>
+                            </div>
+
+                            <div
+                                v-if="canLeave(person) && isConfirmingLeave"
+                                aria-labelledby="confirm-leave"
+                                class="col-span-full flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-destructive/20 pt-3"
+                                role="group"
+                                @keydown.esc.stop.prevent="cancelLeave"
+                            >
+                                <p id="confirm-leave" class="text-sm">
+                                    Leave {{ workspace.name }}?
+                                    <span class="text-muted-foreground">
+                                        You’ll lose access to its boards, and need a new invite from
+                                        {{ owner.name }} to come back.
+                                    </span>
+                                </p>
+                                <div class="ml-auto flex gap-2">
+                                    <Button
+                                        id="cancel-leave"
+                                        :disabled="isLeaving"
+                                        class="cursor-pointer"
+                                        size="sm"
+                                        variant="outline"
+                                        @click="cancelLeave"
+                                    >
+                                        Cancel
+                                    </Button>
+                                    <Button
+                                        :disabled="isLeaving"
+                                        class="cursor-pointer"
+                                        size="sm"
+                                        variant="destructive"
+                                        @click="leaveWorkspace"
+                                    >
+                                        {{ isLeaving ? 'Leaving…' : 'Leave workspace' }}
+                                    </Button>
+                                </div>
                             </div>
 
                             <div

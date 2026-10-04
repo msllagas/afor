@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Board;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceInvitation;
@@ -53,6 +54,29 @@ test('service resets the invitation link by replacing every existing invitation'
         'invited_by'   => $this->user->id,
         'token'        => Str::of($link)->afterLast('/'),
     ]);
+});
+
+test('service refuses to let the owner leave their workspace', function () {
+    expect(fn () => $this->service->leaveWorkspace($this->workspace, $this->user))
+        ->toThrow(InvalidArgumentException::class, 'The workspace owner cannot leave it.');
+});
+
+test('service refuses to let a non-member leave the workspace', function () {
+    $outsider = User::factory()->create();
+
+    expect(fn () => $this->service->leaveWorkspace($this->workspace, $outsider))
+        ->toThrow(InvalidArgumentException::class, 'User is not a member of this workspace.');
+});
+
+test('service removes a removed member\'s stars on the workspace boards', function () {
+    $member = User::factory()->create();
+    $this->workspace->users()->attach($member->id);
+    $board = Board::factory()->for($this->workspace)->create();
+    $member->favoriteBoards()->attach($board->id);
+
+    $this->service->removeMember($this->workspace, $member);
+
+    $this->assertDatabaseMissing('board_user_favorites', ['user_id' => $member->id, 'board_id' => $board->id]);
 });
 
 test('service removes member from the workspace', function () {

@@ -8,6 +8,7 @@ use App\Models\Board;
 use App\Models\BoardList;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class BoardListController extends Controller
 {
@@ -41,6 +42,8 @@ class BoardListController extends Controller
 
     public function reorder(Request $request, Board $board): RedirectResponse
     {
+        Gate::authorize('update', $board);
+
         $boardLists = $request->input('boardLists', []);
 
         foreach ($boardLists as $boardList) {

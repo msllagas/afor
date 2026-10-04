@@ -40,3 +40,14 @@ test('only the workspace creator can update, delete or invite people to the work
         ->and($member->can($ability, $workspace))->toBeFalse()
         ->and(User::factory()->create()->can($ability, $workspace))->toBeFalse();
 })->with(['update', 'delete', 'invite']);
+
+test('only workspace members can leave the workspace', function () {
+    $owner = User::factory()->create();
+    $member = User::factory()->create();
+    $workspace = Workspace::factory()->forUser($owner)->create();
+    $workspace->users()->attach($member);
+
+    expect($member->can('leave', $workspace))->toBeTrue()
+        ->and($owner->can('leave', $workspace))->toBeFalse()
+        ->and(User::factory()->create()->can('leave', $workspace))->toBeFalse();
+});

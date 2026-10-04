@@ -28,7 +28,7 @@ const emit = defineEmits<{
     recolor: [color: string | null];
     move: [direction: -1 | 1];
     archive: [];
-    requestFailed: [message: string];
+    requestFailed: [message: string, status?: number];
 }>();
 
 const { autoResize } = useTextAreaAutoResize();
@@ -136,8 +136,8 @@ async function onCardAdded() {
     cardScroller.value?.scrollTo({ top: cardScroller.value.scrollHeight });
 }
 
-function onRequestFailed() {
-    emit('requestFailed', 'Could not add the card. Check your connection and try again.');
+function onRequestFailed(response?: { status: number }) {
+    emit('requestFailed', 'Could not add the card. Check your connection and try again.', response?.status);
 
     return false;
 }
@@ -257,7 +257,7 @@ function onRequestFailed() {
                 reset-on-success
                 v-bind="CardController.store.form(boardList.id)"
                 @http-exception="onRequestFailed"
-                @network-error="onRequestFailed"
+                @network-error="onRequestFailed()"
                 @success="onCardAdded"
             >
                 <textarea

@@ -2,17 +2,19 @@
 
 namespace App\Http\Requests;
 
+use Illuminate\Auth\Access\Response;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Gate;
 
 class UpdateBoardsRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
-    public function authorize(): bool
+    public function authorize(): Response
     {
-        return \Auth::check();
+        return Gate::inspect('update', $this->route('board'));
     }
 
     /**
