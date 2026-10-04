@@ -26,3 +26,10 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+
+# Laravel Boost-related stuff
+/.mcp.json
+/CLAUDE.md
+/AGENTS.md
+/boost.json
+/.claude
