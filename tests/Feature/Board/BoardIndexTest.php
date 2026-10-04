@@ -42,3 +42,42 @@ test('users can view boards index with their own and shared workspaces', functio
             )
         );
 });
+
+test('guests are redirected to the login page', function () {
+    $response = $this->get(route('boards.index'));
+
+    $response->assertRedirect(route('login'));
+});
+
+test('boards index excludes workspaces the user does not belong to', function () {
+    $user = User::factory()->create();
+    Workspace::factory()->forUser(User::factory()->create())->create();
+
+    $response = $this->actingAs($user)
+        ->get(route('boards.index'));
+
+    $response->assertInertia(fn (Assert $page) => $page
+        ->has('ownedWorkspaces', 0)
+        ->has('sharedWorkspaces', 0)
+    );
+});
+
+test('boards index lists every shared workspace as a list', function () {
+    $user = User::factory()->create();
+    Workspace::factory()->forUser($user)->create();
+
+    $sharedWorkspaces = Workspace::factory()
+        ->forUser(User::factory()->create())
+        ->count(2)
+        ->create();
+    $user->sharedWorkspaces()->attach($sharedWorkspaces);
+
+    $response = $this->actingAs($user)
+        ->get(route('boards.index'));
+
+    $response->assertInertia(fn (Assert $page) => $page
+        ->has('ownedWorkspaces', 1)
+        ->has('sharedWorkspaces', 2)
+        ->where('sharedWorkspaces', fn ($workspaces) => array_is_list($workspaces->all()))
+    );
+});

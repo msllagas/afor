@@ -25,25 +25,21 @@ class BoardController extends Controller
     public function index(): Response
     {
         $user = auth()->user();
-        $ownedWorkspaces = $user->ownedWorkspaces()
-            ->select('id', 'name')
-            ->with([
-                'boards:id,name,workspace_id',
-                'logoFile',
-            ])
-            ->get();
 
-        $sharedWorkspaces = $user->sharedWorkspaces()
-            ->select('workspaces.id', 'workspaces.name')
+        [$ownedWorkspaces, $sharedWorkspaces] = Workspace::query()
+            ->select('id', 'name', 'owner_id')
+            ->where('owner_id', $user->id)
+            ->orWhereHas('users', fn ($query) => $query->whereKey($user->id))
             ->with([
-                'boards:id,name,workspace_id',
                 'logoFile',
+                'boards:id,name,workspace_id',
             ])
-            ->get();
+            ->get()
+            ->partition(fn (Workspace $workspace) => $workspace->owner_id === $user->id);
 
         return Inertia::render('boards/Index', [
-            'ownedWorkspaces'  => WorkspaceResource::collection($ownedWorkspaces)->resolve(),
-            'sharedWorkspaces' => WorkspaceResource::collection($sharedWorkspaces)->resolve(),
+            'ownedWorkspaces'  => WorkspaceResource::collection($ownedWorkspaces->values())->resolve(),
+            'sharedWorkspaces' => WorkspaceResource::collection($sharedWorkspaces->values())->resolve(),
         ]);
     }
 
