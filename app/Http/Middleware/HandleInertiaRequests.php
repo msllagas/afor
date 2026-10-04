@@ -51,14 +51,14 @@ class HandleInertiaRequests extends Middleware
                 'user' => $user ? new UserResource($user->loadMissing('avatarFile')) : null,
             ],
             'sidebarOpen'      => !$request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
-            'sharedWorkspaces' => $request->user()
+            'sharedWorkspaces' => fn () => $user
                 ? WorkspaceResource::collection(
-                    $request->user()->sharedWorkspaces()->with('logoFile')->get()
+                    $user->sharedWorkspaces()->with('logoFile')->get()
                 )->resolve()
                 : [],
-            'ownedWorkspaces' => $request->user()
+            'ownedWorkspaces' => fn () => $user
                 ? WorkspaceResource::collection(
-                    $request->user()->ownedWorkspaces()->with('logoFile')->get()
+                    $user->ownedWorkspaces()->with('logoFile')->get()
                 )->resolve()
                 : [],
         ];
