@@ -97,3 +97,21 @@ test('boards index hides archived boards', function () {
         ->where('ownedWorkspaces.0.boards.0.id', $activeBoard->id)
     );
 });
+
+test('boards index marks the boards the user starred', function () {
+    $user = User::factory()->create();
+    $workspace = Workspace::factory()->forUser($user)->create();
+    $starredBoard = Board::factory()->for($workspace)->create(['created_at' => now()->subDay()]);
+    $otherBoard = Board::factory()->for($workspace)->create();
+    $user->favoriteBoards()->attach($starredBoard);
+    User::factory()->create()->favoriteBoards()->attach($otherBoard);
+
+    $response = $this->actingAs($user)
+        ->get(route('boards.index'));
+
+    $response->assertInertia(fn (Assert $page) => $page
+        ->where('ownedWorkspaces.0.boards.0.id', $starredBoard->id)
+        ->where('ownedWorkspaces.0.boards.0.is_favorited', true)
+        ->where('ownedWorkspaces.0.boards.1.is_favorited', false)
+    );
+});

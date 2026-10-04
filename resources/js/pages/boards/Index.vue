@@ -5,9 +5,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useInitials } from '@/composables/useInitials';
 import AppLayout from '@/layouts/AppLayout.vue';
 import boardsRoutes from '@/routes/boards';
-import type { BreadcrumbItem, Workspace } from '@/types';
-import { Head } from '@inertiajs/vue3';
+import { favorite } from '@/routes/workspaces/boards';
+import type { Board, BreadcrumbItem, Workspace } from '@/types';
+import { Head, useHttp } from '@inertiajs/vue3';
 import { Crown, Users } from 'lucide-vue-next';
+import { toast } from 'vue-sonner';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -22,6 +24,18 @@ const props = defineProps<{
 }>();
 
 const { getInitials } = useInitials();
+const http = useHttp();
+
+function handleStarBoard(board: Board, isStarred: boolean) {
+    board.is_favorited = isStarred;
+
+    http.post(favorite({ workspace: board.workspace_id, board: board.id }).url, {
+        onError: () => {
+            toast.error('Could not update the star. Try again.');
+            board.is_favorited = !isStarred;
+        },
+    });
+}
 </script>
 
 <template>
@@ -62,7 +76,12 @@ const { getInitials } = useInitials();
                                 </span>
                             </div>
                             <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                                <BoardCard v-for="board in ownedWorkspace.boards" :key="board.id" :board="board" />
+                                <BoardCard
+                                    v-for="board in ownedWorkspace.boards"
+                                    :key="board.id"
+                                    :board="board"
+                                    @star-board="handleStarBoard"
+                                />
                                 <BoardCardPopover :workspace-id="ownedWorkspace.id" />
                             </div>
                         </div>
@@ -103,7 +122,12 @@ const { getInitials } = useInitials();
                                 </span>
                             </div>
                             <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                                <BoardCard v-for="board in sharedWorkspace.boards" :key="board.id" :board="board" />
+                                <BoardCard
+                                    v-for="board in sharedWorkspace.boards"
+                                    :key="board.id"
+                                    :board="board"
+                                    @star-board="handleStarBoard"
+                                />
                                 <BoardCardPopover :workspace-id="sharedWorkspace.id" />
                             </div>
                         </div>
