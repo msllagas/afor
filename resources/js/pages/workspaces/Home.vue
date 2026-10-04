@@ -10,7 +10,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { home, members as workspaceMembers } from '@/routes/workspaces';
 import { favorite } from '@/routes/workspaces/boards';
 import type { Board, BreadcrumbItem, Workspace, WorkspaceMember } from '@/types';
-import { Deferred, Head, Link, useHttp } from '@inertiajs/vue3';
+import { Deferred, Head, Link, router, useHttp } from '@inertiajs/vue3';
 import { Archive, Check, Link as LinkIcon, Star } from 'lucide-vue-next';
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { toast } from 'vue-sonner';
@@ -94,6 +94,9 @@ function handleStarBoard(board: Board, isStarred: boolean) {
     };
 
     http.post(favorite({ workspace: props.workspace.id, board: board.id }).url, {
+        // Refresh the sidebar's Starred section; if that fails it catches up on the next visit.
+        onSuccess: () =>
+            router.reload({ only: ['starredBoards'], onHttpException: () => false, onNetworkError: () => false }),
         onError: rollback,
         onHttpException: rollback,
         onNetworkError: rollback,

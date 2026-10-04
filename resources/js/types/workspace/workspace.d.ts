@@ -27,6 +27,8 @@ export interface Board {
     archiver?: { id: string; name: string } | null;
 }
 
+export type StarredBoard = Pick<Board, 'id' | 'name' | 'workspace_id'>;
+
 export interface Workspace {
     id: string;
     name: string;

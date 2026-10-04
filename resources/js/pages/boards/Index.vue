@@ -8,7 +8,7 @@ import { index } from '@/routes/boards';
 import { home } from '@/routes/workspaces';
 import { favorite } from '@/routes/workspaces/boards';
 import type { Board, BreadcrumbItem, Workspace } from '@/types';
-import { Head, Link, useHttp } from '@inertiajs/vue3';
+import { Head, Link, router, useHttp } from '@inertiajs/vue3';
 import { Star } from 'lucide-vue-next';
 import { computed } from 'vue';
 import { toast } from 'vue-sonner';
@@ -61,6 +61,9 @@ function handleStarBoard(board: Board, isStarred: boolean) {
     };
 
     http.post(favorite({ workspace: board.workspace_id, board: board.id }).url, {
+        // Refresh the sidebar's Starred section; if that fails it catches up on the next visit.
+        onSuccess: () =>
+            router.reload({ only: ['starredBoards'], onHttpException: () => false, onNetworkError: () => false }),
         onError: rollback,
         onHttpException: rollback,
         onNetworkError: rollback,

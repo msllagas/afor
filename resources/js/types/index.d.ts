@@ -3,6 +3,8 @@ import type { LucideIcon } from 'lucide-vue-next';
 export * from './workspace-invitation/workspace-invitation';
 export * from './workspace/workspace';
 
+import type { StarredBoard, Workspace } from './workspace/workspace';
+
 export interface Auth {
     user: User;
 }
@@ -25,6 +27,10 @@ export type AppPageProps<T extends Record<string, unknown> = Record<string, unkn
     quote: { message: string; author: string };
     auth: Auth;
     sidebarOpen: boolean;
+    ownedWorkspaces: Workspace[];
+    sharedWorkspaces: Workspace[];
+    currentWorkspaceId: string | null;
+    starredBoards: StarredBoard[];
 };
 
 export interface User {
