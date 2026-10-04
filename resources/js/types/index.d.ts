@@ -37,6 +37,8 @@ export interface User {
     updated_at: string;
 }
 
-export type WorkspaceMember = Pick<User, 'id' | 'name' | 'email' | 'avatar'>;
+export type WorkspaceMember = Pick<User, 'id' | 'name' | 'email' | 'avatar'> & {
+    joined_at?: string | null;
+};
 
 export type BreadcrumbItemType = BreadcrumbItem;

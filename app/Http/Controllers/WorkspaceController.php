@@ -91,37 +91,28 @@ class WorkspaceController extends Controller
         ]);
     }
 
-    public function members(Workspace $workspace)
+    public function members(Workspace $workspace): Response|RedirectResponse
     {
         $user = auth()->user();
 
-        $isOwner = $workspace->owner_id === $user->id;
-
-        $isMember = $workspace->users()
-            ->where('user_id', $user->id)
-            ->exists();
-
-        if (!$isOwner && !$isMember) {
+        if (!$workspace->isAccessibleBy($user)) {
             return redirect()->route('dashboard');
         }
 
-        $owner = new WorkspaceMemberResource(
-            $workspace->owner()->select(['id', 'name'])->first()->load('avatarFile')
-        )->resolve();
-
-        $members = WorkspaceMemberResource::collection(
-            $workspace->users()
-                ->with('avatarFile')
-                ->select('users.id', 'users.name')
-                ->get()
-        )->resolve();
-
         return Inertia::render('workspaces/Member', [
-            'workspace'  => $workspace,
-            'owner'      => $owner,
-            'members'    => $members,
-            'inviteLink' => Inertia::defer(fn () => $this->workspaceService->generateInvitationLink($workspace,
-                auth()->user())),
+            'workspace' => fn () => new WorkspaceResource($workspace->load('logoFile')),
+            'owner'     => fn () => new WorkspaceMemberResource(
+                $workspace->owner()->select('id', 'name', 'email')->with('avatarFile')->firstOrFail()
+            )->resolve(),
+            'members' => fn () => WorkspaceMemberResource::collection(
+                $workspace->users()
+                    ->select('users.id', 'users.name', 'users.email')
+                    ->with('avatarFile')
+                    ->orderBy('users.name')
+                    ->get()
+            )->resolve(),
+            'canManageMembers' => fn () => $user->can('manageMembers', $workspace),
+            'inviteLink'       => Inertia::defer(fn () => $this->workspaceService->generateInvitationLink($workspace, $user)),
         ]);
     }
 
