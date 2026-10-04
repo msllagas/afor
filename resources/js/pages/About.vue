@@ -1,5 +1,7 @@
 <script lang="ts" setup>
 import SeoHead from '@/components/SeoHead.vue';
+import { home } from '@/routes';
+import { Link } from '@inertiajs/vue3';
 </script>
 
 <template>
@@ -13,12 +15,12 @@ import SeoHead from '@/components/SeoHead.vue';
             <p class="text-sm font-medium tracking-widest text-primary uppercase">Coming soon</p>
             <h1 class="text-3xl font-bold text-foreground">About Afor</h1>
             <p class="text-sm text-muted-foreground">This page is under construction. Check back later.</p>
-            <a
+            <Link
+                :href="home()"
                 class="mt-4 inline-block text-sm text-primary underline underline-offset-4 transition-opacity hover:opacity-75"
-                href="/"
             >
                 Back to home
-            </a>
+            </Link>
         </div>
     </div>
 </template>

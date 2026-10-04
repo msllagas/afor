@@ -1,5 +1,7 @@
 <script lang="ts" setup>
 import SeoHead from '@/components/SeoHead.vue';
+import { privacyPolicy } from '@/routes';
+import { Link } from '@inertiajs/vue3';
 </script>
 
 <template>
@@ -32,10 +34,10 @@ import SeoHead from '@/components/SeoHead.vue';
                     <p class="leading-relaxed text-muted-foreground">
                         By accessing or using Afor, you confirm that you have read, understood, and agree to these Terms
                         of Use, as well as our
-                        <a
+                        <Link
+                            :href="privacyPolicy()"
                             class="text-primary underline underline-offset-2 transition-opacity hover:opacity-75"
-                            href="/privacy-policy"
-                            >Privacy Policy</a
+                            >Privacy Policy</Link
                         >. These Terms constitute a legally binding agreement between you and Afor.
                     </p>
                 </section>
