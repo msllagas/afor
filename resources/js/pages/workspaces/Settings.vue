@@ -1,17 +1,38 @@
 <script lang="ts" setup>
+import InputError from '@/components/InputError.vue';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { useInitials } from '@/composables/useInitials';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { dashboard } from '@/routes';
 import workspaceRoutes from '@/routes/workspaces';
 import type { BreadcrumbItem, Workspace } from '@/types';
-import { Head, useForm } from '@inertiajs/vue3';
-import { Camera, Loader2, Trash2 } from 'lucide-vue-next';
-import { ref } from 'vue';
+import { Head, router, useForm } from '@inertiajs/vue3';
+import { Camera, Loader2, Trash2, TriangleAlert } from 'lucide-vue-next';
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
+import { toast } from 'vue-sonner';
+
+const NAME_MAX_LENGTH = 65;
+const DESCRIPTION_MAX_LENGTH = 255;
+const LOGO_MAX_BYTES = 2 * 1024 * 1024;
+const LOGO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 const props = defineProps<{
     workspace: Workspace;
+    boardCount: number;
+    memberCount: number;
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -19,234 +40,479 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Settings', href: workspaceRoutes.settings(props.workspace.id).url },
 ];
 
-const fileInput = ref<HTMLInputElement | null>(null);
-const previewUrl = ref<string | null>(props.workspace.logo ?? null);
-const isDragging = ref(false);
+const { getInitials } = useInitials();
 
 const form = useForm({
     name: props.workspace.name,
     description: props.workspace.description ?? '',
     logo: null as File | null,
-    _method: 'patch',
+    remove_logo: false,
 });
 
-function triggerFileInput() {
+const fileInput = ref<HTMLInputElement | null>(null);
+const pendingLogoUrl = ref<string | null>(null);
+const isDraggingLogo = ref(false);
+const announcement = ref('');
+
+const showDeleteDialog = ref(false);
+const deleteConfirmation = ref('');
+const isDeleting = ref(false);
+
+const previewUrl = computed(() => pendingLogoUrl.value ?? (form.remove_logo ? null : props.workspace.logo || null));
+
+const isDeleteConfirmed = computed(() => deleteConfirmation.value.trim() === props.workspace.name);
+
+const deleteConsequences = computed(() => {
+    const boards = `${props.boardCount} ${props.boardCount === 1 ? 'board' : 'boards'}`;
+    const members = `${props.memberCount} ${props.memberCount === 1 ? 'member' : 'members'}`;
+
+    return props.memberCount
+        ? `Its ${boards}, with every list and card in them, are deleted and ${members} lose access.`
+        : `Its ${boards}, with every list and card in them, are deleted.`;
+});
+
+watch(showDeleteDialog, (isOpen) => {
+    if (!isOpen) {
+        deleteConfirmation.value = '';
+    }
+});
+
+function announce(message: string) {
+    announcement.value = '';
+    nextTick(() => (announcement.value = message));
+}
+
+function setPendingLogo(file: File | null) {
+    if (pendingLogoUrl.value) {
+        URL.revokeObjectURL(pendingLogoUrl.value);
+    }
+
+    pendingLogoUrl.value = file ? URL.createObjectURL(file) : null;
+    form.logo = file;
+
+    if (fileInput.value) {
+        fileInput.value.value = '';
+    }
+}
+
+function chooseLogo() {
     fileInput.value?.click();
 }
 
-function handleFile(file: File) {
-    if (file.size > 2 * 1024 * 1024) {
+function selectLogo(file: File) {
+    if (!LOGO_TYPES.includes(file.type)) {
+        form.setError('logo', 'Choose a JPG, PNG or WebP image.');
+
         return;
     }
 
-    if (!file.type.startsWith('image/')) return;
+    if (file.size > LOGO_MAX_BYTES) {
+        form.setError('logo', 'Choose an image that is 2 MB or smaller.');
 
-    if (!['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(file.type)) {
         return;
     }
 
-    form.logo = file;
-    previewUrl.value = URL.createObjectURL(file);
+    form.clearErrors('logo');
+    form.remove_logo = false;
+    setPendingLogo(file);
 }
 
-function onFileChange(e: Event) {
-    const file = (e.target as HTMLInputElement).files?.[0];
-    if (file) handleFile(file);
+function onLogoInputChange(event: Event) {
+    const file = (event.target as HTMLInputElement).files?.[0];
+
+    if (file) {
+        selectLogo(file);
+    }
 }
 
-function onDrop(e: DragEvent) {
-    isDragging.value = false;
-    const file = e.dataTransfer?.files?.[0];
-    if (file) handleFile(file);
+function onLogoDrop(event: DragEvent) {
+    isDraggingLogo.value = false;
+    const file = event.dataTransfer?.files?.[0];
+
+    if (file) {
+        selectLogo(file);
+    }
 }
 
-function removePhoto() {
-    form.logo = null;
-    previewUrl.value = null;
-    if (fileInput.value) fileInput.value.value = '';
+function removeLogo() {
+    form.clearErrors('logo');
+    setPendingLogo(null);
+    form.remove_logo = Boolean(props.workspace.logo);
 }
 
-function submit() {
-    form.post(workspaceRoutes.update(props.workspace.id).url, {
+function discardChanges() {
+    setPendingLogo(null);
+    form.reset();
+    form.clearErrors();
+}
+
+function focusFirstInvalidField(errors: Record<string, string>) {
+    const fieldId = ['name', 'description', 'logo'].find((field) => field in errors);
+
+    if (fieldId) {
+        nextTick(() => document.getElementById(fieldId === 'logo' ? 'logo-button' : fieldId)?.focus());
+    }
+}
+
+function handleSaveFailure(status?: number) {
+    if (status === 404) {
+        toast.error('This workspace no longer exists');
+        router.visit(dashboard());
+
+        return;
+    }
+
+    const descriptions: Record<number, string> = {
+        403: 'Only the workspace owner can change its settings.',
+        413: 'That image is too large to upload. Choose one that is 2 MB or smaller.',
+        419: 'Your session expired. Refresh the page, then try again.',
+    };
+    const canRetry = status === undefined || !(status in descriptions);
+
+    toast.error('Couldn’t save your changes', {
+        description:
+            status === undefined
+                ? 'Check your connection, then try again.'
+                : (descriptions[status] ?? 'Something went wrong on our end. Try again in a moment.'),
+        action: canRetry ? { label: 'Try again', onClick: save } : undefined,
+    });
+}
+
+function save() {
+    form.transform((data) => ({ ...data, _method: 'patch' })).post(workspaceRoutes.update(props.workspace.id).url, {
         forceFormData: true,
         preserveScroll: true,
         preserveState: true,
-        only: ['workspace'],
+        only: ['workspace', 'ownedWorkspaces'],
+        onSuccess: () => {
+            setPendingLogo(null);
+            form.defaults({ name: form.name, description: form.description, logo: null, remove_logo: false });
+            form.reset('logo', 'remove_logo');
+            announce('Workspace settings saved.');
+        },
+        onError: focusFirstInvalidField,
+        onHttpException: (response) => {
+            handleSaveFailure(response.status);
+
+            return false;
+        },
+        onNetworkError: () => {
+            handleSaveFailure();
+
+            return false;
+        },
     });
 }
+
+function handleDeleteFailure(status?: number) {
+    if (status === 404) {
+        toast.error(`${props.workspace.name} was already deleted`);
+        router.visit(dashboard());
+
+        return;
+    }
+
+    const descriptions: Record<number, string> = {
+        403: 'Only the workspace owner can delete it.',
+        419: 'Your session expired. Refresh the page, then try again.',
+    };
+    const canRetry = status === undefined || !(status in descriptions);
+
+    if (!canRetry) {
+        showDeleteDialog.value = false;
+    }
+
+    toast.error(`Couldn’t delete ${props.workspace.name}`, {
+        description:
+            status === undefined
+                ? 'Check your connection, then try again.'
+                : (descriptions[status] ?? 'Something went wrong on our end. Try again in a moment.'),
+    });
+}
+
+function deleteWorkspace() {
+    if (!isDeleteConfirmed.value || isDeleting.value) {
+        return;
+    }
+
+    const workspaceName = props.workspace.name;
+
+    router.delete(workspaceRoutes.destroy(props.workspace.id).url, {
+        onStart: () => (isDeleting.value = true),
+        onSuccess: () => toast.success(`Deleted ${workspaceName}`),
+        onHttpException: (response) => {
+            handleDeleteFailure(response.status);
+
+            return false;
+        },
+        onNetworkError: () => {
+            handleDeleteFailure();
+
+            return false;
+        },
+        onFinish: () => (isDeleting.value = false),
+    });
+}
+
+onBeforeUnmount(() => {
+    if (pendingLogoUrl.value) {
+        URL.revokeObjectURL(pendingLogoUrl.value);
+    }
+});
 </script>
 
 <template>
     <AppLayout :breadcrumbs="breadcrumbs">
-        <Head :title="workspace.name + ' - Settings'" />
+        <Head :title="`${workspace.name} settings`">
+            <link
+                head-key="font-fraunces"
+                href="https://fonts.bunny.net/css?family=fraunces:500,600"
+                rel="stylesheet"
+            />
+        </Head>
 
-        <div class="px-10 py-12">
-            <div class="max-w-2xl space-y-8">
-                <!-- Header -->
-                <div class="space-y-1">
-                    <h1 class="text-xl font-bold tracking-tight">Workspace Settings</h1>
-                    <p class="text-sm text-muted-foreground">Manage your workspace's identity and details.</p>
-                </div>
+        <div class="mx-auto w-full max-w-3xl px-4 pt-8 pb-16 sm:px-6 sm:pt-10 lg:px-10">
+            <header>
+                <h1 class="font-display text-3xl font-semibold tracking-tight sm:text-4xl">Settings</h1>
+                <p class="mt-1.5 max-w-prose text-sm text-muted-foreground">
+                    Change how <span class="font-medium text-foreground">{{ workspace.name }}</span> looks to everyone
+                    in it.
+                </p>
+            </header>
 
-                <hr class="border-border/50" />
+            <section aria-labelledby="details-heading" class="mt-10">
+                <h2
+                    id="details-heading"
+                    class="mb-6 border-b pb-3 font-display text-xl font-semibold tracking-tight sm:text-2xl"
+                >
+                    Details
+                </h2>
 
-                <form class="space-y-8" @submit.prevent="submit">
-                    <!-- Photo -->
-                    <div class="space-y-3">
-                        <Label class="text-[11px] font-semibold tracking-widest text-muted-foreground uppercase">
-                            Workspace Photo
-                        </Label>
-
-                        <div class="flex items-center gap-5">
-                            <!-- Avatar preview -->
-                            <div
+                <form class="space-y-7" novalidate @submit.prevent="save">
+                    <div>
+                        <span id="logo-label" class="text-sm font-medium">Logo</span>
+                        <div class="mt-2 flex flex-wrap items-center gap-4 sm:gap-5">
+                            <button
+                                id="logo-button"
+                                :aria-describedby="form.errors.logo ? 'logo-error' : 'logo-hint'"
+                                :aria-invalid="Boolean(form.errors.logo)"
                                 :class="
-                                    isDragging
-                                        ? 'scale-105 border-primary shadow-lg shadow-primary/20'
-                                        : 'border-border/60 hover:border-primary/40'
+                                    isDraggingLogo
+                                        ? 'scale-105 ring-2 ring-primary'
+                                        : 'ring-1 ring-border hover:ring-primary/40'
                                 "
-                                class="group relative h-20 w-20 shrink-0 cursor-pointer overflow-hidden rounded-2xl border-2 transition-all"
-                                @click="triggerFileInput"
-                                @dragleave="isDragging = false"
-                                @dragover.prevent="isDragging = true"
-                                @drop.prevent="onDrop"
+                                aria-label="Choose a logo image"
+                                class="group relative size-20 shrink-0 cursor-pointer overflow-hidden rounded-2xl transition-[transform,box-shadow] duration-200 outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 motion-reduce:transition-none sm:size-24"
+                                type="button"
+                                @click="chooseLogo"
+                                @dragleave="isDraggingLogo = false"
+                                @dragover.prevent="isDraggingLogo = true"
+                                @drop.prevent="onLogoDrop"
                             >
-                                <img
-                                    v-if="previewUrl"
-                                    :src="previewUrl"
-                                    alt="Workspace photo"
-                                    class="h-full w-full object-cover"
-                                />
-                                <div
-                                    v-else
-                                    class="flex h-full w-full items-center justify-center bg-linear-to-br from-primary/10 to-accent/10"
+                                <Avatar class="size-full rounded-2xl">
+                                    <AvatarImage :src="previewUrl ?? ''" alt="" class="object-cover" />
+                                    <AvatarFallback
+                                        class="rounded-2xl bg-blush font-display text-2xl font-semibold text-blush-foreground"
+                                    >
+                                        {{ getInitials(form.name || workspace.name) }}
+                                    </AvatarFallback>
+                                </Avatar>
+                                <span
+                                    aria-hidden="true"
+                                    class="absolute inset-0 flex items-center justify-center bg-black/45 opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100"
                                 >
-                                    <span class="text-2xl font-bold text-primary/60">
-                                        {{ workspace.name.charAt(0) }}
-                                    </span>
-                                </div>
+                                    <Camera class="size-5 text-white" />
+                                </span>
+                            </button>
 
-                                <!-- Overlay on hover -->
-                                <div
-                                    class="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 backdrop-blur-[1px] transition-opacity group-hover:opacity-100"
-                                >
-                                    <Camera class="h-5 w-5 text-white" />
-                                </div>
-                            </div>
-
-                            <!-- Upload actions -->
-                            <div class="space-y-2">
+                            <div class="min-w-0 space-y-2">
                                 <div class="flex flex-wrap gap-2">
                                     <Button
-                                        class="h-8 gap-1.5 rounded-lg border-border/60 bg-muted/60 text-xs font-medium shadow-sm"
+                                        class="cursor-pointer"
                                         size="sm"
                                         type="button"
                                         variant="outline"
-                                        @click="triggerFileInput"
+                                        @click="chooseLogo"
                                     >
-                                        <Camera class="h-3.5 w-3.5" />
-                                        {{ previewUrl ? 'Change photo' : 'Upload photo' }}
+                                        <Camera aria-hidden="true" />
+                                        {{ previewUrl ? 'Replace logo' : 'Upload logo' }}
                                     </Button>
-
                                     <Button
                                         v-if="previewUrl"
-                                        class="h-8 gap-1.5 rounded-lg border-border/60 bg-muted/60 text-xs font-medium text-muted-foreground shadow-sm hover:border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+                                        class="cursor-pointer text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                                         size="sm"
                                         type="button"
-                                        variant="outline"
-                                        @click="removePhoto"
+                                        variant="ghost"
+                                        @click="removeLogo"
                                     >
-                                        <Trash2 class="h-3.5 w-3.5" />
-                                        Remove
+                                        <Trash2 aria-hidden="true" />
+                                        Remove<span class="sr-only"> logo</span>
                                     </Button>
                                 </div>
-                                <p class="text-[11px] text-muted-foreground">
-                                    JPG, PNG or GIF · Max 2MB · Recommended 256×256px
+                                <p id="logo-hint" class="text-xs text-muted-foreground">
+                                    JPG, PNG or WebP, up to 2 MB. Drop an image on the logo to replace it.
                                 </p>
+                                <InputError id="logo-error" :message="form.errors.logo" role="alert" />
                             </div>
                         </div>
 
-                        <input ref="fileInput" accept="image/*" class="hidden" type="file" @change="onFileChange" />
+                        <input
+                            ref="fileInput"
+                            :accept="LOGO_TYPES.join(',')"
+                            aria-labelledby="logo-label"
+                            class="sr-only"
+                            tabindex="-1"
+                            type="file"
+                            @change="onLogoInputChange"
+                        />
                     </div>
 
-                    <hr class="border-border/50" />
-
-                    <!-- Name -->
                     <div class="grid gap-2">
-                        <Label for="name"> Workspace Name </Label>
+                        <Label for="name">
+                            Name
+                            <span aria-hidden="true" class="text-destructive">*</span>
+                        </Label>
                         <Input
                             id="name"
                             v-model="form.name"
-                            :class="{ 'border-destructive': form.errors.name }"
-                            maxlength="64"
-                            placeholder="My Afor Workspace"
+                            :aria-describedby="form.errors.name ? 'name-error' : 'name-count'"
+                            :aria-invalid="Boolean(form.errors.name)"
+                            :maxlength="NAME_MAX_LENGTH"
+                            autocomplete="off"
+                            placeholder="Product team"
+                            required
                             type="text"
                         />
-                        <p v-if="form.errors.name" class="text-xs text-destructive">{{ form.errors.name }}</p>
-                        <p v-else class="text-xs text-muted-foreground">{{ form.name.length }}/64 characters</p>
+                        <InputError id="name-error" :message="form.errors.name" />
+                        <p v-if="!form.errors.name" id="name-count" class="text-xs text-muted-foreground tabular-nums">
+                            {{ form.name.length }}/{{ NAME_MAX_LENGTH }} characters
+                        </p>
                     </div>
 
-                    <!-- Description -->
                     <div class="grid gap-2">
-                        <Label for="description">
-                            Description
-                            <span class="ml-1 font-normal tracking-normal text-muted-foreground/60 normal-case"
-                                >· optional</span
-                            >
-                        </Label>
+                        <Label for="description">Description</Label>
                         <Textarea
                             id="description"
                             v-model="form.description"
-                            :class="{ 'border-destructive': form.errors.description }"
-                            class="resize-none dark:bg-muted/30"
-                            maxlength="280"
+                            :aria-describedby="form.errors.description ? 'description-error' : 'description-count'"
+                            :aria-invalid="Boolean(form.errors.description)"
+                            :maxlength="DESCRIPTION_MAX_LENGTH"
+                            class="min-h-24 resize-y"
                             placeholder="What is this workspace for?"
                             rows="3"
                         />
-                        <p v-if="form.errors.description" class="text-xs text-destructive">
-                            {{ form.errors.description }}
-                        </p>
-                        <p v-else class="text-[11px] text-muted-foreground">
-                            {{ form.description.length }}/280 characters
+                        <InputError id="description-error" :message="form.errors.description" />
+                        <p
+                            v-if="!form.errors.description"
+                            id="description-count"
+                            class="text-xs text-muted-foreground tabular-nums"
+                        >
+                            {{ form.description.length }}/{{ DESCRIPTION_MAX_LENGTH }} characters
                         </p>
                     </div>
 
-                    <!-- Save -->
-                    <div class="flex items-center gap-4">
-                        <Button :disabled="form.processing || !form.isDirty" size="sm" type="submit">
-                            <Loader2 v-if="form.processing" class="h-3.5 w-3.5 animate-spin" />
-                            {{ form.processing ? 'Saving…' : 'Save changes' }}
-                        </Button>
-                        <Transition
-                            enter-active-class="transition ease-in-out"
-                            enter-from-class="opacity-0"
-                            leave-active-class="transition ease-in-out"
-                            leave-to-class="opacity-0"
-                        >
-                            <p v-show="form.recentlySuccessful" class="text-sm text-neutral-600">Saved.</p>
-                        </Transition>
+                    <div class="flex justify-end">
+                        <div class="flex items-center gap-2">
+                            <Button
+                                v-if="form.isDirty"
+                                :disabled="form.processing"
+                                class="cursor-pointer"
+                                type="button"
+                                variant="ghost"
+                                @click="discardChanges"
+                            >
+                                Discard
+                            </Button>
+                            <Button
+                                :disabled="form.processing || !form.isDirty"
+                                class="min-w-32 cursor-pointer"
+                                type="submit"
+                            >
+                                <Loader2 v-if="form.processing" class="animate-spin" aria-hidden="true" />
+                                {{ form.processing ? 'Saving…' : form.recentlySuccessful ? 'Saved' : 'Save changes' }}
+                            </Button>
+                        </div>
                     </div>
                 </form>
+            </section>
 
-                <!-- Danger Zone -->
-                <div class="space-y-3 rounded-xl border border-destructive/20 bg-destructive/3 p-5">
-                    <div class="space-y-0.5">
-                        <h3 class="text-sm font-semibold text-destructive">Danger Zone</h3>
-                        <p class="text-xs text-muted-foreground">
-                            Deleting a workspace is permanent and cannot be undone. All boards and data will be lost.
-                        </p>
-                    </div>
+            <section aria-labelledby="delete-heading" class="mt-12">
+                <h2
+                    id="delete-heading"
+                    class="mb-4 border-b pb-3 font-display text-xl font-semibold tracking-tight sm:text-2xl"
+                >
+                    Delete workspace
+                </h2>
+
+                <div
+                    class="flex flex-col gap-4 rounded-2xl border border-destructive/30 bg-destructive/5 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5"
+                >
+                    <p class="max-w-prose text-sm text-muted-foreground">
+                        Permanently delete <span class="font-medium text-foreground">{{ workspace.name }}</span
+                        >. {{ deleteConsequences }} This can’t be undone.
+                    </p>
                     <Button
-                        class="h-8 gap-1.5 rounded-lg border-destructive/30 bg-destructive/5 text-xs font-medium text-destructive shadow-sm hover:bg-destructive hover:text-white"
-                        size="sm"
-                        type="button"
-                        variant="outline"
+                        class="shrink-0 cursor-pointer self-start sm:self-auto"
+                        variant="destructive"
+                        @click="showDeleteDialog = true"
                     >
-                        <Trash2 class="h-3.5 w-3.5" />
+                        <Trash2 aria-hidden="true" />
                         Delete workspace
                     </Button>
                 </div>
-            </div>
+            </section>
+
+            <p aria-live="polite" class="sr-only">{{ announcement }}</p>
         </div>
+
+        <Dialog v-model:open="showDeleteDialog">
+            <DialogContent class="sm:max-w-md">
+                <form class="grid gap-5" @submit.prevent="deleteWorkspace">
+                    <DialogHeader>
+                        <span
+                            aria-hidden="true"
+                            class="mx-auto mb-1 flex size-10 items-center justify-center rounded-full bg-destructive/10 text-destructive sm:mx-0"
+                        >
+                            <TriangleAlert class="size-5" />
+                        </span>
+                        <DialogTitle class="break-words">Delete {{ workspace.name }}?</DialogTitle>
+                        <DialogDescription>{{ deleteConsequences }} This can’t be undone.</DialogDescription>
+                    </DialogHeader>
+
+                    <div class="grid gap-2">
+                        <Label class="block leading-normal font-normal" for="delete-confirmation">
+                            Type <span class="font-semibold break-all">{{ workspace.name }}</span> to confirm
+                            <span aria-hidden="true" class="text-destructive">*</span>
+                        </Label>
+                        <Input
+                            id="delete-confirmation"
+                            v-model="deleteConfirmation"
+                            :disabled="isDeleting"
+                            autocapitalize="off"
+                            autocomplete="off"
+                            required
+                            spellcheck="false"
+                        />
+                    </div>
+
+                    <DialogFooter class="gap-2">
+                        <DialogClose as-child>
+                            <Button :disabled="isDeleting" class="cursor-pointer" type="button" variant="outline">
+                                Cancel
+                            </Button>
+                        </DialogClose>
+                        <Button
+                            :disabled="!isDeleteConfirmed || isDeleting"
+                            class="cursor-pointer"
+                            type="submit"
+                            variant="destructive"
+                        >
+                            <Loader2 v-if="isDeleting" class="animate-spin" aria-hidden="true" />
+                            {{ isDeleting ? 'Deleting…' : 'Delete workspace' }}
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
     </AppLayout>
 </template>

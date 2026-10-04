@@ -135,10 +135,10 @@ class WorkspaceController extends Controller
             return redirect()->route('dashboard');
         }
 
-        $workspace->load('logoFile');
-
         return Inertia::render('workspaces/Settings', [
-            'workspace' => new WorkspaceResource($workspace),
+            'workspace'   => fn () => new WorkspaceResource($workspace->load('logoFile')),
+            'boardCount'  => fn () => $workspace->boards()->count(),
+            'memberCount' => fn () => $workspace->users()->count(),
         ]);
     }
 }

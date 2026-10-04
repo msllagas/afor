@@ -16,6 +16,7 @@ import { type NavItem, Workspace } from '@/types';
 import type { PageProps as InertiaPageProps } from '@inertiajs/core';
 import { Link, usePage } from '@inertiajs/vue3';
 import { Kanban, LayoutGrid } from 'lucide-vue-next';
+import { computed } from 'vue';
 import AppLogo from './AppLogo.vue';
 
 const mainNavItems: NavItem[] = [
@@ -38,44 +39,48 @@ interface PageProps extends InertiaPageProps {
 
 const page = usePage<PageProps>();
 
-const ownedWorkspaces = page.props?.ownedWorkspaces.map((workspace) => ({
-    title: workspace.name,
-    logo: workspace.logo,
-    url: '#',
-    isActive: page.url.startsWith(`/workspaces/${workspace.id}`),
-    items: [
-        {
-            title: 'Home',
-            url: workspacesRoutes.home(workspace.id).url,
-        },
-        {
-            title: 'Members',
-            url: workspacesRoutes.members(workspace.id).url,
-        },
-        {
-            title: 'Settings',
-            url: workspacesRoutes.settings(workspace.id).url,
-        },
-    ],
-}));
+const ownedWorkspaces = computed(() =>
+    page.props.ownedWorkspaces.map((workspace) => ({
+        title: workspace.name,
+        logo: workspace.logo,
+        url: '#',
+        isActive: page.url.startsWith(`/workspaces/${workspace.id}`),
+        items: [
+            {
+                title: 'Home',
+                url: workspacesRoutes.home(workspace.id).url,
+            },
+            {
+                title: 'Members',
+                url: workspacesRoutes.members(workspace.id).url,
+            },
+            {
+                title: 'Settings',
+                url: workspacesRoutes.settings(workspace.id).url,
+            },
+        ],
+    })),
+);
 
 // Settings are owner-only, so shared workspaces don't link to them.
-const sharedWorkspaces = page.props?.sharedWorkspaces.map((workspace) => ({
-    title: workspace.name,
-    logo: workspace.logo,
-    url: '#',
-    isActive: page.url.startsWith(`/workspaces/${workspace.id}`),
-    items: [
-        {
-            title: 'Home',
-            url: workspacesRoutes.home(workspace.id).url,
-        },
-        {
-            title: 'Members',
-            url: workspacesRoutes.members(workspace.id).url,
-        },
-    ],
-}));
+const sharedWorkspaces = computed(() =>
+    page.props.sharedWorkspaces.map((workspace) => ({
+        title: workspace.name,
+        logo: workspace.logo,
+        url: '#',
+        isActive: page.url.startsWith(`/workspaces/${workspace.id}`),
+        items: [
+            {
+                title: 'Home',
+                url: workspacesRoutes.home(workspace.id).url,
+            },
+            {
+                title: 'Members',
+                url: workspacesRoutes.members(workspace.id).url,
+            },
+        ],
+    })),
+);
 </script>
 
 <template>

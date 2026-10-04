@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Board;
 use App\Models\User;
 use App\Models\Workspace;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -7,6 +8,8 @@ use Inertia\Testing\AssertableInertia as Assert;
 test('workspace owner can open the workspace settings', function () {
     $owner = User::factory()->create();
     $workspace = Workspace::factory()->forUser($owner)->create();
+    $workspace->users()->attach(User::factory()->count(2)->create());
+    Board::factory()->for($workspace)->count(3)->create();
 
     $response = $this->actingAs($owner)
         ->get(route('workspaces.settings', $workspace));
@@ -20,6 +23,8 @@ test('workspace owner can open the workspace settings', function () {
                 ->where('description', $workspace->description)
                 ->etc()
             )
+            ->where('boardCount', 3)
+            ->where('memberCount', 2)
         );
 });
 
