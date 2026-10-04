@@ -21,7 +21,7 @@ test('users can create board', function () {
     ]);
 });
 
-test('board creation dispatches an event', function () {
+test('board creation does not dispatch the board added event', function () {
     Event::fake();
 
     $user = User::factory()->create();
@@ -34,7 +34,7 @@ test('board creation dispatches an event', function () {
             'name' => 'Test Board',
         ]);
 
-    Event::assertDispatched(BoardAddedToWorkspace::class);
+    Event::assertNotDispatched(BoardAddedToWorkspace::class);
 });
 
 test('users are redirected to boards.show after creating board', function () {

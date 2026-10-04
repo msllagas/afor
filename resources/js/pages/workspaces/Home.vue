@@ -11,7 +11,6 @@ import { home, members as workspaceMembers } from '@/routes/workspaces';
 import { favorite } from '@/routes/workspaces/boards';
 import type { Board, BreadcrumbItem, Workspace, WorkspaceMember } from '@/types';
 import { Deferred, Head, Link, useHttp } from '@inertiajs/vue3';
-import { useEcho } from '@laravel/echo-vue';
 import { Archive, Check, Link as LinkIcon, Star } from 'lucide-vue-next';
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { toast } from 'vue-sonner';
@@ -25,10 +24,6 @@ const props = defineProps<{
     boards?: Board[];
     inviteLink?: string;
 }>();
-
-type BoardData = {
-    board: Board;
-};
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Workspace', href: home(props.workspace.id).url },
@@ -104,12 +99,6 @@ function handleStarBoard(board: Board, isStarred: boolean) {
         onNetworkError: rollback,
     }).catch(() => {});
 }
-
-useEcho<BoardData>(`workspace.${props.workspace.id}`, 'BoardAddedToWorkspace', ({ board }) => {
-    if (!boards.value.some((existing) => existing.id === board.id)) {
-        boards.value.push(board);
-    }
-});
 
 onBeforeUnmount(() => clearTimeout(copiedResetTimer));
 </script>

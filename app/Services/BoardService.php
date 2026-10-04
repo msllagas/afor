@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Events\BoardAddedToWorkspace;
 use App\Models\Board;
 use App\Models\User;
 use App\Models\Workspace;
@@ -23,8 +22,6 @@ class BoardService
         ]);
 
         $this->createDefaultLists($board);
-
-        BoardAddedToWorkspace::dispatch($board, $workspace->id);
 
         return $board->load('boardLists.cards');
     }
