@@ -62,6 +62,12 @@ class Workspace extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function isAccessibleBy(User $user): bool
+    {
+        return $this->owner_id === $user->id
+            || $this->users()->whereKey($user->id)->exists();
+    }
+
     // Members of the workspace
     public function users(): BelongsToMany
     {

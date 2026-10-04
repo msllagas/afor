@@ -83,3 +83,41 @@ test('archived boards are previewed with their active lists and the user star', 
         ->assertJsonPath('0.board_lists.0.color', 'angel')
         ->assertJsonPath('0.board_lists.0.cards_count', 2);
 });
+
+test('users outside the workspace cannot list its archived boards', function () {
+    Board::factory()->for($this->workspace)->archived($this->user)->create();
+
+    $this->actingAs(User::factory()->create())
+        ->getJson(route('workspaces.boards.archived', $this->workspace))
+        ->assertNotFound();
+});
+
+test('users outside the workspace cannot archive its boards', function () {
+    $board = Board::factory()->for($this->workspace)->unarchived()->create();
+
+    $this->actingAs(User::factory()->create())
+        ->patch(route('boards.archive', $board))
+        ->assertNotFound();
+
+    expect($board->refresh()->archived_at)->toBeNull();
+});
+
+test('users outside the workspace cannot unarchive its boards', function () {
+    $board = Board::factory()->for($this->workspace)->archived($this->user)->create();
+
+    $this->actingAs(User::factory()->create())
+        ->patchJson(route('boards.unarchive', $board))
+        ->assertNotFound();
+
+    expect($board->refresh()->archived_at)->not->toBeNull();
+});
+
+test('users outside the workspace cannot delete its archived boards', function () {
+    $board = Board::factory()->for($this->workspace)->archived($this->user)->create();
+
+    $this->actingAs(User::factory()->create())
+        ->deleteJson(route('boards.destroy', $board))
+        ->assertNotFound();
+
+    $this->assertModelExists($board);
+});

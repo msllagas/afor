@@ -11,6 +11,7 @@ use App\Models\Workspace;
 use App\Services\BoardService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -118,6 +119,8 @@ class BoardController extends Controller
      */
     public function destroy(Board $board)
     {
+        Gate::authorize('delete', $board);
+
         // for now, only allow force deletion of archived boards
         if (!($board->archived_by && $board->archived_at)) {
             // if trash bins have been implemented, that's when soft deletion can be done, but for now
@@ -136,6 +139,8 @@ class BoardController extends Controller
 
     public function archive(Board $board): RedirectResponse
     {
+        Gate::authorize('update', $board);
+
         $this->boardService->archive($board, auth()->user());
 
         return back();
@@ -143,11 +148,15 @@ class BoardController extends Controller
 
     public function unarchive(Board $board): Board
     {
+        Gate::authorize('update', $board);
+
         return $this->boardService->unarchive($board);
     }
 
     public function archived(Workspace $workspace): Collection
     {
+        Gate::authorize('view', $workspace);
+
         return $workspace->boards()
             ->select('id', 'name', 'workspace_id', 'created_at', 'archived_at', 'archived_by')
             ->archived()
