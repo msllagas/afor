@@ -39,9 +39,9 @@ const showAvatar = computed(() => !!user.value.avatar);
 
         <DropdownMenu>
             <DropdownMenuTrigger as-child>
-                <Button as-child class="cursor-pointer" size="icon" variant="ghost">
+                <Button aria-label="Open user menu" class="cursor-pointer rounded-lg" size="icon" variant="ghost">
                     <Avatar :key="user.avatar ?? 'fallback'" class="h-8 w-8 overflow-hidden rounded-lg">
-                        <AvatarImage v-if="showAvatar" :src="user.avatar!" :alt="user.name" />
+                        <AvatarImage v-if="showAvatar" :src="user.avatar!" alt="" />
                         <AvatarFallback class="rounded-lg text-black dark:text-white">
                             {{ getInitials(user.name) }}
                         </AvatarFallback>
