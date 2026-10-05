@@ -53,7 +53,9 @@ function cloneLists(boardLists: BoardListType[]): BoardListType[] {
 
 const lists = ref<BoardListType[]>(cloneLists(props.board.board_lists));
 const boardName = ref(props.board.name);
-const isDragging = ref(false);
+// What is being dragged: empty lists only invite a drop while a card is in flight, not a whole list.
+const draggedItem = ref<'card' | 'list' | null>(null);
+const isDragging = computed(() => draggedItem.value !== null);
 let pendingRequests = 0;
 let hasPendingSync = false;
 let lastDragEndedAt = 0;
@@ -552,12 +554,12 @@ const cardDragOptions = computed(() => ({
     emptyInsertThreshold: 24,
 }));
 
-function onDragStart() {
-    isDragging.value = true;
+function onDragStart(item: 'card' | 'list') {
+    draggedItem.value = item;
 }
 
 function onDragEnd() {
-    isDragging.value = false;
+    draggedItem.value = null;
     lastDragEndedAt = Date.now();
 
     if (hasPendingSync) {
@@ -1052,7 +1054,7 @@ function deleteCard(card: Card) {
                     v-bind="listDragOptions"
                     @change="onListsChange"
                     @end="onDragEnd"
-                    @start="onDragStart"
+                    @start="onDragStart('list')"
                 >
                     <template #item="{ element, index }">
                         <li
@@ -1065,11 +1067,11 @@ function deleteCard(card: Card) {
                                 :can-move-right="index < lists.length - 1"
                                 :card-drag-options="cardDragOptions"
                                 :colors="colors"
-                                :is-dragging="isDragging"
+                                :is-dragging-card="draggedItem === 'card'"
                                 @archive="archiveList(element)"
                                 @cards-change="onCardsChange"
                                 @drag-end="onDragEnd"
-                                @drag-start="onDragStart"
+                                @drag-start="onDragStart('card')"
                                 @move="moveList(element, $event)"
                                 @open-card="openCard"
                                 @recolor="recolorList(element, $event)"

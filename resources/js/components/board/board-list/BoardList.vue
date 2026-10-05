@@ -16,7 +16,8 @@ const props = defineProps<{
     cardDragOptions: Record<string, unknown>;
     canMoveLeft: boolean;
     canMoveRight: boolean;
-    isDragging: boolean;
+    /** A card (not a list) is being dragged somewhere on the board. */
+    isDraggingCard: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -203,7 +204,7 @@ function onRequestFailed(response?: { status: number }) {
             class="relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain px-2 pt-1 pb-2"
         >
             <draggable
-                :class="{ 'min-h-16': !boardList.cards.length && (isDragging || !isAddingCard) }"
+                :class="{ 'min-h-16': !boardList.cards.length && (isDraggingCard || !isAddingCard) }"
                 :list="boardList.cards"
                 class="peer flex flex-col gap-2"
                 item-key="id"
@@ -237,15 +238,15 @@ function onRequestFailed(response?: { status: number }) {
             </draggable>
             <!-- While a card is dragged, empty lists become drop zones; the hint steps aside once the card is over it. -->
             <p
-                v-if="!boardList.cards.length && (isDragging || !isAddingCard)"
+                v-if="!boardList.cards.length && (isDraggingCard || !isAddingCard)"
                 :class="
-                    isDragging
+                    isDraggingCard
                         ? 'border-2 border-current/40 bg-(--list-bg-hovered) font-medium text-(--list-fg)'
                         : 'border border-current/25 text-(--list-fg-muted)'
                 "
                 class="pointer-events-none absolute inset-x-2 top-1 flex h-16 items-center justify-center rounded-xl border-dashed text-xs transition-colors peer-has-[.board-drag-ghost]:hidden"
             >
-                {{ isDragging ? 'Drop a card here' : 'No cards yet' }}
+                {{ isDraggingCard ? 'Drop a card here' : 'No cards yet' }}
             </p>
 
             <Form
