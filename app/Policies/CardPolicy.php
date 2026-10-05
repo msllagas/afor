@@ -5,19 +5,19 @@ namespace App\Policies;
 use App\Models\BoardList;
 use App\Models\Card;
 use App\Models\User;
-use App\Policies\Concerns\RequiresWorkspaceMembership;
+use App\Policies\Concerns\RequiresBoardAccess;
 use Illuminate\Auth\Access\Response;
 
 class CardPolicy
 {
-    use RequiresWorkspaceMembership;
+    use RequiresBoardAccess;
 
     /**
      * Determine whether the user can open the card.
      */
     public function view(User $user, Card $card): Response
     {
-        return $this->memberOf($user, $card->boardList->board->workspace);
+        return $this->onBoard($user, $card->boardList->board);
     }
 
     /**
@@ -25,7 +25,7 @@ class CardPolicy
      */
     public function create(User $user, BoardList $boardList): Response
     {
-        return $this->memberOf($user, $boardList->board->workspace);
+        return $this->onBoard($user, $boardList->board);
     }
 
     /**
@@ -33,7 +33,7 @@ class CardPolicy
      */
     public function update(User $user, Card $card): Response
     {
-        return $this->memberOf($user, $card->boardList->board->workspace);
+        return $this->onBoard($user, $card->boardList->board);
     }
 
     /**
@@ -41,6 +41,6 @@ class CardPolicy
      */
     public function delete(User $user, Card $card): Response
     {
-        return $this->memberOf($user, $card->boardList->board->workspace);
+        return $this->onBoard($user, $card->boardList->board);
     }
 }

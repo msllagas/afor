@@ -8,7 +8,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Archive, Ellipsis, Plus } from 'lucide-vue-next';
+import { Archive, Ellipsis, Plus, Users } from 'lucide-vue-next';
 
 defineProps<{
     isArchiving?: boolean;
@@ -17,6 +17,7 @@ defineProps<{
 const emit = defineEmits<{
     addList: [];
     archiveBoard: [];
+    showMembers: [];
 }>();
 
 // "Add list" moves focus into the list composer, so the menu must not pull it back to its trigger.
@@ -48,6 +49,10 @@ function onCloseAutoFocus(event: Event) {
             <DropdownMenuItem class="cursor-pointer" @select="onAddList">
                 <Plus />
                 <span>Add list</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem class="cursor-pointer" @select="emit('showMembers')">
+                <Users />
+                <span>Members</span>
             </DropdownMenuItem>
             <DropdownMenuItem :disabled="isArchiving" class="cursor-pointer" @select="emit('archiveBoard')">
                 <Archive />

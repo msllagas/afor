@@ -59,21 +59,31 @@ class DemoSeeder extends Seeder
         $petWorkspaces['scout']->users()->attach($petWorkspaces['cooper']->owner_id);
         $petWorkspaces['cooper']->users()->attach($petWorkspaces['scout']->owner_id);
 
+        // Clifford is on some of Mandy's boards and Tyler is on none, so Tyler sees the empty state. Scout never joined.
+        $mandyWorkspace->users()->attach([$petWorkspaces['clifford']->owner_id, $petWorkspaces['tyler']->owner_id]);
+
         $workspaces = ['mandy' => $mandyWorkspace, 'angel' => $angelWorkspace, ...$petWorkspaces->all()];
-        $favoritedBy = ['mandy' => $mandy, 'angel' => $angel];
+        $users = [
+            'mandy' => $mandy,
+            'angel' => $angel,
+            ...$petWorkspaces->map(fn (Workspace $workspace): User => $workspace->owner)->all(),
+        ];
 
         foreach ($this->boards() as $ownerKey => $boards) {
             $workspace = $workspaces[$ownerKey];
 
             foreach ($boards as $boardData) {
-                $board = Board::factory()->for($workspace)->create(['name' => $boardData['name']]);
+                $board = Board::factory()
+                    ->for($workspace)
+                    ->withMembers(collect($boardData['members'] ?? [])->map(fn (string $userKey): User => $users[$userKey])->all())
+                    ->create(['name' => $boardData['name']]);
 
                 if ($boardData['archived'] ?? false) {
                     $board->update(['archived_at' => now(), 'archived_by' => $workspace->owner_id]);
                 }
 
                 foreach ($boardData['starredBy'] ?? [] as $userKey) {
-                    $favoritedBy[$userKey]->favoriteBoards()->attach($board);
+                    $users[$userKey]->favoriteBoards()->attach($board);
                 }
 
                 foreach (array_values($boardData['lists']) as $listOrder => $listData) {
@@ -96,10 +106,11 @@ class DemoSeeder extends Seeder
     }
 
     /**
-     * Demo boards keyed by the owner of the workspace they belong to.
-     * A card is either a name or a [name, description] pair.
+     * Demo boards keyed by the owner of the workspace they belong to. The owner sees every board in their
+     * workspace; anyone else only sees the boards that list them as members. A card is either a name or a
+     * [name, description] pair.
      *
-     * @return array<string, list<array{name: string, archived?: bool, starredBy?: list<string>, lists: list<array{name: string, color: BoardListColor, cards: list<string|array{string, string}>}>}>>
+     * @return array<string, list<array{name: string, archived?: bool, members?: list<string>, starredBy?: list<string>, lists: list<array{name: string, color: BoardListColor, cards: list<string|array{string, string}>}>}>>
      */
     private function boards(): array
     {
@@ -107,6 +118,7 @@ class DemoSeeder extends Seeder
             'mandy' => [
                 [
                     'name'      => 'Afor Roadmap',
+                    'members'   => ['angel', 'clifford'],
                     'starredBy' => ['mandy'],
                     'lists'     => [
                         ['name' => 'Backlog', 'color' => BoardListColor::NEUTRAL, 'cards' => [
@@ -132,8 +144,9 @@ class DemoSeeder extends Seeder
                     ],
                 ],
                 [
-                    'name'  => 'Bug Tracker',
-                    'lists' => [
+                    'name'    => 'Bug Tracker',
+                    'members' => ['angel', 'clifford'],
+                    'lists'   => [
                         ['name' => 'Reported', 'color' => BoardListColor::RED, 'cards' => [
                             ['Card description is lost when the dialog closes', 'Happens when closing with Escape before the editor saves. Angel hit this twice.'],
                             'Sidebar flickers when switching workspaces',
@@ -168,6 +181,7 @@ class DemoSeeder extends Seeder
                 ],
                 [
                     'name'     => 'First Prototype',
+                    'members'  => ['angel'],
                     'archived' => true,
                     'lists'    => [
                         ['name' => 'Done', 'color' => BoardListColor::GREEN, 'cards' => [
@@ -181,6 +195,7 @@ class DemoSeeder extends Seeder
             'angel' => [
                 [
                     'name'      => 'Beach Weekend',
+                    'members'   => ['mandy'],
                     'starredBy' => ['angel', 'mandy'],
                     'lists'     => [
                         ['name' => 'Ideas', 'color' => BoardListColor::ANGEL, 'cards' => [
@@ -202,6 +217,7 @@ class DemoSeeder extends Seeder
                 ],
                 [
                     'name'      => 'Weekend Errands',
+                    'members'   => ['mandy'],
                     'starredBy' => ['angel'],
                     'lists'     => [
                         ['name' => 'This Week', 'color' => BoardListColor::ORANGE, 'cards' => [
@@ -240,8 +256,9 @@ class DemoSeeder extends Seeder
             ],
             'clifford' => [
                 [
-                    'name'  => 'Daily Routine',
-                    'lists' => [
+                    'name'    => 'Daily Routine',
+                    'members' => ['mandy', 'angel'],
+                    'lists'   => [
                         ['name' => 'Morning', 'color' => BoardListColor::SUNSET, 'cards' => [
                             'Wake Mandy up at 6',
                             'First walk around the block',
@@ -260,8 +277,9 @@ class DemoSeeder extends Seeder
                     ],
                 ],
                 [
-                    'name'  => 'Walk Routes',
-                    'lists' => [
+                    'name'    => 'Walk Routes',
+                    'members' => ['angel'],
+                    'lists'   => [
                         ['name' => 'Favourites', 'color' => BoardListColor::GREEN, 'cards' => [
                             'Park loop past the pond',
                             ['Street with the friendly baker', 'She sometimes has a crust for me. Walk slowly past the door.'],
@@ -278,8 +296,9 @@ class DemoSeeder extends Seeder
             ],
             'tyler' => [
                 [
-                    'name'  => 'Sunny Spots',
-                    'lists' => [
+                    'name'    => 'Sunny Spots',
+                    'members' => ['mandy', 'angel'],
+                    'lists'   => [
                         ['name' => 'Morning Sun', 'color' => BoardListColor::SUNSET, 'cards' => [
                             'Kitchen windowsill',
                             'Top of the bookshelf',
@@ -309,8 +328,9 @@ class DemoSeeder extends Seeder
                     ],
                 ],
                 [
-                    'name'  => 'Demands',
-                    'lists' => [
+                    'name'    => 'Demands',
+                    'members' => ['mandy'],
+                    'lists'   => [
                         ['name' => 'Pending', 'color' => BoardListColor::ANGEL, 'cards' => [
                             'Dinner 30 minutes early',
                             'Open the bedroom door',
@@ -324,8 +344,9 @@ class DemoSeeder extends Seeder
             ],
             'scout' => [
                 [
-                    'name'  => 'Lost Ball Tracker',
-                    'lists' => [
+                    'name'    => 'Lost Ball Tracker',
+                    'members' => ['mandy', 'angel', 'cooper'],
+                    'lists'   => [
                         ['name' => 'Lost', 'color' => BoardListColor::RED, 'cards' => [
                             'Red ball under the couch',
                             'Tennis ball over the fence',
@@ -341,8 +362,9 @@ class DemoSeeder extends Seeder
                     ],
                 ],
                 [
-                    'name'  => 'Training Goals',
-                    'lists' => [
+                    'name'    => 'Training Goals',
+                    'members' => ['angel'],
+                    'lists'   => [
                         ['name' => 'Learning', 'color' => BoardListColor::BLUE, 'cards' => [
                             'Drop the ball the first time I am asked',
                             'Wait at the door',
@@ -360,8 +382,9 @@ class DemoSeeder extends Seeder
             ],
             'cooper' => [
                 [
-                    'name'  => 'Park Adventures',
-                    'lists' => [
+                    'name'    => 'Park Adventures',
+                    'members' => ['mandy', 'angel', 'scout'],
+                    'lists'   => [
                         ['name' => 'Planned', 'color' => BoardListColor::BLUE, 'cards' => [
                             ['Dog park by the river with Scout', 'Saturday morning, before it gets too hot.'],
                             'Beach day',
@@ -376,8 +399,9 @@ class DemoSeeder extends Seeder
                     ],
                 ],
                 [
-                    'name'  => 'Squirrel Watch',
-                    'lists' => [
+                    'name'    => 'Squirrel Watch',
+                    'members' => ['scout'],
+                    'lists'   => [
                         ['name' => 'Spotted', 'color' => BoardListColor::ORANGE, 'cards' => [
                             'Big grey one in the oak tree',
                             'Little one on the fence',
@@ -391,8 +415,9 @@ class DemoSeeder extends Seeder
                     ],
                 ],
                 [
-                    'name'  => 'Treat Rankings',
-                    'lists' => [
+                    'name'    => 'Treat Rankings',
+                    'members' => ['angel'],
+                    'lists'   => [
                         ['name' => 'Top Tier', 'color' => BoardListColor::GREEN, 'cards' => [
                             'Peanut butter biscuits',
                             'Cheese cubes',

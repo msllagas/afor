@@ -373,8 +373,8 @@ onBeforeUnmount(() => clearTimeout(copiedResetTimer));
             <header>
                 <h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">Members</h1>
                 <p class="mt-1.5 max-w-prose text-sm text-muted-foreground">
-                    Everyone in <span class="font-medium text-foreground">{{ workspace.name }}</span> can view, create
-                    and join its boards.
+                    Everyone in <span class="font-medium text-foreground">{{ workspace.name }}</span> can see the boards
+                    the owner adds them to. Open a board and choose Members to add or remove people.
                 </p>
             </header>
 
@@ -611,7 +611,7 @@ onBeforeUnmount(() => clearTimeout(copiedResetTimer));
                                 <p id="confirm-leave" class="text-sm">
                                     Leave {{ workspace.name }}?
                                     <span class="text-muted-foreground">
-                                        You’ll lose access to its boards, and need a new invite from
+                                        You’ll be taken off all its boards, and need a new invite from
                                         {{ owner.name }} to come back.
                                     </span>
                                 </p>
@@ -647,7 +647,7 @@ onBeforeUnmount(() => clearTimeout(copiedResetTimer));
                             >
                                 <p :id="`confirm-remove-${person.id}`" class="text-sm">
                                     Remove {{ person.name }}?
-                                    <span class="text-muted-foreground">They’ll lose access to its boards.</span>
+                                    <span class="text-muted-foreground">They’ll be taken off all its boards.</span>
                                 </p>
                                 <div class="ml-auto flex gap-2">
                                     <Button

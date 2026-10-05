@@ -74,3 +74,20 @@ test('guests are sent to log in when leaving a workspace', function () {
 
     $response->assertRedirect(route('login'));
 });
+
+test('leaving a workspace takes the member off its boards but not off boards in other workspaces', function () {
+    $member = User::factory()->create();
+    $otherMember = User::factory()->create();
+    $workspace = Workspace::factory()->forUser()->create();
+    $otherWorkspace = Workspace::factory()->forUser()->create();
+    $workspace->users()->attach([$member->id, $otherMember->id]);
+    $otherWorkspace->users()->attach($member->id);
+    $leftBoard = Board::factory()->for($workspace)->withMembers([$member, $otherMember])->create();
+    $keptBoard = Board::factory()->for($otherWorkspace)->withMembers($member)->create();
+
+    $this->actingAs($member)->delete(route('workspaces.leave', ['workspace' => $workspace]));
+
+    $this->assertDatabaseMissing('board_user', ['user_id' => $member->id, 'board_id' => $leftBoard->id]);
+    $this->assertDatabaseHas('board_user', ['user_id' => $member->id, 'board_id' => $keptBoard->id]);
+    $this->assertDatabaseHas('board_user', ['user_id' => $otherMember->id, 'board_id' => $leftBoard->id]);
+});

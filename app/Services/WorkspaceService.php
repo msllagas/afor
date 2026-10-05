@@ -99,15 +99,18 @@ class WorkspaceService
     }
 
     /**
-     * Remove the membership along with what the user kept from it: their stars on its boards,
-     * and the workspace as the one they last opened.
+     * Remove the membership along with what the user kept from it: their place on its boards, their stars
+     * on them, and the workspace as the one they last opened. Rejoining later starts with no boards.
      */
     private function endMembership(Workspace $workspace, User $user): void
     {
         DB::transaction(function () use ($workspace, $user) {
             $workspace->users()->detach($user->id);
 
-            $user->favoriteBoards()->detach($workspace->boards()->pluck('id'));
+            $boardIds = $workspace->boards()->withTrashed()->pluck('id');
+
+            $user->sharedBoards()->detach($boardIds);
+            $user->favoriteBoards()->detach($boardIds);
 
             if ($user->last_workspace_id === $workspace->id) {
                 $user->forceFill(['last_workspace_id' => null])->saveQuietly();

@@ -21,7 +21,9 @@ const props = defineProps<{
     columns: number;
     query: string;
     isCurrent: boolean;
+    /** Only the workspace owner can add boards; members see the ones they were added to. */
     canAddBoard: boolean;
+    isOwned: boolean;
     isShowingAll: boolean;
 }>();
 
@@ -104,6 +106,12 @@ const countLabel = computed(() => {
             </div>
 
             <CollapsibleContent class="pt-3 pb-1">
+                <p
+                    v-if="!isOwned && !workspace.boards.length"
+                    class="rounded-xl border border-dashed px-4 py-3 text-sm text-muted-foreground"
+                >
+                    You haven’t been added to any boards here yet. Ask the workspace owner to add you.
+                </p>
                 <ul
                     v-if="view === 'grid'"
                     :id="listId"

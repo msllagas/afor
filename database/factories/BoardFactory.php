@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Board;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -42,5 +43,15 @@ class BoardFactory extends Factory
             'archived_at' => null,
             'archived_by' => null,
         ]);
+    }
+
+    /**
+     * Add the given users to the board. They need to be members of its workspace to reach it.
+     *
+     * @param  User|Collection<int, User>|array<int, User>  $users
+     */
+    public function withMembers(User|Collection|array $users): static
+    {
+        return $this->hasAttached($users, [], 'members');
     }
 }

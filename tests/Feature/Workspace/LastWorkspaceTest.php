@@ -19,7 +19,7 @@ test('opening a board remembers its workspace as the last workspace', function (
     $member = User::factory()->create();
     $workspace = Workspace::factory()->forUser($owner)->create();
     $workspace->users()->attach($member);
-    $board = Board::factory()->for($workspace)->create();
+    $board = Board::factory()->for($workspace)->withMembers($member)->create();
 
     $this->actingAs($member)->get(route('boards.show', $board));
 

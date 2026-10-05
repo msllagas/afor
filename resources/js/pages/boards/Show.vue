@@ -2,19 +2,28 @@
 import BoardListController from '@/actions/App/Http/Controllers/BoardListController';
 import BoardList from '@/components/board/board-list/BoardList.vue';
 import BoardDropdownMenu from '@/components/board/BoardDropdownMenu.vue';
+import BoardMembersDialog from '@/components/board/BoardMembersDialog.vue';
 import InputError from '@/components/InputError.vue';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import WorkspaceAvatar from '@/components/workspace/WorkspaceAvatar.vue';
+import { useInitials } from '@/composables/useInitials';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { cn } from '@/lib/utils';
 import cardRoutes from '@/routes/board-lists/cards';
 import boardRoutes from '@/routes/boards';
 import boardListRoutes from '@/routes/boards/board-lists';
 import { home } from '@/routes/workspaces';
-import { index as boardsIndex } from '@/routes/boards';
 import { favorite } from '@/routes/workspaces/boards';
-import type { Board, BoardList as BoardListType, BreadcrumbItem, Card, SortableChangeEvent } from '@/types';
+import type {
+    Board,
+    BoardList as BoardListType,
+    BreadcrumbItem,
+    Card,
+    SortableChangeEvent,
+    WorkspaceMember,
+} from '@/types';
 import type { RequestPayload } from '@inertiajs/core';
 import { Form, Head, Link, router, useHttp, usePage } from '@inertiajs/vue3';
 import { onClickOutside, useMediaQuery } from '@vueuse/core';
@@ -30,6 +39,11 @@ const props = defineProps<{
     board: Board;
     selectedCard?: Card | null;
     colors: Array<string>;
+    owner: WorkspaceMember;
+    members: WorkspaceMember[];
+    canManageMembers: boolean;
+    /** Workspace members who aren't on the board yet. Only sent to the owner. */
+    addableMembers?: WorkspaceMember[];
 }>();
 
 // The card description editor reads the list colours for its highlighter.
@@ -129,17 +143,24 @@ async function announce(message: string) {
 
 let hasLostAccess = false;
 
-/** The board was deleted, or the user is no longer in its workspace (maybe they left it in another tab). */
+/**
+ * The board was deleted, or the user was taken off it or out of its workspace (maybe in another tab).
+ * The workspace page sends them on to the dashboard if they're no longer in the workspace either.
+ */
 function leaveInaccessibleBoard() {
     if (hasLostAccess) {
         return;
     }
 
     hasLostAccess = true;
-    toast.error('You no longer have access to this board', {
-        description: 'It was deleted, or you’re no longer a member of its workspace.',
+    // The toast waits for the next page, since the board page's toasts go with it.
+    router.visit(workspaceHomeUrl.value, {
+        replace: true,
+        onFinish: () =>
+            toast.error('You no longer have access to this board', {
+                description: 'It was deleted, or you were removed from it.',
+            }),
     });
-    router.visit(boardsIndex().url, { replace: true });
 }
 
 /**
@@ -362,6 +383,39 @@ function archiveBoard() {
             onNetworkError: fail,
         },
     );
+}
+
+/*
+|--------------------------------------------------------------------------
+| Members
+|--------------------------------------------------------------------------
+*/
+
+const MEMBER_AVATAR_CAP = 3;
+
+const { getInitials } = useInitials();
+const showMembersDialog = ref(false);
+const boardPeople = computed(() => [props.owner, ...props.members]);
+const hiddenPeopleCount = computed(() => Math.max(boardPeople.value.length - MEMBER_AVATAR_CAP, 0));
+// Keep the bubble the size of an avatar however big the board gets; the dialog lists everyone.
+const hiddenPeopleLabel = computed(() => (hiddenPeopleCount.value > 99 ? '99+' : `+${hiddenPeopleCount.value}`));
+const peopleLabel = computed(() => {
+    const count = boardPeople.value.length;
+
+    return `${count} ${count === 1 ? 'person' : 'people'} on this board`;
+});
+
+/** A member change came back 404: the person was already gone, or the user lost the board itself. */
+function onMemberNotFound(failureMessage: string) {
+    confirmBoardAccess(() => {
+        toast.error(failureMessage, { description: 'The member list changed. It has been refreshed.' });
+        router.reload({
+            only: ['members', 'addableMembers'],
+            async: true,
+            onHttpException: () => false,
+            onNetworkError: () => false,
+        });
+    });
 }
 
 /*
@@ -966,6 +1020,31 @@ function deleteCard(card: Card) {
                 <p class="hidden shrink-0 text-sm text-muted-foreground tabular-nums lg:block">{{ summary }}</p>
 
                 <div class="flex shrink-0 items-center gap-1">
+                    <button
+                        :aria-label="`Board members: ${peopleLabel}`"
+                        class="mr-1 hidden min-h-9 cursor-pointer items-center rounded-full p-0.5 transition-colors outline-none hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/50 sm:flex"
+                        type="button"
+                        @click="showMembersDialog = true"
+                    >
+                        <span aria-hidden="true" class="flex -space-x-2">
+                            <Avatar
+                                v-for="person in boardPeople.slice(0, MEMBER_AVATAR_CAP)"
+                                :key="person.id"
+                                class="size-7 ring-2 ring-background sm:size-8"
+                            >
+                                <AvatarImage :src="person.avatar ?? ''" alt="" class="object-cover" />
+                                <AvatarFallback class="bg-blush text-xs font-semibold text-blush-foreground">
+                                    {{ getInitials(person.name) }}
+                                </AvatarFallback>
+                            </Avatar>
+                            <span
+                                v-if="hiddenPeopleCount"
+                                class="relative flex size-7 items-center justify-center rounded-full bg-muted text-[10px] font-semibold text-muted-foreground tabular-nums ring-2 ring-background sm:size-8 sm:text-xs"
+                            >
+                                {{ hiddenPeopleLabel }}
+                            </span>
+                        </span>
+                    </button>
                     <TooltipProvider>
                         <Tooltip>
                             <TooltipTrigger as-child>
@@ -1000,6 +1079,7 @@ function deleteCard(card: Card) {
                         :is-archiving="isArchiving"
                         @add-list="openListComposer"
                         @archive-board="archiveBoard"
+                        @show-members="showMembersDialog = true"
                     />
                 </div>
             </header>
@@ -1153,6 +1233,18 @@ function deleteCard(card: Card) {
             @describe="describeCard"
             @move="moveCard"
             @rename="renameCard"
+        />
+
+        <BoardMembersDialog
+            v-model:open="showMembersDialog"
+            :addable-members="addableMembers"
+            :board-id="board.id"
+            :board-name="boardName"
+            :can-manage-members="canManageMembers"
+            :members="members"
+            :owner="owner"
+            :workspace-name="workspaceName"
+            @not-found="onMemberNotFound"
         />
 
         <p aria-live="polite" class="sr-only" role="status">{{ announcement }}</p>

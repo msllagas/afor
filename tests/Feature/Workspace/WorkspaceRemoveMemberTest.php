@@ -1,7 +1,9 @@
 <?php
 
+use App\Models\Board;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Models\WorkspaceInvitation;
 
 test('workspace creator can remove members', function () {
     $user = User::factory()->create();
@@ -110,4 +112,22 @@ test('users outside the workspace cannot remove its members', function () {
         'workspace_id' => $workspace->id,
         'user_id'      => $member->id,
     ]);
+});
+
+test('removing a member takes them off the workspace boards, so rejoining starts with none', function () {
+    $owner = User::factory()->create();
+    $workspace = Workspace::factory()->forUser($owner)->create();
+    $member = User::factory()->create();
+    $workspace->users()->attach($member->id);
+    $board = Board::factory()->for($workspace)->withMembers($member)->create();
+    $keptBoard = Board::factory()->for(Workspace::factory()->forUser())->withMembers($member)->create();
+    $invitation = WorkspaceInvitation::factory()->for($workspace)->create();
+
+    $this->actingAs($owner)->delete(route('workspaces.members.user.destroy', [$workspace, $member]));
+    $this->actingAs($member)->post(route('workspace-invitations.accept', [$workspace, $invitation->token]));
+
+    $this->assertDatabaseHas('workspace_user', ['workspace_id' => $workspace->id, 'user_id' => $member->id]);
+    $this->assertDatabaseMissing('board_user', ['user_id' => $member->id, 'board_id' => $board->id]);
+    $this->assertDatabaseHas('board_user', ['user_id' => $member->id, 'board_id' => $keptBoard->id]);
+    $this->actingAs($member)->get(route('boards.show', $board))->assertNotFound();
 });

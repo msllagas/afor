@@ -42,6 +42,8 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property-read int|null $notifications_count
  * @property-read Collection<int, Workspace> $ownedWorkspaces
  * @property-read int|null $owned_workspaces_count
+ * @property-read Collection<int, Board> $sharedBoards
+ * @property-read int|null $shared_boards_count
  * @property-read Collection<int, Workspace> $sharedWorkspaces
  * @property-read int|null $shared_workspaces_count
  * @property-read mixed $workspaces
@@ -145,6 +147,15 @@ class User extends Authenticatable implements MustVerifyEmail
                 ? Storage::url($this->avatarFile->path)
                 : null
         );
+    }
+
+    /**
+     * Boards this user was added to in workspaces they're a member of.
+     */
+    public function sharedBoards(): BelongsToMany
+    {
+        return $this->belongsToMany(Board::class)
+            ->withTimestamps();
     }
 
     public function favoriteBoards(): BelongsToMany

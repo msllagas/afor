@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\BoardController;
 use App\Http\Controllers\BoardListController;
+use App\Http\Controllers\BoardMemberController;
 use App\Http\Controllers\CardController;
 use App\Http\Controllers\WorkspaceController;
 use App\Http\Controllers\WorkspaceInvitationController;
@@ -112,6 +113,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
             Route::patch('/{board}/board-lists/reorder', [BoardListController::class, 'reorder'])
                 ->name('board-lists.reorder');
+
+            Route::post('/{board}/members', [BoardMemberController::class, 'store'])
+                ->name('members.store');
+
+            Route::delete('/{board}/members/{member}', [BoardMemberController::class, 'destroy'])
+                ->name('members.destroy')
+                ->scopeBindings();
+
+            Route::delete('/{board}/membership', [BoardMemberController::class, 'leave'])
+                ->name('leave');
         });
 
     /*
@@ -134,9 +145,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     */
     Route::scopeBindings()->group(function () {
 
-        Route::resource('boards.board-lists', BoardListController::class);
+        Route::resource('boards.board-lists', BoardListController::class)
+            ->only(['store', 'update']);
 
-        Route::resource('board-lists.cards', CardController::class);
+        Route::resource('board-lists.cards', CardController::class)
+            ->only(['store', 'show', 'update', 'destroy']);
     });
 
 });

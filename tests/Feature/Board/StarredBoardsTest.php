@@ -23,11 +23,11 @@ test('starred boards are shared with every page in name order', function () {
     );
 });
 
-test('starred boards include boards from shared workspaces', function () {
+test('starred boards include boards the user was added to in shared workspaces', function () {
     $user = User::factory()->create();
     $workspace = Workspace::factory()->create();
     $workspace->users()->attach($user);
-    $board = Board::factory()->for($workspace)->create();
+    $board = Board::factory()->for($workspace)->withMembers($user)->create();
     $user->favoriteBoards()->attach($board);
 
     $response = $this->actingAs($user)->get(route('dashboard'));
@@ -54,6 +54,18 @@ test('starred boards leave out boards from workspaces the user no longer belongs
     Workspace::factory()->forUser($user)->create();
     $formerWorkspace = Workspace::factory()->create();
     $board = Board::factory()->for($formerWorkspace)->create();
+    $user->favoriteBoards()->attach($board);
+
+    $response = $this->actingAs($user)->get(route('dashboard'));
+
+    $response->assertInertia(fn (Assert $page) => $page->has('starredBoards', 0));
+});
+
+test('starred boards leave out boards the user is not on', function () {
+    $user = User::factory()->create();
+    $workspace = Workspace::factory()->create();
+    $workspace->users()->attach($user);
+    $board = Board::factory()->for($workspace)->create();
     $user->favoriteBoards()->attach($board);
 
     $response = $this->actingAs($user)->get(route('dashboard'));

@@ -28,6 +28,8 @@ use Illuminate\Support\Carbon;
  * @property-read int|null $board_lists_count
  * @property-read Collection<int, User> $favoritedByUsers
  * @property-read int|null $favorited_by_users_count
+ * @property-read Collection<int, User> $members
+ * @property-read int|null $members_count
  * @property-read Workspace $workspace
  * @property-read User|null $archiver
  *
@@ -38,6 +40,7 @@ use Illuminate\Support\Carbon;
  * @method static Builder<static>|Board onlyTrashed()
  * @method static Builder<static>|Board query()
  * @method static Builder<static>|Board unarchived()
+ * @method static Builder<static>|Board visibleTo(User $user)
  * @method static Builder<static>|Board whereArchivedAt($value)
  * @method static Builder<static>|Board whereArchivedBy($value)
  * @method static Builder<static>|Board whereCreatedAt($value)
@@ -76,6 +79,42 @@ class Board extends Model
             ->whereNull('archived_by');
     }
 
+    /**
+     * Boards the user can see: every board in a workspace they own, plus the boards they were added to
+     * in workspaces they're still a member of. Keep in step with isAccessibleBy().
+     */
+    #[Scope]
+    protected function visibleTo(Builder $query, User $user): Builder
+    {
+        return $query->where(fn (Builder $query) => $query
+            ->whereHas('workspace', fn (Builder $query) => $query->where('owner_id', $user->id))
+            ->orWhere(fn (Builder $query) => $query
+                ->whereHas('members', fn (Builder $query) => $query->whereKey($user->id))
+                ->whereHas('workspace.users', fn (Builder $query) => $query->whereKey($user->id))));
+    }
+
+    /**
+     * Whether the user can see and work on the board. The workspace owner always can; anyone else needs
+     * to be on the board and still in its workspace, so a membership left behind never grants access.
+     * Keep in step with the visibleTo() scope.
+     */
+    public function isAccessibleBy(User $user): bool
+    {
+        return $this->isOwnedBy($user)
+            || $this->members()
+                ->whereKey($user->id)
+                ->whereHas('sharedWorkspaces', fn (Builder $query) => $query->whereKey($this->workspace_id))
+                ->exists();
+    }
+
+    /**
+     * Whether the user owns the board's workspace, which gives them every board in it.
+     */
+    public function isOwnedBy(User $user): bool
+    {
+        return $this->workspace->owner_id === $user->id;
+    }
+
     public function workspace(): BelongsTo
     {
         return $this->belongsTo(Workspace::class);
@@ -90,6 +129,15 @@ class Board extends Model
     {
         return $this->hasMany(BoardList::class)
             ->orderBy('order');
+    }
+
+    /**
+     * Workspace members who were added to the board. The workspace owner is never one of them.
+     */
+    public function members(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class)
+            ->withTimestamps();
     }
 
     public function favoritedByUsers(): BelongsToMany

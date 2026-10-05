@@ -33,11 +33,11 @@ test('workspace owners can delete their board list cards', function () {
 
 });
 
-test('workspace members can delete the board list cards', function () {
+test('board members can delete the board list cards', function () {
     $member = User::factory()->create();
 
     $this->workspace->users()->attach($member);
-    $board = Board::factory()->for($this->workspace)->create();
+    $board = Board::factory()->for($this->workspace)->withMembers($member)->create();
     $boardList = BoardList::factory()->for($board)->create();
     $card = Card::factory()->for($boardList)->create();
 

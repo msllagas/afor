@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\BoardListColor;
+use App\Http\Controllers\Concerns\RendersBoardPage;
 use App\Http\Requests\StoreBoardsRequest;
 use App\Http\Requests\UpdateBoardsRequest;
 use App\Http\Resources\WorkspaceResource;
@@ -17,6 +17,8 @@ use Inertia\Response;
 
 class BoardController extends Controller
 {
+    use RendersBoardPage;
+
     public function __construct(
         private readonly BoardService $boardService,
     ) {}
@@ -37,6 +39,7 @@ class BoardController extends Controller
                 'boards' => fn ($query) => $query
                     ->select('id', 'name', 'workspace_id', 'created_at')
                     ->unarchived()
+                    ->visibleTo($user)
                     ->withExists([
                         'favoritedByUsers as is_favorited' => fn ($query) => $query->whereKey($user->id),
                     ])
@@ -84,18 +87,7 @@ class BoardController extends Controller
     {
         Gate::authorize('view', $board);
 
-        $board->load([
-            'boardLists' => function ($query) {
-                $query->with('cards')
-                    ->active();
-            },
-        ]);
-
-        return Inertia::render('boards/Show', [
-            'board'        => $board,
-            'selectedCard' => null,
-            'colors'       => Inertia::once(fn () => BoardListColor::cases()),
-        ]);
+        return $this->renderBoardPage($board, auth()->user());
     }
 
     /**
@@ -162,6 +154,7 @@ class BoardController extends Controller
         return $workspace->boards()
             ->select('id', 'name', 'workspace_id', 'created_at', 'archived_at', 'archived_by')
             ->archived()
+            ->visibleTo(auth()->user())
             ->withExists([
                 'favoritedByUsers as is_favorited' => fn ($query) => $query->whereKey(auth()->id()),
             ])

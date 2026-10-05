@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateWorkspaceRequest;
 use App\Http\Resources\UserResource;
 use App\Http\Resources\WorkspaceMemberResource;
 use App\Http\Resources\WorkspaceResource;
+use App\Models\Board;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Services\FileUploadService;
@@ -78,6 +79,7 @@ class WorkspaceController extends Controller
             'boards' => Inertia::defer(fn () => $workspace->boards()
                 ->select('id', 'name', 'workspace_id', 'created_at')
                 ->unarchived()
+                ->visibleTo($user)
                 ->withExists([
                     'favoritedByUsers as is_favorited' => fn ($query) => $query->whereKey($user->id),
                 ])
@@ -89,7 +91,8 @@ class WorkspaceController extends Controller
                 ])
                 ->oldest()
                 ->get()),
-            'canInvite' => $canInvite,
+            'canInvite'       => $canInvite,
+            'canCreateBoards' => $user->can('create', [Board::class, $workspace]),
             ...($canInvite ? [
                 'inviteLink' => Inertia::defer(fn () => $this->workspaceService->generateInvitationLink($workspace, $user)),
             ] : []),

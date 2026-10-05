@@ -148,3 +148,34 @@ test('workspace home previews each board with its active lists and card counts',
         )
     );
 });
+
+test('workspace home lists only the boards a member was added to and does not let them create boards', function () {
+    $workspace = Workspace::factory()->forUser()->create();
+    $member = User::factory()->create();
+    $workspace->users()->attach($member);
+    $boardMemberIsOn = Board::factory()->for($workspace)->withMembers($member)->create();
+    Board::factory()->for($workspace)->create();
+
+    $response = $this->actingAs($member)->get(route('workspaces.home', $workspace));
+
+    $response->assertInertia(fn (Assert $page) => $page
+        ->where('canCreateBoards', false)
+        ->loadDeferredProps(fn (Assert $reload) => $reload
+            ->has('boards', 1)
+            ->where('boards.0.id', $boardMemberIsOn->id)
+        )
+    );
+});
+
+test('workspace home lists every board to the owner and lets them create boards', function () {
+    $owner = User::factory()->create();
+    $workspace = Workspace::factory()->forUser($owner)->create();
+    Board::factory()->for($workspace)->count(2)->create();
+
+    $response = $this->actingAs($owner)->get(route('workspaces.home', $workspace));
+
+    $response->assertInertia(fn (Assert $page) => $page
+        ->where('canCreateBoards', true)
+        ->loadDeferredProps(fn (Assert $reload) => $reload->has('boards', 2))
+    );
+});

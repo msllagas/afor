@@ -69,9 +69,7 @@ class HandleInertiaRequests extends Middleware
                 ? $user->favoriteBoards()
                     ->select('boards.id', 'boards.name', 'boards.workspace_id')
                     ->unarchived()
-                    ->whereHas('workspace', fn ($query) => $query
-                        ->where('owner_id', $user->id)
-                        ->orWhereHas('users', fn ($query) => $query->whereKey($user->id)))
+                    ->visibleTo($user)
                     ->orderBy('boards.name')
                     ->get()
                     ->map(fn (Board $board) => $board->only('id', 'name', 'workspace_id'))

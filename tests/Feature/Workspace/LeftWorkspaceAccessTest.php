@@ -15,8 +15,8 @@ beforeEach(function () {
     $this->member = User::factory()->create();
     $this->workspace = Workspace::factory()->forUser()->create();
     $this->workspace->users()->attach($this->member);
-    $this->board = Board::factory()->for($this->workspace)->create(['name' => 'Roadmap']);
-    $this->archivedBoard = Board::factory()->for($this->workspace)->archived()->create();
+    $this->board = Board::factory()->for($this->workspace)->withMembers($this->member)->create(['name' => 'Roadmap']);
+    $this->archivedBoard = Board::factory()->for($this->workspace)->withMembers($this->member)->archived()->create();
     $this->boardList = BoardList::factory()->for($this->board)->create(['name' => 'Doing']);
     $this->otherList = BoardList::factory()->for($this->board)->create();
     $this->card = Card::factory()->for($this->boardList)->create(['name' => 'Ship it']);
@@ -67,7 +67,7 @@ dataset('workspace requests', [
 
 test('members who left a workspace get not found for its boards, lists and cards', function (Closure $request) {
     [$method, $url, $payload] = [...$request->call($this), []];
-    $tables = ['boards', 'board_lists', 'cards', 'board_user_favorites'];
+    $tables = ['boards', 'board_lists', 'cards', 'board_user', 'board_user_favorites'];
     $before = collect($tables)->mapWithKeys(fn (string $table) => [$table => DB::table($table)->get()]);
 
     $response = $this->json($method, $url, $payload);
@@ -78,9 +78,10 @@ test('members who left a workspace get not found for its boards, lists and cards
     }
 })->with('workspace requests');
 
-test('members who stay in the workspace can still open its boards and cards', function () {
+test('members who stay in the workspace can still open the boards and cards they were added to', function () {
     $stayingMember = User::factory()->create();
     $this->workspace->users()->attach($stayingMember);
+    $this->board->members()->attach($stayingMember);
 
     $this->actingAs($stayingMember)->get(route('boards.show', $this->board))->assertOk();
     $this->actingAs($stayingMember)

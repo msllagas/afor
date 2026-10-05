@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Board;
 use App\Models\User;
 use App\Models\Workspace;
+use Illuminate\Support\Facades\DB;
 
 class BoardService
 {
@@ -34,6 +35,23 @@ class BoardService
         ]);
 
         return $board;
+    }
+
+    public function addMember(Board $board, User $user): void
+    {
+        $board->members()->attach($user->id);
+    }
+
+    /**
+     * Take the user off the board along with their star on it. They stay in the workspace.
+     */
+    public function removeMember(Board $board, User $user): void
+    {
+        DB::transaction(function () use ($board, $user) {
+            $board->members()->detach($user->id);
+
+            $user->favoriteBoards()->detach($board->id);
+        });
     }
 
     public function toggleFavorite(Board $board, User $user): Board

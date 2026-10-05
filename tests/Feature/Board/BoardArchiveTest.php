@@ -121,3 +121,16 @@ test('users outside the workspace cannot delete its archived boards', function (
 
     $this->assertModelExists($board);
 });
+
+test('archived boards leave out boards the member is not on', function () {
+    $member = User::factory()->create();
+    $this->workspace->users()->attach($member);
+    $boardMemberIsOn = Board::factory()->for($this->workspace)->withMembers($member)->archived($this->user)->create();
+    Board::factory()->for($this->workspace)->archived($this->user)->create();
+
+    $this->actingAs($member)
+        ->getJson(route('workspaces.boards.archived', $this->workspace))
+        ->assertOk()
+        ->assertJsonCount(1)
+        ->assertJsonPath('0.id', $boardMemberIsOn->id);
+});

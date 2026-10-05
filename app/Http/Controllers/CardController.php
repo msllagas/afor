@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\BoardListColor;
+use App\Http\Controllers\Concerns\RendersBoardPage;
 use App\Http\Requests\StoreCardRequest;
 use App\Http\Requests\UpdateCardRequest;
 use App\Models\BoardList;
@@ -10,26 +10,11 @@ use App\Models\Card;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
-use Inertia\Inertia;
 use Inertia\Response;
 
 class CardController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        //
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
+    use RendersBoardPage;
 
     /**
      * Store a newly created resource in storage.
@@ -51,43 +36,13 @@ class CardController extends Controller
     }
 
     /**
-     * Display the specified resource.
+     * Display the board with the card open.
      */
     public function show(BoardList $boardList, Card $card): Response
     {
         Gate::authorize('view', $card);
 
-        $board = $boardList->board;
-
-        $board->load([
-            'boardLists' => function ($query) {
-                $query->with('cards')
-                    ->active();
-            },
-        ]);
-
-        return Inertia::render('boards/Show', [
-            'board'        => $board,
-            'selectedCard' => $card,
-            'colors'       => Inertia::once(fn () => BoardListColor::cases()),
-        ]);
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(BoardList $boardList, Card $card): Response
-    {
-        Gate::authorize('view', $card);
-
-        $board = $boardList->board;
-        $board->load('boardLists.cards');
-
-        return Inertia::render('boards/Show', [
-            'board'        => $boardList->board,
-            'selectedCard' => $card,
-        ]);
-
+        return $this->renderBoardPage($boardList->board, auth()->user(), $card);
     }
 
     /**

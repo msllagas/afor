@@ -138,3 +138,35 @@ test('boards index previews each board with its active lists and card counts', f
         )
     );
 });
+
+test('boards index lists every board of owned workspaces but only the boards a member was added to', function () {
+    $user = User::factory()->create();
+    $ownedWorkspace = Workspace::factory()->forUser($user)->create();
+    Board::factory()->for($ownedWorkspace)->count(2)->create();
+    $sharedWorkspace = Workspace::factory()->create();
+    $sharedWorkspace->users()->attach($user);
+    $boardUserIsOn = Board::factory()->for($sharedWorkspace)->withMembers($user)->create();
+    Board::factory()->for($sharedWorkspace)->create();
+
+    $response = $this->actingAs($user)->get(route('boards.index'));
+
+    $response->assertInertia(fn (Assert $page) => $page
+        ->has('ownedWorkspaces.0.boards', 2)
+        ->has('sharedWorkspaces.0.boards', 1)
+        ->where('sharedWorkspaces.0.boards.0.id', $boardUserIsOn->id)
+    );
+});
+
+test('boards index lists a shared workspace with no boards when the member was added to none', function () {
+    $user = User::factory()->create();
+    $sharedWorkspace = Workspace::factory()->create();
+    $sharedWorkspace->users()->attach($user);
+    Board::factory()->for($sharedWorkspace)->create();
+
+    $response = $this->actingAs($user)->get(route('boards.index'));
+
+    $response->assertInertia(fn (Assert $page) => $page
+        ->has('sharedWorkspaces', 1)
+        ->has('sharedWorkspaces.0.boards', 0)
+    );
+});

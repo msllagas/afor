@@ -23,6 +23,8 @@ const props = defineProps<{
     members: WorkspaceMember[];
     boards?: Board[];
     canInvite: boolean;
+    /** Only the workspace owner can create boards; members see the boards they were added to. */
+    canCreateBoards: boolean;
     /** Only sent to the owner. */
     inviteLink?: string;
 }>();
@@ -237,9 +239,15 @@ onBeforeUnmount(() => clearTimeout(copiedResetTimer));
                         </div>
                     </template>
 
-                    <p v-if="!boards.length" class="mb-4 text-sm text-muted-foreground">
+                    <p v-if="!boards.length && canCreateBoards" class="mb-4 text-sm text-muted-foreground">
                         No boards yet. Create the first one to start planning.
                     </p>
+                    <div v-else-if="!boards.length" class="rounded-2xl border-2 border-dashed px-6 py-12 text-center">
+                        <h3 class="font-semibold">You haven’t been added to any boards yet</h3>
+                        <p class="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
+                            Ask the workspace owner to add you to the boards you work on.
+                        </p>
+                    </div>
                     <div class="grid grid-cols-1 gap-4 min-[480px]:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
                         <BoardCard
                             v-for="board in boards"
@@ -247,7 +255,7 @@ onBeforeUnmount(() => clearTimeout(copiedResetTimer));
                             :board="board"
                             @star-board="handleStarBoard"
                         />
-                        <BoardCardPopover :workspace-id="workspace.id" />
+                        <BoardCardPopover v-if="canCreateBoards" :workspace-id="workspace.id" />
                     </div>
                 </Deferred>
             </section>
