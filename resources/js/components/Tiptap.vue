@@ -479,7 +479,7 @@ function onToolbarKeydown(event: KeyboardEvent) {
 }
 
 const toolButtonClass =
-    'inline-flex size-8 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors outline-none hover:bg-muted hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-40 aria-pressed:bg-accent aria-pressed:text-accent-foreground data-[state=open]:bg-muted data-[state=open]:text-foreground [&_svg]:size-4';
+    'inline-flex size-8 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors outline-none hover:bg-background hover:text-foreground hover:shadow-xs focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-40 aria-pressed:bg-primary/15 aria-pressed:text-primary data-[state=open]:bg-background data-[state=open]:text-foreground data-[state=open]:shadow-xs dark:hover:bg-background/60 dark:data-[state=open]:bg-background/60 [&_svg]:size-4';
 
 const popoverActionClass =
     'flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground transition-colors outline-none hover:bg-muted hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50';
@@ -492,7 +492,7 @@ const popoverActionClass =
             <div
                 ref="toolbar"
                 aria-label="Text formatting"
-                class="sticky top-0 z-10 flex flex-wrap items-center gap-0.5 rounded-t-[inherit] border-b bg-background px-1.5 py-1"
+                class="sticky top-0 z-10 flex flex-wrap items-center gap-0.5 rounded-t-[inherit] border-b bg-muted/70 px-2 py-1.5 dark:bg-muted/40"
                 role="toolbar"
                 @keydown="onToolbarKeydown"
             >
@@ -697,11 +697,14 @@ const popoverActionClass =
         </TooltipProvider>
 
         <!-- The text scrolls inside the editor, so the toolbar stays put and the dialog keeps room below. -->
-        <div class="relative max-h-[min(22rem,45dvh)] cursor-text overflow-y-auto overscroll-contain px-3 py-2.5">
+        <div
+            class="relative max-h-[min(22rem,45dvh)] min-h-32 cursor-text overflow-y-auto overscroll-contain bg-background px-4 py-3.5 dark:bg-card"
+            @mousedown.self.prevent="editor.commands.focus('end')"
+        >
             <p
                 v-if="editor.isEmpty"
                 aria-hidden="true"
-                class="pointer-events-none absolute top-2.5 left-3 text-base text-muted-foreground sm:text-sm"
+                class="pointer-events-none absolute top-3.5 left-4 text-base text-muted-foreground sm:text-sm"
             >
                 Add a more detailed description…
             </p>

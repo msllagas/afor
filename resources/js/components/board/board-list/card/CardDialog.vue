@@ -176,7 +176,7 @@ function onOpenChange(isOpen: boolean) {
                 <div class="min-h-0 flex-1 space-y-2 overflow-y-auto px-5 py-5 sm:px-6">
                     <h3 class="text-sm font-medium">Description</h3>
                     <div
-                        class="w-full overflow-clip rounded-lg border border-input transition-colors focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50"
+                        class="w-full overflow-clip rounded-xl border border-input bg-muted/30 shadow-xs transition-[color,box-shadow] focus-within:border-primary/60 focus-within:ring-[3px] focus-within:ring-primary/20 dark:bg-input/20"
                     >
                         <Tiptap
                             :key="displayedCard.id"

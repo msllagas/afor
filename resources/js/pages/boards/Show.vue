@@ -1160,7 +1160,7 @@ function deleteCard(card: Card) {
                             <div
                                 v-if="isAddingList"
                                 ref="list-composer"
-                                class="rounded-2xl border bg-card p-3 shadow-sm"
+                                class="rounded-2xl border border-primary/25 bg-card p-3 shadow-sm ring-1 ring-primary/10 dark:border-primary/30 dark:ring-primary/15"
                             >
                                 <p v-if="!lists.length" class="mb-3 text-sm text-muted-foreground">
                                     Lists are the columns of your board, like
@@ -1210,11 +1210,16 @@ function deleteCard(card: Card) {
                             </div>
                             <button
                                 v-else
-                                class="flex h-11 w-full cursor-pointer items-center gap-2 rounded-2xl border border-dashed border-primary/30 bg-background/70 px-4 text-sm font-medium text-muted-foreground backdrop-blur-sm transition-colors outline-none hover:border-primary/50 hover:bg-blush/60 hover:text-blush-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                class="group flex h-12 w-full cursor-pointer items-center gap-3 rounded-2xl border-2 border-dashed border-primary/40 bg-card/80 px-3 text-sm font-medium text-foreground/80 shadow-xs backdrop-blur-sm transition-colors outline-none hover:border-primary/70 hover:bg-blush hover:text-blush-foreground focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:border-primary/50 dark:bg-card/60 dark:text-foreground/85 dark:hover:border-primary/80"
                                 type="button"
                                 @click="openListComposer"
                             >
-                                <Plus class="size-4" />
+                                <span
+                                    aria-hidden="true"
+                                    class="flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground"
+                                >
+                                    <Plus class="size-4" />
+                                </span>
                                 {{ lists.length ? 'Add another list' : 'Add a list' }}
                             </button>
                         </li>
