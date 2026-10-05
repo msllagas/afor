@@ -135,8 +135,7 @@ class User extends Authenticatable implements MustVerifyEmail
     public function avatarFile(): MorphOne
     {
         return $this->morphOne(File::class, 'fileable')
-            ->where('collection', FileCollection::AVATAR->value)
-            ->latestOfMany();
+            ->where('collection', FileCollection::AVATAR->value);
     }
 
     public function avatar(): Attribute
