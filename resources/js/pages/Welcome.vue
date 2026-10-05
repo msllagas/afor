@@ -117,10 +117,6 @@ const footerLinks = [
         <main class="flex-1">
             <section class="relative isolate overflow-hidden">
                 <div
-                    aria-hidden="true"
-                    class="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[520px] bg-linear-to-b from-blush/70 to-transparent"
-                />
-                <div
                     class="mx-auto grid max-w-6xl items-center gap-12 px-4 pt-16 pb-20 sm:px-6 lg:grid-cols-12 lg:gap-10 lg:px-8 lg:pt-24 lg:pb-28"
                 >
                     <div class="lg:col-span-5">
@@ -150,14 +146,14 @@ const footerLinks = [
                         aria-hidden="true"
                         class="duration-700 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-6 lg:col-span-7"
                     >
-                        <div class="rounded-3xl border bg-card/80 p-3 shadow-xl shadow-primary/5 sm:p-4">
+                        <div class="rounded-3xl border bg-card/80 p-3 shadow-xl shadow-black/5 sm:p-4">
                             <div class="mb-3 flex items-center justify-between px-1">
                                 <p class="font-semibold">Launch week</p>
                                 <div class="flex -space-x-1">
                                     <span
                                         v-for="member in previewMembers"
                                         :key="member"
-                                        class="flex size-7 items-center justify-center rounded-full bg-blush text-[10px] font-semibold text-blush-foreground ring-2 ring-card"
+                                        class="flex size-7 items-center justify-center rounded-full bg-muted text-[10px] font-semibold text-foreground ring-2 ring-card"
                                     >
                                         {{ member }}
                                     </span>
@@ -193,7 +189,7 @@ const footerLinks = [
                                                 <span
                                                     v-for="member in card.members"
                                                     :key="member"
-                                                    class="flex size-6 items-center justify-center rounded-full bg-blush text-[9px] font-semibold text-blush-foreground ring-2 ring-card"
+                                                    class="flex size-6 items-center justify-center rounded-full bg-muted text-[9px] font-semibold text-foreground ring-2 ring-card"
                                                 >
                                                     {{ member }}
                                                 </span>
@@ -218,9 +214,7 @@ const footerLinks = [
                     </h2>
                     <div class="mt-12 grid gap-10 sm:grid-cols-2 lg:grid-cols-3 lg:gap-12">
                         <div v-for="feature in features" :key="feature.title" class="flex flex-col gap-3">
-                            <div
-                                class="flex size-11 items-center justify-center rounded-xl bg-blush text-blush-foreground"
-                            >
+                            <div class="flex size-11 items-center justify-center rounded-xl bg-muted text-foreground">
                                 <component :is="feature.icon" class="size-5" />
                             </div>
                             <h3 class="text-lg font-semibold">{{ feature.title }}</h3>
