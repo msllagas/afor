@@ -115,7 +115,7 @@ function onOpenChange(isOpen: boolean) {
                             ref="name-input"
                             v-model="draftName"
                             aria-label="Card title"
-                            class="-ml-2 block w-full resize-none overflow-hidden rounded-lg border border-transparent bg-transparent px-2 py-1 font-display text-xl leading-snug font-semibold outline-none hover:bg-muted focus-visible:border-ring focus-visible:bg-background focus-visible:ring-[3px] focus-visible:ring-ring/50 sm:text-2xl"
+                            class="-ml-2 block w-full resize-none overflow-hidden rounded-lg border border-transparent bg-transparent px-2 py-1 text-xl leading-snug font-semibold outline-none hover:bg-muted focus-visible:border-ring focus-visible:bg-background focus-visible:ring-[3px] focus-visible:ring-ring/50 sm:text-2xl"
                             maxlength="255"
                             rows="1"
                             @blur="saveName(displayedCard)"

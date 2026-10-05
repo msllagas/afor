@@ -263,17 +263,11 @@ onBeforeUnmount(() => {
 
 <template>
     <AppLayout :breadcrumbs="breadcrumbs">
-        <Head :title="`${workspace.name} settings`">
-            <link
-                head-key="font-fraunces"
-                href="https://fonts.bunny.net/css?family=fraunces:500,600"
-                rel="stylesheet"
-            />
-        </Head>
+        <Head :title="`${workspace.name} settings`" />
 
         <div class="mx-auto w-full max-w-3xl px-4 pt-8 pb-16 sm:px-6 sm:pt-10 lg:px-10">
             <header>
-                <h1 class="font-display text-3xl font-semibold tracking-tight sm:text-4xl">Settings</h1>
+                <h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">Settings</h1>
                 <p class="mt-1.5 max-w-prose text-sm text-muted-foreground">
                     Change how <span class="font-medium text-foreground">{{ workspace.name }}</span> looks to everyone
                     in it.
@@ -281,10 +275,7 @@ onBeforeUnmount(() => {
             </header>
 
             <section aria-labelledby="details-heading" class="mt-10">
-                <h2
-                    id="details-heading"
-                    class="mb-6 border-b pb-3 font-display text-xl font-semibold tracking-tight sm:text-2xl"
-                >
+                <h2 id="details-heading" class="mb-6 border-b pb-3 text-xl font-semibold tracking-tight sm:text-2xl">
                     Details
                 </h2>
 
@@ -312,7 +303,7 @@ onBeforeUnmount(() => {
                                 <Avatar class="size-full rounded-2xl">
                                     <AvatarImage :src="previewUrl ?? ''" alt="" class="object-cover" />
                                     <AvatarFallback
-                                        class="rounded-2xl bg-blush font-display text-2xl font-semibold text-blush-foreground"
+                                        class="rounded-2xl bg-blush text-2xl font-semibold text-blush-foreground"
                                     >
                                         {{ getInitials(form.name || workspace.name) }}
                                     </AvatarFallback>
@@ -437,10 +428,7 @@ onBeforeUnmount(() => {
             </section>
 
             <section aria-labelledby="delete-heading" class="mt-12">
-                <h2
-                    id="delete-heading"
-                    class="mb-4 border-b pb-3 font-display text-xl font-semibold tracking-tight sm:text-2xl"
-                >
+                <h2 id="delete-heading" class="mb-4 border-b pb-3 text-xl font-semibold tracking-tight sm:text-2xl">
                     Delete workspace
                 </h2>
 

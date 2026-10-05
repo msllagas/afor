@@ -5,7 +5,7 @@ import { Link } from '@inertiajs/vue3';
 </script>
 
 <template>
-    <div class="min-h-screen bg-background text-foreground">
+    <div class="min-h-dvh bg-background text-foreground">
         <SeoHead
             title="Terms of Use"
             description="The terms for using Afor, covering accounts, workspaces, your content, and acceptable use."

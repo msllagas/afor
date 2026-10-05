@@ -110,13 +110,7 @@ onBeforeUnmount(() => clearTimeout(copiedResetTimer));
 
 <template>
     <AppLayout :breadcrumbs="breadcrumbs">
-        <Head :title="workspace.name">
-            <link
-                head-key="font-fraunces"
-                href="https://fonts.bunny.net/css?family=fraunces:500,600"
-                rel="stylesheet"
-            />
-        </Head>
+        <Head :title="workspace.name" />
 
         <div class="mx-auto w-full max-w-7xl px-4 pt-8 pb-16 sm:px-6 sm:pt-10 lg:px-10">
             <header class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
@@ -126,12 +120,12 @@ onBeforeUnmount(() => clearTimeout(copiedResetTimer));
                     <Avatar class="size-12 rounded-xl ring-1 ring-border sm:row-span-2 sm:size-16 sm:rounded-2xl">
                         <AvatarImage :src="workspace.logo ?? ''" alt="" class="object-cover" />
                         <AvatarFallback
-                            class="rounded-xl bg-blush font-display text-lg font-semibold text-blush-foreground sm:rounded-2xl sm:text-xl"
+                            class="rounded-xl bg-blush text-lg font-semibold text-blush-foreground sm:rounded-2xl sm:text-xl"
                         >
                             {{ getInitials(workspace.name) }}
                         </AvatarFallback>
                     </Avatar>
-                    <h1 class="font-display text-2xl font-semibold tracking-tight break-words sm:self-end sm:text-4xl">
+                    <h1 class="text-2xl font-semibold tracking-tight break-words sm:self-end sm:text-4xl">
                         {{ workspace.name }}
                     </h1>
                     <p
@@ -205,7 +199,7 @@ onBeforeUnmount(() => clearTimeout(copiedResetTimer));
                 <div class="mb-6 flex items-center justify-between gap-3 border-b pb-3">
                     <h2
                         id="boards-heading"
-                        class="flex items-baseline gap-2 font-display text-xl font-semibold tracking-tight sm:text-2xl"
+                        class="flex items-baseline gap-2 text-xl font-semibold tracking-tight sm:text-2xl"
                     >
                         Boards
                         <span

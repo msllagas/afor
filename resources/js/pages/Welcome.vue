@@ -3,7 +3,7 @@ import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import SeoHead from '@/components/SeoHead.vue';
 import { Button } from '@/components/ui/button';
 import { about, contact, dashboard, home, login, privacyPolicy, register, termsOfUse } from '@/routes';
-import { Head, Link } from '@inertiajs/vue3';
+import { Link } from '@inertiajs/vue3';
 import { ArrowLeftRight, Code, Github, Palette, Users } from 'lucide-vue-next';
 
 type PreviewCard = {
@@ -82,18 +82,15 @@ const footerLinks = [
 </script>
 
 <template>
-    <div class="flex min-h-screen flex-col bg-background text-foreground">
+    <div class="flex min-h-dvh flex-col bg-background text-foreground">
         <SeoHead
             title="Afor - Kanban boards for the work you share"
             description="Afor is a kanban board for teams and friends. Put tasks on cards, sort them into colored lists, and see every change in real time."
         />
-        <Head>
-            <link href="https://fonts.bunny.net/css?family=fraunces:500,600" rel="stylesheet" />
-        </Head>
         <header class="sticky top-0 z-50 h-16 w-full border-b bg-background/90 backdrop-blur">
             <nav class="mx-auto flex h-full max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
                 <Link
-                    class="flex items-center gap-2.5 rounded-md font-display text-2xl font-semibold text-primary focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
+                    class="flex items-center gap-2.5 rounded-md text-2xl font-semibold text-primary focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
                     :href="home()"
                 >
                     <span aria-hidden="true" class="size-8 shrink-0 [&>svg]:size-full">
@@ -127,9 +124,7 @@ const footerLinks = [
                     class="mx-auto grid max-w-6xl items-center gap-12 px-4 pt-16 pb-20 sm:px-6 lg:grid-cols-12 lg:gap-10 lg:px-8 lg:pt-24 lg:pb-28"
                 >
                     <div class="lg:col-span-5">
-                        <h1
-                            class="font-display text-5xl leading-[1.05] font-semibold tracking-tight text-balance sm:text-6xl"
-                        >
+                        <h1 class="text-5xl leading-[1.05] font-semibold tracking-tight text-balance sm:text-6xl">
                             Plan together, one card at a time.
                         </h1>
                         <p class="mt-6 max-w-md text-lg leading-relaxed text-pretty text-muted-foreground">
@@ -218,7 +213,7 @@ const footerLinks = [
 
             <section class="border-t">
                 <div class="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:px-8">
-                    <h2 class="max-w-xl font-display text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
+                    <h2 class="max-w-xl text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
                         Everything your team needs happens on the board.
                     </h2>
                     <div class="mt-12 grid gap-10 sm:grid-cols-2 lg:grid-cols-3 lg:gap-12">
@@ -248,7 +243,7 @@ const footerLinks = [
                     class="mx-auto flex max-w-6xl flex-col items-start gap-8 rounded-3xl bg-primary px-6 py-12 text-primary-foreground sm:px-12 md:flex-row md:items-center md:justify-between"
                 >
                     <div class="max-w-lg">
-                        <h2 class="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
+                        <h2 class="text-3xl font-semibold tracking-tight sm:text-4xl">
                             <template v-if="$page.props.auth.user">Your boards are waiting</template>
                             <template v-else>Start your first board</template>
                         </h2>
@@ -273,7 +268,7 @@ const footerLinks = [
                 class="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-10 sm:px-6 md:flex-row md:items-end md:justify-between lg:px-8"
             >
                 <div>
-                    <p class="font-display text-xl font-semibold text-primary">Afor</p>
+                    <p class="text-xl font-semibold text-primary">Afor</p>
                     <p class="mt-1 text-sm text-muted-foreground">A kanban board for the work you share.</p>
                     <nav class="mt-5 flex flex-wrap gap-x-5 gap-y-2">
                         <Link

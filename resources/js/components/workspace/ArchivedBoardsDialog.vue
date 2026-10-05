@@ -243,7 +243,7 @@ watch(open, (isOpen) => {
             @escape-key-down="handleEscape"
         >
             <DialogHeader class="gap-1.5 border-b px-5 pt-5 pr-12 pb-4 text-left sm:px-6">
-                <DialogTitle class="flex items-center gap-2 font-display text-xl font-semibold tracking-tight">
+                <DialogTitle class="flex items-center gap-2 text-xl font-semibold tracking-tight">
                     Archived boards
                     <span
                         v-if="archivedBoards?.length"

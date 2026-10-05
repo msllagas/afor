@@ -247,7 +247,10 @@ function removeAvatar() {
                             </Link>
                         </p>
 
-                        <div v-if="status === 'verification-link-sent'" class="mt-2 text-sm font-medium text-green-600">
+                        <div
+                            v-if="status === 'verification-link-sent'"
+                            class="mt-2 text-sm font-medium text-green-600 dark:text-green-400"
+                        >
                             A new verification link has been sent to your email address.
                         </div>
                     </div>
@@ -261,7 +264,7 @@ function removeAvatar() {
                             leave-active-class="transition ease-in-out"
                             leave-to-class="opacity-0"
                         >
-                            <p v-show="recentlySuccessful" class="text-sm text-neutral-600">Saved.</p>
+                            <p v-show="recentlySuccessful" class="text-sm text-muted-foreground">Saved.</p>
                         </Transition>
                     </div>
                 </Form>

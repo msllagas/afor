@@ -27,11 +27,11 @@
 }
 
 .tiptap h1 {
-    @apply font-display text-xl font-semibold;
+    @apply text-xl font-semibold;
 }
 
 .tiptap h2 {
-    @apply font-display text-lg font-semibold;
+    @apply text-lg font-semibold;
 }
 
 .tiptap h3 {

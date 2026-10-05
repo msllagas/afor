@@ -5,7 +5,7 @@ import { Link } from '@inertiajs/vue3';
 </script>
 
 <template>
-    <div class="flex min-h-screen items-center justify-center bg-background text-foreground">
+    <div class="flex min-h-dvh items-center justify-center bg-background text-foreground">
         <SeoHead
             title="About"
             description="Learn about Afor, a kanban board for planning work together with your team."

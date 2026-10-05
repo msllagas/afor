@@ -911,13 +911,7 @@ function deleteCard(card: Card) {
 
 <template>
     <AppLayout :breadcrumbs="breadcrumbs" content-class="h-dvh md:h-[calc(100dvh-1rem)]">
-        <Head :title="pageTitle">
-            <link
-                head-key="font-fraunces"
-                href="https://fonts.bunny.net/css?family=fraunces:500,600"
-                rel="stylesheet"
-            />
-        </Head>
+        <Head :title="pageTitle" />
 
         <div class="flex min-h-0 flex-1 flex-col">
             <header class="flex items-center gap-3 border-b px-4 py-3 sm:px-6">
@@ -941,7 +935,7 @@ function deleteCard(card: Card) {
                     </Link>
                     <h1 v-if="!isEditingName" class="flex min-w-0">
                         <button
-                            class="-mx-1.5 max-w-full cursor-pointer truncate rounded-md px-1.5 text-left font-display text-lg leading-tight font-semibold tracking-tight transition-colors outline-none hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/50 sm:text-2xl"
+                            class="-mx-1.5 max-w-full cursor-pointer truncate rounded-md px-1.5 text-left text-lg leading-tight font-semibold tracking-tight transition-colors outline-none hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/50 sm:text-2xl"
                             title="Rename board"
                             type="button"
                             ref="board-name-button"
@@ -953,14 +947,14 @@ function deleteCard(card: Card) {
                     <div v-else class="-mx-1.5 inline-grid max-w-full grid-cols-1">
                         <span
                             aria-hidden="true"
-                            class="invisible col-start-1 row-start-1 overflow-hidden px-1.5 font-display text-lg leading-tight font-semibold tracking-tight whitespace-pre sm:text-2xl"
+                            class="invisible col-start-1 row-start-1 overflow-hidden px-1.5 text-lg leading-tight font-semibold tracking-tight whitespace-pre sm:text-2xl"
                             >{{ draftName || ' ' }}</span
                         >
                         <input
                             ref="board-name-input"
                             v-model="draftName"
                             aria-label="Board name"
-                            class="col-start-1 row-start-1 w-full min-w-24 rounded-md border border-ring bg-background px-1.5 font-display text-lg leading-tight font-semibold tracking-tight ring-[3px] ring-ring/50 outline-none sm:text-2xl"
+                            class="col-start-1 row-start-1 w-full min-w-24 rounded-md border border-ring bg-background px-1.5 text-lg leading-tight font-semibold tracking-tight ring-[3px] ring-ring/50 outline-none sm:text-2xl"
                             maxlength="255"
                             @blur="saveName()"
                             @keydown.enter.prevent="saveName(true)"

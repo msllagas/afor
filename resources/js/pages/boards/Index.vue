@@ -381,20 +381,14 @@ function handleStarBoard(board: Board, isStarred: boolean) {
 
 <template>
     <AppLayout :breadcrumbs="breadcrumbs" content-class="overflow-x-clip">
-        <Head title="Boards">
-            <link
-                head-key="font-fraunces"
-                href="https://fonts.bunny.net/css?family=fraunces:500,600"
-                rel="stylesheet"
-            />
-        </Head>
+        <Head title="Boards" />
 
         <div
             :style="{ '--boards-toolbar-height': `${toolbarHeight}px` }"
             class="mx-auto w-full max-w-7xl px-4 pt-8 pb-16 sm:px-6 sm:pt-10 lg:px-10"
         >
             <header>
-                <h1 class="font-display text-3xl font-semibold tracking-tight sm:text-4xl">Boards</h1>
+                <h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">Boards</h1>
                 <p class="mt-1.5 text-sm text-muted-foreground">{{ summary }}</p>
             </header>
 
@@ -463,7 +457,7 @@ function handleStarBoard(board: Board, isStarred: boolean) {
                         >
                             <h2
                                 :id="`${group.id}-heading`"
-                                class="border-b pb-2 font-display text-lg font-semibold tracking-tight sm:text-xl"
+                                class="border-b pb-2 text-lg font-semibold tracking-tight sm:text-xl"
                             >
                                 {{ group.title }}
                             </h2>
@@ -492,7 +486,7 @@ function handleStarBoard(board: Board, isStarred: boolean) {
                             v-if="!groups.length"
                             class="rounded-2xl border-2 border-dashed border-primary/25 px-6 py-14 text-center"
                         >
-                            <h2 class="font-display text-xl font-semibold">{{ emptyState.title }}</h2>
+                            <h2 class="text-xl font-semibold">{{ emptyState.title }}</h2>
                             <p class="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
                                 {{ emptyState.description }}
                             </p>
@@ -510,7 +504,7 @@ function handleStarBoard(board: Board, isStarred: boolean) {
             </div>
 
             <div v-else class="mt-12 rounded-2xl border-2 border-dashed border-primary/25 px-6 py-14 text-center">
-                <h2 class="font-display text-xl font-semibold">No workspaces yet</h2>
+                <h2 class="text-xl font-semibold">No workspaces yet</h2>
                 <p class="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
                     Boards live inside workspaces. Ask a teammate for an invite link to join theirs.
                 </p>

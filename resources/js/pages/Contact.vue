@@ -5,7 +5,7 @@ import { Link } from '@inertiajs/vue3';
 </script>
 
 <template>
-    <div class="flex min-h-screen items-center justify-center bg-background text-foreground">
+    <div class="flex min-h-dvh items-center justify-center bg-background text-foreground">
         <SeoHead
             title="Contact"
             description="Questions or feedback about Afor? Email the Afor team at afor@mandyllagas.com."

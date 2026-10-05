@@ -367,17 +367,11 @@ onBeforeUnmount(() => clearTimeout(copiedResetTimer));
 
 <template>
     <AppLayout :breadcrumbs="breadcrumbs">
-        <Head :title="`${workspace.name} members`">
-            <link
-                head-key="font-fraunces"
-                href="https://fonts.bunny.net/css?family=fraunces:500,600"
-                rel="stylesheet"
-            />
-        </Head>
+        <Head :title="`${workspace.name} members`" />
 
         <div class="mx-auto w-full max-w-3xl px-4 pt-8 pb-16 sm:px-6 sm:pt-10 lg:px-10">
             <header>
-                <h1 class="font-display text-3xl font-semibold tracking-tight sm:text-4xl">Members</h1>
+                <h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">Members</h1>
                 <p class="mt-1.5 max-w-prose text-sm text-muted-foreground">
                     Everyone in <span class="font-medium text-foreground">{{ workspace.name }}</span> can view, create
                     and join its boards.
@@ -501,7 +495,7 @@ onBeforeUnmount(() => clearTimeout(copiedResetTimer));
                 <div class="mb-4 flex flex-wrap items-center justify-between gap-3 border-b pb-3">
                     <h2
                         id="people-heading"
-                        class="flex items-baseline gap-2 font-display text-xl font-semibold tracking-tight sm:text-2xl"
+                        class="flex items-baseline gap-2 text-xl font-semibold tracking-tight sm:text-2xl"
                     >
                         People
                         <span class="font-sans text-sm font-medium text-muted-foreground tabular-nums">

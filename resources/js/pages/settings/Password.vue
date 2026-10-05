@@ -91,7 +91,7 @@ const currentPasswordInput = ref<HTMLInputElement | null>(null);
                             leave-active-class="transition ease-in-out"
                             leave-to-class="opacity-0"
                         >
-                            <p v-show="recentlySuccessful" class="text-sm text-neutral-600">Saved.</p>
+                            <p v-show="recentlySuccessful" class="text-sm text-muted-foreground">Saved.</p>
                         </Transition>
                     </div>
                 </Form>

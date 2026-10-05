@@ -94,13 +94,7 @@ onMounted(() => {
     <main
         class="relative isolate flex min-h-dvh flex-col items-center justify-center overflow-hidden bg-background px-4 py-16 text-foreground"
     >
-        <Head :title="message.title">
-            <link
-                head-key="font-fraunces"
-                href="https://fonts.bunny.net/css?family=fraunces:500,600"
-                rel="stylesheet"
-            />
-        </Head>
+        <Head :title="message.title" />
 
         <div
             aria-hidden="true"
@@ -126,15 +120,11 @@ onMounted(() => {
             <p
                 v-else
                 aria-hidden="true"
-                class="bg-linear-to-br from-primary to-primary/50 bg-clip-text font-display text-7xl leading-none font-semibold tracking-tight text-transparent tabular-nums sm:text-8xl"
+                class="bg-linear-to-br from-primary to-primary/50 bg-clip-text text-7xl leading-none font-semibold tracking-tight text-transparent tabular-nums sm:text-8xl"
             >
                 {{ status }}
             </p>
-            <h1
-                ref="heading"
-                class="mt-5 font-display text-2xl font-semibold tracking-tight outline-none sm:text-3xl"
-                tabindex="-1"
-            >
+            <h1 ref="heading" class="mt-5 text-2xl font-semibold tracking-tight outline-none sm:text-3xl" tabindex="-1">
                 <span class="sr-only">Error {{ status }}: </span>{{ message.title }}
             </h1>
             <p class="mx-auto mt-3 max-w-sm text-sm text-muted-foreground sm:text-base">{{ message.description }}</p>

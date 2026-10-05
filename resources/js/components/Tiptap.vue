@@ -144,8 +144,8 @@ const blockButtons: ToolbarButton[] = [
 
 const textStyles: Array<{ label: string; level: HeadingLevel | null; class: string }> = [
     { label: 'Normal text', level: null, class: 'text-sm' },
-    { label: 'Heading 1', level: 1, class: 'font-display text-xl font-semibold' },
-    { label: 'Heading 2', level: 2, class: 'font-display text-lg font-semibold' },
+    { label: 'Heading 1', level: 1, class: 'text-xl font-semibold' },
+    { label: 'Heading 2', level: 2, class: 'text-lg font-semibold' },
     { label: 'Heading 3', level: 3, class: 'text-base font-semibold' },
     { label: 'Heading 4', level: 4, class: 'text-sm font-semibold' },
 ];
