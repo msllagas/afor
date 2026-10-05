@@ -34,7 +34,7 @@ const view = defineModel<BoardsView>('view', { required: true });
 const searchInput = useTemplateRef<HTMLInputElement>('search-input');
 
 const toggleClass =
-    'inline-flex h-8 cursor-pointer items-center justify-center rounded-md px-2.5 text-sm font-medium text-muted-foreground outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-xs dark:data-[state=on]:bg-accent';
+    'inline-flex h-8 cursor-pointer items-center justify-center rounded-md px-2.5 text-sm font-medium text-muted-foreground outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-xs dark:data-[state=on]:bg-foreground/15 dark:data-[state=on]:ring-1 dark:data-[state=on]:ring-white/10';
 
 // "/" jumps to search from anywhere on the page, unless the user is already typing somewhere.
 onKeyStroke('/', (event) => {

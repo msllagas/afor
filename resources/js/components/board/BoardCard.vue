@@ -76,7 +76,10 @@ const summary = computed(() => {
                         class="h-2.5 rounded-xs bg-card/90"
                     />
                 </div>
-                <p v-if="hasListPreview && !previewLists.length" class="self-center text-xs text-blush-foreground">
+                <p
+                    v-if="hasListPreview && !previewLists.length"
+                    class="-mt-3 flex-1 self-center text-center text-xs text-blush-foreground"
+                >
                     Empty board
                 </p>
             </div>

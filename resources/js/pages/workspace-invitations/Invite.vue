@@ -1,13 +1,21 @@
 <script lang="ts" setup>
 import { Button } from '@/components/ui/button';
+import { useInitials } from '@/composables/useInitials';
+import { login, register } from '@/routes';
 import workspaceInvitationsRoutes from '@/routes/workspace-invitations';
 import type { Invitation } from '@/types';
-import { Head, router } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
+import { ArrowRight, LayoutDashboard, Users } from 'lucide-vue-next';
+import { ref } from 'vue';
 
 const props = defineProps<{
     invitation: Invitation;
     savedToken?: boolean;
 }>();
+
+const { getInitials } = useInitials();
+
+const isAccepting = ref(false);
 
 function acceptInvitation() {
     router.post(
@@ -15,55 +23,89 @@ function acceptInvitation() {
             workspace: props.invitation.workspace.id,
             token: props.invitation.token,
         }),
+        {},
+        {
+            onStart: () => (isAccepting.value = true),
+            onFinish: () => (isAccepting.value = false),
+        },
     );
-}
-
-function handleLogin() {
-    console.log('handle login here');
-}
-function handleRegister() {
-    console.log('handle register here');
 }
 </script>
 
 <template>
-    <main class="flex min-h-dvh items-center justify-center bg-background px-4 py-10 text-foreground">
+    <main
+        class="relative flex min-h-dvh flex-col items-center justify-center gap-6 overflow-hidden bg-background px-4 py-10 text-foreground"
+    >
         <Head title="Workspace invitation" />
-        <div class="w-full max-w-2xl space-y-8 rounded-2xl border bg-card p-6 text-center shadow-xl sm:p-10">
-            <div class="space-y-3">
-                <p class="text-sm tracking-widest text-muted-foreground uppercase">Workspace Invitation</p>
 
-                <h1
-                    class="text-lg leading-relaxed font-medium text-balance text-muted-foreground md:text-xl lg:text-2xl"
-                >
-                    <span class="font-semibold text-foreground">
-                        {{ invitation.inviter.name }}
-                    </span>
-                    <span class="mx-1">invited you to</span>
-                    <span class="font-bold break-words text-primary">
-                        {{ invitation.workspace.name }}
-                    </span>
-                </h1>
+        <div
+            aria-hidden="true"
+            class="pointer-events-none absolute inset-x-0 top-0 h-80 bg-linear-to-b from-primary/10 to-transparent dark:from-primary/15"
+        />
+
+        <section
+            aria-labelledby="invitation-heading"
+            class="relative w-full max-w-md overflow-hidden rounded-3xl border bg-card text-center shadow-xl ring-1 ring-primary/10 dark:ring-primary/15"
+        >
+            <div class="space-y-7 p-6 sm:p-9">
+                <div class="space-y-5">
+                    <div class="relative mx-auto w-fit">
+                        <div
+                            aria-hidden="true"
+                            class="flex size-20 items-center justify-center rounded-2xl bg-primary/15 text-3xl font-semibold text-primary ring-1 ring-primary/20"
+                        >
+                            {{ getInitials(invitation.workspace.name) }}
+                        </div>
+                        <span
+                            aria-hidden="true"
+                            class="absolute -right-2 -bottom-2 flex size-8 items-center justify-center rounded-full bg-primary text-primary-foreground ring-4 ring-card"
+                        >
+                            <Users class="size-4" />
+                        </span>
+                    </div>
+
+                    <div class="space-y-2">
+                        <p class="text-xs font-medium tracking-widest text-muted-foreground uppercase">
+                            Workspace invitation
+                        </p>
+                        <h1 id="invitation-heading" class="text-2xl leading-snug font-semibold text-balance">
+                            Join
+                            <span class="break-words text-primary">{{ invitation.workspace.name }}</span>
+                        </h1>
+                        <p class="text-sm text-muted-foreground">
+                            <span class="font-medium text-foreground">{{ invitation.inviter.name }}</span>
+                            invited you to work together on their boards.
+                        </p>
+                    </div>
+                </div>
+
+                <div v-if="$page.props.auth.user" class="space-y-3">
+                    <Button
+                        :disabled="isAccepting"
+                        class="h-11 w-full cursor-pointer gap-2 font-semibold"
+                        size="lg"
+                        @click="acceptInvitation"
+                    >
+                        {{ isAccepting ? 'Joining…' : 'Accept invitation' }}
+                        <ArrowRight v-if="!isAccepting" aria-hidden="true" class="size-4" />
+                    </Button>
+                    <p class="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+                        <LayoutDashboard aria-hidden="true" class="size-3.5" />
+                        Joining as
+                        <span class="font-medium text-foreground">{{ $page.props.auth.user.name }}</span>
+                    </p>
+                </div>
+
+                <div v-else class="space-y-3">
+                    <Button as-child class="h-11 w-full font-semibold" size="lg">
+                        <Link :href="register()">Create an account</Link>
+                    </Button>
+                    <Button as-child class="h-11 w-full font-semibold" size="lg" variant="outline">
+                        <Link :href="login()">I already have an account</Link>
+                    </Button>
+                    <p class="text-xs text-muted-foreground">Sign in or sign up to join this workspace.</p>
+                </div>
             </div>
-
-            <div class="flex flex-col items-center justify-center gap-3 sm:flex-row">
-                <Button
-                    v-if="$page.props.auth.user"
-                    class="w-full px-10 font-semibold sm:w-auto"
-                    size="lg"
-                    @click="acceptInvitation"
-                >
-                    Accept Invitation
-                </Button>
-
-                <template v-else>
-                    <Button class="w-full sm:w-auto" size="lg" variant="outline" @click="handleLogin">Log in</Button>
-
-                    <Button class="w-full sm:w-auto" size="lg" @click="handleRegister">Create Account</Button>
-                </template>
-            </div>
-        </div>
+        </section>
     </main>
 </template>
-
-<style scoped></style>

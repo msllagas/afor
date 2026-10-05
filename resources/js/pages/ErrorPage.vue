@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import { Button } from '@/components/ui/button';
 import { home } from '@/routes';
 import { index as boardsIndex } from '@/routes/boards';
@@ -100,14 +99,6 @@ onMounted(() => {
             aria-hidden="true"
             class="pointer-events-none absolute inset-0 -z-10 [background-image:radial-gradient(color-mix(in_oklab,var(--primary)_14%,transparent)_1px,transparent_1px)] [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_75%)] [background-size:22px_22px]"
         />
-
-        <Link
-            :href="isSignedIn ? boardsIndex() : home()"
-            aria-label="Afor home"
-            class="mb-10 size-12 rounded-2xl outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 [&>svg]:size-full"
-        >
-            <AppLogoIcon />
-        </Link>
 
         <div class="w-full max-w-md text-center">
             <span
