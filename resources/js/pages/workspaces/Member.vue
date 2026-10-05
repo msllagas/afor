@@ -381,7 +381,7 @@ onBeforeUnmount(() => clearTimeout(copiedResetTimer));
             <section
                 v-if="canInvite"
                 aria-labelledby="invite-heading"
-                class="mt-8 rounded-2xl border border-primary/15 bg-blush/40 p-4 sm:p-5"
+                class="mt-8 rounded-2xl border bg-muted/40 p-4 sm:p-5"
             >
                 <div class="flex items-start gap-3">
                     <span
@@ -679,7 +679,7 @@ onBeforeUnmount(() => clearTimeout(copiedResetTimer));
                     </p>
                     <div
                         v-else-if="!workspaceMembers.length && !normalizedSearch"
-                        class="mt-4 rounded-2xl border-2 border-dashed border-primary/25 px-6 py-8 text-center"
+                        class="mt-4 rounded-2xl border-2 border-dashed px-6 py-8 text-center"
                     >
                         <p class="font-medium">It’s just {{ canManageMembers ? 'you' : owner.name }} for now</p>
                         <p class="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">

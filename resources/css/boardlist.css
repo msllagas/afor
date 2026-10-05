@@ -120,16 +120,16 @@
 }
 
 .list-neutral {
-    --list-bg: oklch(0.92 0.008 350);
-    --list-bg-hovered: oklch(0.87 0.012 350);
-    --list-fg: oklch(0.27 0.02 350);
-    --list-fg-muted: oklch(0.45 0.025 350);
+    --list-bg: oklch(0.92 0 0);
+    --list-bg-hovered: oklch(0.87 0 0);
+    --list-fg: oklch(0.27 0 0);
+    --list-fg-muted: oklch(0.45 0 0);
 }
 .dark .list-neutral {
-    --list-bg: oklch(0.26 0.018 340);
-    --list-bg-hovered: oklch(0.32 0.022 340);
-    --list-fg: oklch(0.93 0.01 350);
-    --list-fg-muted: oklch(0.74 0.02 350);
+    --list-bg: oklch(0.26 0 0);
+    --list-bg-hovered: oklch(0.32 0 0);
+    --list-fg: oklch(0.93 0 0);
+    --list-fg-muted: oklch(0.74 0 0);
 }
 
 /* Lists without a colour follow the app theme. */

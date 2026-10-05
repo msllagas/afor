@@ -297,7 +297,7 @@ watch(open, (isOpen) => {
                 <div v-else-if="archivedBoards === null" aria-busy="true" class="flex flex-col gap-2">
                     <span class="sr-only">Loading archived boards</span>
                     <div v-for="i in 3" :key="i" class="flex items-center gap-3 rounded-xl border p-3">
-                        <Skeleton class="h-10 w-14 rounded-md bg-blush/60" />
+                        <Skeleton class="h-10 w-14 rounded-md" />
                         <div class="flex flex-1 flex-col gap-2">
                             <Skeleton :class="i % 2 ? 'w-2/3' : 'w-1/2'" class="h-3.5" />
                             <Skeleton class="h-3 w-1/3" />

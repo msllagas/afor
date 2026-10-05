@@ -228,7 +228,7 @@ onBeforeUnmount(() => clearTimeout(copiedResetTimer));
                             class="grid grid-cols-1 gap-4 min-[480px]:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4"
                         >
                             <div v-for="i in 4" :key="i" class="overflow-hidden rounded-2xl border bg-card">
-                                <Skeleton class="h-24 rounded-none bg-blush/60" />
+                                <Skeleton class="h-24 rounded-none" />
                                 <div class="space-y-2 px-4 py-3">
                                     <Skeleton :class="i % 2 ? 'w-2/3' : 'w-1/2'" class="h-3.5" />
                                     <Skeleton class="h-3 w-1/3" />

@@ -482,10 +482,7 @@ function handleStarBoard(board: Board, isStarred: boolean) {
                             </div>
                         </section>
 
-                        <div
-                            v-if="!groups.length"
-                            class="rounded-2xl border-2 border-dashed border-primary/25 px-6 py-14 text-center"
-                        >
+                        <div v-if="!groups.length" class="rounded-2xl border-2 border-dashed px-6 py-14 text-center">
                             <h2 class="text-xl font-semibold">{{ emptyState.title }}</h2>
                             <p class="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
                                 {{ emptyState.description }}
@@ -503,7 +500,7 @@ function handleStarBoard(board: Board, isStarred: boolean) {
                 </div>
             </div>
 
-            <div v-else class="mt-12 rounded-2xl border-2 border-dashed border-primary/25 px-6 py-14 text-center">
+            <div v-else class="mt-12 rounded-2xl border-2 border-dashed px-6 py-14 text-center">
                 <h2 class="text-xl font-semibold">No workspaces yet</h2>
                 <p class="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
                     Boards live inside workspaces. Ask a teammate for an invite link to join theirs.
