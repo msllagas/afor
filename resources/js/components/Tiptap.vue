@@ -11,23 +11,32 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { cn } from '@/lib/utils';
 import Highlight from '@tiptap/extension-highlight';
 import { TextStyle } from '@tiptap/extension-text-style';
+import type { EditorView } from '@tiptap/pm/view';
 import StarterKit from '@tiptap/starter-kit';
-import { type Content, type Editor, EditorContent, useEditor } from '@tiptap/vue-3';
+import { type Content, type Editor, EditorContent, Extension, useEditor } from '@tiptap/vue-3';
 import {
     Bold,
     Check,
     ChevronDown,
+    Code,
     Eraser,
+    ExternalLink,
     Highlighter,
     Italic,
+    Link2,
+    Link2Off,
     List,
     ListOrdered,
     type LucideIcon,
+    Minus,
+    Redo2,
+    SquareCode,
     Strikethrough,
     TextQuote,
     Underline,
+    Undo2,
 } from 'lucide-vue-next';
-import { computed, inject } from 'vue';
+import { computed, inject, nextTick, ref, useTemplateRef, watch } from 'vue';
 
 const model = defineModel<string>();
 const emit = defineEmits<{
@@ -45,6 +54,8 @@ const shiftKey = isApple ? '⇧' : 'Shift+';
 
 /** Highlights keep a list colour class (e.g. `list-blue`) so they follow light and dark mode. */
 const MultiHighlight = Highlight.extend({
+    // Typing at the edge of a highlight starts plain text again.
+    inclusive: false,
     addAttributes() {
         return {
             ...this.parent?.(),
@@ -57,18 +68,163 @@ const MultiHighlight = Highlight.extend({
     },
 });
 
+/**
+ * Pressing Enter starts the next line as plain text. By default Tiptap carries marks such as bold or a
+ * highlight over to the new line, so everything typed there keeps the formatting.
+ */
+const PlainTextAfterEnter = Extension.create({
+    name: 'plainTextAfterEnter',
+    onBeforeCreate() {
+        this.editor.extensionManager.splittableMarks = [];
+    },
+});
+
+const toolbar = useTemplateRef<HTMLElement>('toolbar');
+const linkInput = useTemplateRef<HTMLInputElement>('link-input');
+const isLinkOpen = ref(false);
+const isHighlightOpen = ref(false);
+const linkUrl = ref('');
+const linkError = ref('');
+
+/** Opens the link popover from the keyboard, prefilled with the link under the cursor. */
+function openLinkPopover(editor: Editor) {
+    linkUrl.value = (editor.getAttributes('link').href as string | undefined) ?? '';
+    linkError.value = '';
+    isLinkOpen.value = true;
+}
+
+const CODE_INDENT = '  ';
+
+/**
+ * Tab indents inside a code block instead of moving focus to the next field. Shift+Tab outdents, and
+ * when there is nothing left to outdent it falls through, so keyboard users can still leave the editor.
+ */
+function indentCodeBlock(view: EditorView, outdent: boolean): boolean {
+    const { state } = view;
+    const { $from, $to, from, to } = state.selection;
+
+    if (!$from.sameParent($to) || $from.parent.type.name !== 'codeBlock') {
+        return false;
+    }
+
+    const blockStart = $from.start();
+    const text = $from.parent.textContent;
+
+    if (!outdent && from === to) {
+        view.dispatch(state.tr.insertText(CODE_INDENT, from));
+
+        return true;
+    }
+
+    const lastSelected = to > from ? to - blockStart - 1 : to - blockStart;
+    const lineStarts = [0, ...[...text.matchAll(/\n/g)].map((match) => match.index + 1)];
+    const selectedLineStarts = lineStarts.filter(
+        (start, index) => start <= lastSelected && (lineStarts[index + 1] ?? text.length + 1) > from - blockStart,
+    );
+
+    const transaction = state.tr;
+
+    // Walks backwards so earlier positions stay valid while the document changes.
+    for (const lineStart of selectedLineStarts.reverse()) {
+        const position = blockStart + lineStart;
+
+        if (!outdent) {
+            transaction.insertText(CODE_INDENT, position);
+
+            continue;
+        }
+
+        const leading = /^( {1,2}|\t)/.exec(text.slice(lineStart))?.[0].length ?? 0;
+
+        if (leading) {
+            transaction.delete(position, position + leading);
+        }
+    }
+
+    if (!transaction.docChanged) {
+        return false;
+    }
+
+    view.dispatch(transaction);
+
+    return true;
+}
+
 const editor = useEditor({
     content: (model.value ?? '') as Content,
     extensions: [
-        StarterKit.configure({ heading: { levels: [...HEADING_LEVELS] }, link: { openOnClick: false } }),
+        StarterKit.configure({
+            heading: { levels: [...HEADING_LEVELS] },
+            dropcursor: { color: 'var(--primary)', width: 2 },
+            link: {
+                openOnClick: false,
+                defaultProtocol: 'https',
+                protocols: ['mailto'],
+                HTMLAttributes: { rel: 'noopener noreferrer nofollow', target: '_blank' },
+            },
+        }),
         MultiHighlight.configure({ multicolor: true }),
         TextStyle,
+        PlainTextAfterEnter,
     ],
     editorProps: {
         attributes: {
             'aria-label': 'Description',
             'aria-multiline': 'true',
             role: 'textbox',
+        },
+        handleKeyDown: (view, event) => {
+            if (event.key === 'Tab' && !event.ctrlKey && !event.metaKey && !event.altKey) {
+                const instance = editor.value!;
+                let isHandled = indentCodeBlock(view, event.shiftKey);
+
+                // In a list, Tab nests the item and Shift+Tab lifts it. Even when there is nowhere left to nest,
+                // the key is swallowed so focus never jumps out of the editor.
+                if (!isHandled && instance.isActive('listItem')) {
+                    const chain = instance.chain();
+
+                    (event.shiftKey ? chain.liftListItem('listItem') : chain.sinkListItem('listItem')).run();
+                    isHandled = true;
+                }
+
+                if (isHandled) {
+                    event.preventDefault();
+                    // The dialog's focus trap wraps Tab from its last field back to the first, so it must not see this key.
+                    event.stopPropagation();
+                }
+
+                return isHandled;
+            }
+
+            if (
+                (event.metaKey || event.ctrlKey) &&
+                !event.shiftKey &&
+                !event.altKey &&
+                event.key.toLowerCase() === 'k'
+            ) {
+                event.preventDefault();
+                openLinkPopover(editor.value!);
+
+                return true;
+            }
+
+            return false;
+        },
+        // Links are editable text, so a plain click places the cursor; Ctrl/⌘-click follows the link.
+        handleClick: (view, pos, event) => {
+            if (!(event.metaKey || event.ctrlKey)) {
+                return false;
+            }
+
+            const href = (event.target as HTMLElement | null)?.closest('a')?.getAttribute('href');
+
+            if (!href) {
+                return false;
+            }
+
+            window.open(href, '_blank', 'noopener,noreferrer');
+
+            return true;
         },
     },
     onUpdate: ({ editor }) => {
@@ -79,13 +235,45 @@ const editor = useEditor({
     },
 });
 
+// Picks up description changes made elsewhere, without disturbing what the user is typing.
+watch(
+    () => model.value,
+    (value) => {
+        const instance = editor.value;
+
+        if (!instance || instance.isFocused || (value ?? '') === instance.getHTML()) {
+            return;
+        }
+
+        instance.commands.setContent((value ?? '') as Content, { emitUpdate: false });
+    },
+);
+
 type ToolbarButton = {
     label: string;
-    shortcut: string;
+    shortcut?: string;
     icon: LucideIcon;
-    isActive: (editor: Editor) => boolean;
+    isActive?: (editor: Editor) => boolean;
+    isDisabled?: (editor: Editor) => boolean;
     run: (editor: Editor) => void;
 };
+
+const historyButtons: ToolbarButton[] = [
+    {
+        label: 'Undo',
+        shortcut: `${modKey}Z`,
+        icon: Undo2,
+        isDisabled: (editor) => !editor.can().undo(),
+        run: (editor) => editor.chain().focus().undo().run(),
+    },
+    {
+        label: 'Redo',
+        shortcut: `${modKey}${shiftKey}Z`,
+        icon: Redo2,
+        isDisabled: (editor) => !editor.can().redo(),
+        run: (editor) => editor.chain().focus().redo().run(),
+    },
+];
 
 const markButtons: ToolbarButton[] = [
     {
@@ -116,6 +304,13 @@ const markButtons: ToolbarButton[] = [
         isActive: (editor) => editor.isActive('strike'),
         run: (editor) => editor.chain().focus().toggleStrike().run(),
     },
+    {
+        label: 'Inline code',
+        shortcut: `${modKey}E`,
+        icon: Code,
+        isActive: (editor) => editor.isActive('code'),
+        run: (editor) => editor.chain().focus().toggleCode().run(),
+    },
 ];
 
 const blockButtons: ToolbarButton[] = [
@@ -140,7 +335,21 @@ const blockButtons: ToolbarButton[] = [
         isActive: (editor) => editor.isActive('blockquote'),
         run: (editor) => editor.chain().focus().toggleBlockquote().run(),
     },
+    {
+        label: 'Code block',
+        shortcut: `${modKey}Alt+C`,
+        icon: SquareCode,
+        isActive: (editor) => editor.isActive('codeBlock'),
+        run: (editor) => editor.chain().focus().toggleCodeBlock().run(),
+    },
+    {
+        label: 'Divider',
+        icon: Minus,
+        run: (editor) => editor.chain().focus().setHorizontalRule().run(),
+    },
 ];
+
+const buttonGroups: ToolbarButton[][] = [markButtons, blockButtons];
 
 const textStyles: Array<{ label: string; level: HeadingLevel | null; class: string }> = [
     { label: 'Normal text', level: null, class: 'text-sm' },
@@ -179,14 +388,101 @@ function toggleHighlight(editor: Editor, highlightClass: string) {
     } else {
         editor.chain().focus().setMark('highlight', { class: highlightClass }).run();
     }
+
+    isHighlightOpen.value = false;
 }
 
 function removeHighlight(editor: Editor) {
     editor.chain().focus().unsetMark('highlight').run();
+    isHighlightOpen.value = false;
+}
+
+/** Adds `https://` (or `mailto:` for addresses) when the user typed a bare domain. */
+function normalizeUrl(value: string): string {
+    const url = value.trim();
+
+    if (/^([a-z][a-z0-9+.-]*:|\/|#)/i.test(url)) {
+        return url;
+    }
+
+    return /^[^\s@/]+@[^\s@/]+\.[^\s@/]+$/.test(url) ? `mailto:${url}` : `https://${url}`;
+}
+
+function applyLink(editor: Editor) {
+    const url = linkUrl.value.trim();
+
+    if (!url) {
+        removeLink(editor);
+
+        return;
+    }
+
+    const href = normalizeUrl(url);
+    const { empty } = editor.state.selection;
+    const chain = editor.chain().focus();
+
+    // Without a selection there is nothing to attach the link to, so the address becomes the link text.
+    const applied =
+        empty && !editor.isActive('link')
+            ? chain.insertContent({ type: 'text', text: href, marks: [{ type: 'link', attrs: { href } }] }).run()
+            : chain.extendMarkRange('link').setLink({ href }).run();
+
+    if (!applied) {
+        linkError.value = 'Enter a valid web or email address.';
+        nextTick(() => linkInput.value?.focus());
+
+        return;
+    }
+
+    isLinkOpen.value = false;
+}
+
+function removeLink(editor: Editor) {
+    editor.chain().focus().extendMarkRange('link').unsetLink().run();
+    isLinkOpen.value = false;
+}
+
+function onLinkOpenChange(open: boolean, editor: Editor) {
+    if (open) {
+        openLinkPopover(editor);
+
+        return;
+    }
+
+    isLinkOpen.value = false;
+}
+
+/** Arrow keys, Home and End move between toolbar buttons, as the ARIA toolbar pattern asks. */
+function onToolbarKeydown(event: KeyboardEvent) {
+    const keys = ['ArrowLeft', 'ArrowRight', 'Home', 'End'];
+
+    if (!keys.includes(event.key) || !toolbar.value) {
+        return;
+    }
+
+    const items = Array.from(toolbar.value.querySelectorAll<HTMLElement>('button:not(:disabled)'));
+    const current = items.indexOf(event.target as HTMLElement);
+
+    if (current === -1) {
+        return;
+    }
+
+    const next = {
+        ArrowLeft: (current - 1 + items.length) % items.length,
+        ArrowRight: (current + 1) % items.length,
+        Home: 0,
+        End: items.length - 1,
+    }[event.key as 'ArrowLeft' | 'ArrowRight' | 'Home' | 'End'];
+
+    event.preventDefault();
+    items[next]?.focus();
 }
 
 const toolButtonClass =
-    'inline-flex size-8 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors outline-none hover:bg-muted hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-pressed:bg-accent aria-pressed:text-accent-foreground data-[state=open]:bg-muted data-[state=open]:text-foreground [&_svg]:size-4';
+    'inline-flex size-8 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors outline-none hover:bg-muted hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-40 aria-pressed:bg-accent aria-pressed:text-accent-foreground data-[state=open]:bg-muted data-[state=open]:text-foreground [&_svg]:size-4';
+
+const popoverActionClass =
+    'flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground transition-colors outline-none hover:bg-muted hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50';
 </script>
 
 <template>
@@ -194,10 +490,33 @@ const toolButtonClass =
         <TooltipProvider :delay-duration="400">
             <!-- mousedown.prevent keeps the editor focused, so formatting applies to the current selection. -->
             <div
+                ref="toolbar"
                 aria-label="Text formatting"
                 class="sticky top-0 z-10 flex flex-wrap items-center gap-0.5 rounded-t-[inherit] border-b bg-background px-1.5 py-1"
                 role="toolbar"
+                @keydown="onToolbarKeydown"
             >
+                <Tooltip v-for="button in historyButtons" :key="button.label">
+                    <TooltipTrigger as-child>
+                        <button
+                            :aria-keyshortcuts="button.shortcut"
+                            :aria-label="button.label"
+                            :class="toolButtonClass"
+                            :disabled="button.isDisabled?.(editor)"
+                            type="button"
+                            @click="button.run(editor)"
+                            @mousedown.prevent
+                        >
+                            <component :is="button.icon" aria-hidden="true" />
+                        </button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        {{ button.label }} <span class="opacity-70">{{ button.shortcut }}</span>
+                    </TooltipContent>
+                </Tooltip>
+
+                <Separator class="mx-1 h-5!" orientation="vertical" />
+
                 <DropdownMenu>
                     <DropdownMenuTrigger
                         :class="cn(toolButtonClass, 'w-auto gap-1 px-2 text-sm font-medium')"
@@ -209,7 +528,7 @@ const toolButtonClass =
                         }}</span>
                         <ChevronDown aria-hidden="true" class="size-3.5!" />
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" class="w-52">
+                    <DropdownMenuContent align="start" class="w-52" @close-auto-focus.prevent="editor.commands.focus()">
                         <DropdownMenuItem
                             v-for="style in textStyles"
                             :key="style.label"
@@ -226,51 +545,110 @@ const toolButtonClass =
                     </DropdownMenuContent>
                 </DropdownMenu>
 
-                <Separator class="mx-1 h-5!" orientation="vertical" />
+                <template v-for="(group, index) in buttonGroups" :key="index">
+                    <Separator class="mx-1 h-5!" orientation="vertical" />
 
-                <Tooltip v-for="button in markButtons" :key="button.label">
-                    <TooltipTrigger as-child>
-                        <button
-                            :aria-keyshortcuts="button.shortcut"
-                            :aria-label="button.label"
-                            :aria-pressed="button.isActive(editor)"
-                            :class="toolButtonClass"
-                            type="button"
-                            @click="button.run(editor)"
-                            @mousedown.prevent
+                    <Tooltip v-for="button in group" :key="button.label">
+                        <TooltipTrigger as-child>
+                            <button
+                                :aria-keyshortcuts="button.shortcut"
+                                :aria-label="button.label"
+                                :aria-pressed="button.isActive ? button.isActive(editor) : undefined"
+                                :class="toolButtonClass"
+                                type="button"
+                                @click="button.run(editor)"
+                                @mousedown.prevent
+                            >
+                                <component :is="button.icon" aria-hidden="true" />
+                            </button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            {{ button.label }}
+                            <span v-if="button.shortcut" class="opacity-70">{{ button.shortcut }}</span>
+                        </TooltipContent>
+                    </Tooltip>
+
+                    <!-- The link button sits with the inline formatting, right after the marks. -->
+                    <Popover v-if="index === 0" :open="isLinkOpen" @update:open="onLinkOpenChange($event, editor)">
+                        <Tooltip>
+                            <TooltipTrigger as-child>
+                                <PopoverTrigger
+                                    :aria-keyshortcuts="`${modKey}K`"
+                                    :aria-pressed="editor.isActive('link')"
+                                    :class="toolButtonClass"
+                                    aria-label="Link"
+                                >
+                                    <Link2 aria-hidden="true" />
+                                </PopoverTrigger>
+                            </TooltipTrigger>
+                            <TooltipContent
+                                >Link <span class="opacity-70">{{ modKey }}K</span></TooltipContent
+                            >
+                        </Tooltip>
+                        <PopoverContent
+                            align="start"
+                            class="w-[min(20rem,calc(100vw-2rem))] p-3"
+                            @close-auto-focus.prevent="editor.commands.focus()"
+                            @open-auto-focus.prevent="linkInput?.focus()"
                         >
-                            <component :is="button.icon" aria-hidden="true" />
-                        </button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                        {{ button.label }} <span class="opacity-70">{{ button.shortcut }}</span>
-                    </TooltipContent>
-                </Tooltip>
+                            <form class="space-y-2" @submit.prevent="applyLink(editor)">
+                                <label class="text-xs font-medium text-muted-foreground" for="tiptap-link-url">
+                                    Link address
+                                </label>
+                                <div class="flex gap-1.5">
+                                    <input
+                                        id="tiptap-link-url"
+                                        ref="link-input"
+                                        v-model="linkUrl"
+                                        :aria-describedby="linkError ? 'tiptap-link-error' : undefined"
+                                        :aria-invalid="linkError ? true : undefined"
+                                        autocapitalize="off"
+                                        autocomplete="off"
+                                        class="h-8 min-w-0 flex-1 rounded-md border border-input bg-transparent px-2.5 text-base outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive sm:text-sm"
+                                        inputmode="url"
+                                        placeholder="example.com"
+                                        spellcheck="false"
+                                        type="text"
+                                        @input="linkError = ''"
+                                    />
+                                    <button
+                                        class="inline-flex h-8 cursor-pointer items-center rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground transition-opacity outline-none hover:opacity-90 focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                        type="submit"
+                                    >
+                                        Apply
+                                    </button>
+                                </div>
+                                <p
+                                    v-if="linkError"
+                                    id="tiptap-link-error"
+                                    class="text-xs text-destructive"
+                                    role="alert"
+                                >
+                                    {{ linkError }}
+                                </p>
+                            </form>
+                            <div v-if="editor.isActive('link')" class="mt-2 border-t pt-2">
+                                <a
+                                    :class="popoverActionClass"
+                                    :href="editor.getAttributes('link').href"
+                                    rel="noopener noreferrer nofollow"
+                                    target="_blank"
+                                >
+                                    <ExternalLink aria-hidden="true" class="size-4" />
+                                    Open link
+                                </a>
+                                <button :class="popoverActionClass" type="button" @click="removeLink(editor)">
+                                    <Link2Off aria-hidden="true" class="size-4" />
+                                    Remove link
+                                </button>
+                            </div>
+                        </PopoverContent>
+                    </Popover>
+                </template>
 
                 <Separator class="mx-1 h-5!" orientation="vertical" />
 
-                <Tooltip v-for="button in blockButtons" :key="button.label">
-                    <TooltipTrigger as-child>
-                        <button
-                            :aria-keyshortcuts="button.shortcut"
-                            :aria-label="button.label"
-                            :aria-pressed="button.isActive(editor)"
-                            :class="toolButtonClass"
-                            type="button"
-                            @click="button.run(editor)"
-                            @mousedown.prevent
-                        >
-                            <component :is="button.icon" aria-hidden="true" />
-                        </button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                        {{ button.label }} <span class="opacity-70">{{ button.shortcut }}</span>
-                    </TooltipContent>
-                </Tooltip>
-
-                <Separator class="mx-1 h-5!" orientation="vertical" />
-
-                <Popover>
+                <Popover v-model:open="isHighlightOpen">
                     <PopoverTrigger
                         :class="cn(toolButtonClass, 'relative', editor.isActive('highlight') && 'text-foreground')"
                         aria-label="Highlight"
@@ -283,7 +661,11 @@ const toolButtonClass =
                             class="absolute inset-x-2 bottom-1 h-1 rounded-full ring-1 ring-black/10 [background:var(--list-bg)] dark:ring-white/15"
                         />
                     </PopoverTrigger>
-                    <PopoverContent align="start" class="w-auto p-3">
+                    <PopoverContent
+                        align="start"
+                        class="w-auto p-3"
+                        @close-auto-focus.prevent="editor.commands.focus()"
+                    >
                         <p class="mb-2 text-xs font-medium text-muted-foreground">Highlight</p>
                         <div class="grid grid-cols-5 gap-1.5">
                             <button
@@ -301,8 +683,8 @@ const toolButtonClass =
                             </button>
                         </div>
                         <button
+                            :class="cn(popoverActionClass, 'mt-2')"
                             :disabled="!editor.isActive('highlight')"
-                            class="mt-2 flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground transition-colors outline-none hover:bg-muted hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50"
                             type="button"
                             @click="removeHighlight(editor)"
                         >
@@ -315,11 +697,11 @@ const toolButtonClass =
         </TooltipProvider>
 
         <!-- The text scrolls inside the editor, so the toolbar stays put and the dialog keeps room below. -->
-        <div class="relative max-h-[min(22rem,45dvh)] overflow-y-auto overscroll-contain px-3 py-2.5">
+        <div class="relative max-h-[min(22rem,45dvh)] cursor-text overflow-y-auto overscroll-contain px-3 py-2.5">
             <p
                 v-if="editor.isEmpty"
                 aria-hidden="true"
-                class="pointer-events-none absolute top-2.5 left-3 text-sm text-muted-foreground"
+                class="pointer-events-none absolute top-2.5 left-3 text-base text-muted-foreground sm:text-sm"
             >
                 Add a more detailed description…
             </p>

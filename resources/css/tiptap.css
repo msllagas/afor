@@ -3,52 +3,69 @@
 /*
   Card description editor. Everything reads from the theme tokens, so the
   content looks the same in light and dark mode as the rest of the app.
+
+  The body is 16px on small screens (iOS Safari zooms into anything smaller
+  when it is focused) and 14px from `sm` up. Headings are sized in `em`, so
+  the scale follows whichever body size is active.
 */
 
 .tiptap {
-    @apply min-h-24 text-sm leading-relaxed text-foreground outline-none;
+    @apply min-h-24 text-base leading-relaxed text-foreground caret-primary outline-none sm:text-sm;
     overflow-wrap: anywhere;
+    -webkit-tap-highlight-color: transparent;
 }
 
+/* Vertical rhythm: space between blocks, none at the edges. */
 .tiptap > * + * {
-    margin-top: 0.65em;
+    margin-top: 0.7em;
 }
 
-.tiptap h1,
-.tiptap h2,
-.tiptap h3,
-.tiptap h4 {
-    @apply leading-snug tracking-tight text-foreground;
+.tiptap > :first-child {
+    margin-top: 0;
+}
+
+.tiptap > :last-child {
+    margin-bottom: 0;
+}
+
+/* Headings */
+.tiptap :is(h1, h2, h3, h4) {
+    @apply font-semibold tracking-tight text-foreground;
+    line-height: 1.3;
     text-wrap: balance;
 }
 
 .tiptap > :is(h1, h2, h3, h4):not(:first-child) {
-    margin-top: 1.1em;
+    margin-top: 1.2em;
 }
 
 .tiptap h1 {
-    @apply text-xl font-semibold;
+    font-size: 1.4em;
 }
 
 .tiptap h2 {
-    @apply text-lg font-semibold;
+    font-size: 1.2em;
 }
 
 .tiptap h3 {
-    @apply text-base font-semibold;
+    font-size: 1.05em;
 }
 
 .tiptap h4 {
-    @apply text-sm font-semibold;
+    font-size: 1em;
 }
 
 .tiptap strong {
     @apply font-semibold;
 }
 
-.tiptap ul,
-.tiptap ol {
-    padding-left: 1.4em;
+.tiptap s {
+    @apply decoration-muted-foreground/70;
+}
+
+/* Lists */
+.tiptap :is(ul, ol) {
+    padding-left: 1.5em;
 }
 
 .tiptap ul {
@@ -71,38 +88,64 @@
     @apply text-primary;
 }
 
+.tiptap ol li::marker {
+    @apply font-medium;
+}
+
 .tiptap li > p {
     margin: 0;
+}
+
+.tiptap li > :is(ul, ol) {
+    margin-top: 0.2em;
 }
 
 .tiptap li + li {
     margin-top: 0.2em;
 }
 
+/* Quote */
 .tiptap blockquote {
-    @apply border-l-2 border-primary/50 pl-3 text-muted-foreground italic;
+    @apply rounded-r-md border-l-[3px] border-primary/50 bg-muted/50 py-1 pr-3 pl-3 text-muted-foreground;
 }
 
+.tiptap blockquote > * + * {
+    margin-top: 0.5em;
+}
+
+/* Code */
 .tiptap code {
-    @apply rounded bg-muted px-1 py-0.5 font-mono text-[0.85em] text-accent-foreground;
+    @apply rounded-md border border-border bg-muted px-1.5 py-0.5 font-mono text-[0.85em] text-foreground;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
 }
 
 .tiptap pre {
-    @apply overflow-x-auto rounded-lg bg-muted p-3 font-mono text-xs leading-relaxed;
+    @apply overflow-x-auto rounded-lg border border-border bg-muted p-3 font-mono text-[0.85em] leading-relaxed;
+    overflow-wrap: normal;
+    tab-size: 4;
 }
 
 .tiptap pre code {
-    @apply bg-transparent p-0 text-inherit;
+    @apply border-0 bg-transparent p-0 text-inherit;
+    font-size: inherit;
 }
 
+/* Divider */
 .tiptap hr {
-    @apply my-4 border-border;
+    @apply my-4 border-0 border-t border-border;
 }
 
+/* Links */
 .tiptap a {
-    @apply text-primary underline decoration-primary/40 underline-offset-2 hover:decoration-primary;
+    @apply cursor-pointer font-medium text-primary underline decoration-primary/40 underline-offset-2 transition-colors hover:decoration-primary;
 }
 
+.tiptap :is(hr, img).ProseMirror-selectednode {
+    @apply outline-2 outline-offset-2 outline-ring;
+}
+
+/* Text selection */
 .tiptap ::selection {
     @apply bg-primary/20;
 }
@@ -122,4 +165,38 @@
 .tiptap mark[class*='list-'] {
     background: var(--list-bg);
     color: var(--list-fg);
+}
+
+/* ProseMirror ships no styles for the cursor shown beside blocks such as dividers. */
+.tiptap .ProseMirror-gapcursor {
+    @apply pointer-events-none relative block;
+}
+
+.tiptap .ProseMirror-gapcursor::after {
+    @apply absolute -top-0.5 w-5 border-t border-foreground;
+    content: '';
+    animation: tiptap-caret-blink 1.1s steps(2, start) infinite;
+}
+
+@keyframes tiptap-caret-blink {
+    to {
+        visibility: hidden;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tiptap .ProseMirror-gapcursor::after {
+        animation: none;
+    }
+}
+
+/* Windows high contrast mode drops backgrounds, so keep marked text distinguishable. */
+@media (forced-colors: active) {
+    .tiptap mark {
+        forced-color-adjust: none;
+    }
+
+    .tiptap :is(code, pre, blockquote) {
+        border: 1px solid CanvasText;
+    }
 }
