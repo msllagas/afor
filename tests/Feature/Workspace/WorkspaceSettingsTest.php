@@ -28,22 +28,22 @@ test('workspace owner can open the workspace settings', function () {
         );
 });
 
-test('workspace members are redirected to the dashboard from the workspace settings', function () {
+test('workspace members are forbidden from the workspace settings', function () {
     $member = User::factory()->create();
     $workspace = Workspace::factory()->forUser()->create();
     $workspace->users()->attach($member);
 
     $this->actingAs($member)
         ->get(route('workspaces.settings', $workspace))
-        ->assertRedirect(route('dashboard'));
+        ->assertForbidden();
 });
 
-test('users outside the workspace are redirected to the dashboard from the workspace settings', function () {
+test('users outside the workspace get not found for the workspace settings', function () {
     $workspace = Workspace::factory()->forUser()->create();
 
     $this->actingAs(User::factory()->create())
         ->get(route('workspaces.settings', $workspace))
-        ->assertRedirect(route('dashboard'));
+        ->assertNotFound();
 });
 
 test('guests cannot open the workspace settings', function () {

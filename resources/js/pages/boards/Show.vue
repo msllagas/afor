@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 import cardRoutes from '@/routes/board-lists/cards';
 import boardRoutes from '@/routes/boards';
 import boardListRoutes from '@/routes/boards/board-lists';
+import { dashboard } from '@/routes';
 import { home } from '@/routes/workspaces';
 import { favorite } from '@/routes/workspaces/boards';
 import type {
@@ -145,7 +146,7 @@ let hasLostAccess = false;
 
 /**
  * The board was deleted, or the user was taken off it or out of its workspace (maybe in another tab).
- * The workspace page sends them on to the dashboard if they're no longer in the workspace either.
+ * The dashboard opens the workspace home if they're still in the workspace, and their boards if not.
  */
 function leaveInaccessibleBoard() {
     if (hasLostAccess) {
@@ -154,7 +155,7 @@ function leaveInaccessibleBoard() {
 
     hasLostAccess = true;
     // The toast waits for the next page, since the board page's toasts go with it.
-    router.visit(workspaceHomeUrl.value, {
+    router.visit(dashboard().url, {
         replace: true,
         onFinish: () =>
             toast.error('You no longer have access to this board', {
@@ -166,11 +167,16 @@ function leaveInaccessibleBoard() {
 /**
  * A 404 means either one card or list is gone, or the whole board is out of reach.
  * Re-fetching the board tells which: losing access sends the user away, anything else is an ordinary failure.
+ * The board's own address is asked for, not an open card's, since that card may be what's gone; the card closes.
  */
 function confirmBoardAccess(onStillAccessible: () => void) {
-    router.reload({
-        only: ['board'],
+    descriptionRequest?.cancel();
+    router.visit(boardRoutes.show(props.board.id).url, {
+        only: ['board', 'selectedCard'],
         async: true,
+        replace: true,
+        preserveScroll: true,
+        preserveState: true,
         onSuccess: onStillAccessible,
         onHttpException: (response) => {
             if (response.status === 404) {

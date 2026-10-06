@@ -90,7 +90,7 @@ test('workspace members can access their workspace home', function () {
         );
 });
 
-test('user that is not a member or owner of the workspace are redirected to dashboard', function () {
+test('users outside the workspace get not found for its home', function () {
     $user = User::factory()->create();
     $anotherUser = User::factory()->create();
     $workspace = Workspace::factory()->forUser($anotherUser)->create();
@@ -100,7 +100,7 @@ test('user that is not a member or owner of the workspace are redirected to dash
             'workspace' => $workspace,
         ]));
 
-    $response->assertRedirect(route('dashboard'));
+    $response->assertNotFound();
 });
 
 test('workspace home lists unarchived boards with the user stars', function () {

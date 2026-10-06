@@ -82,7 +82,7 @@ test('workspace members do not get an invite link, even when they ask for it', f
     $this->assertDatabaseMissing('workspace_invitations', ['workspace_id' => $workspace->id]);
 });
 
-test('user that is not a member or owner of the workspace are redirected to dashboard', function () {
+test('users outside the workspace get not found for its members', function () {
     $user = User::factory()->create();
     $anotherUser = User::factory()->create();
     $workspace = Workspace::factory()->forUser($anotherUser)->create();
@@ -92,7 +92,7 @@ test('user that is not a member or owner of the workspace are redirected to dash
             'workspace' => $workspace,
         ]));
 
-    $response->assertRedirect(route('dashboard'));
+    $response->assertNotFound();
 });
 
 test('workspace members are listed alphabetically', function () {

@@ -34,7 +34,7 @@ test('opening a workspace the user cannot access does not change the last worksp
 
     $response = $this->actingAs($user)->get(route('workspaces.home', $otherWorkspace));
 
-    $response->assertRedirect(route('dashboard'));
+    $response->assertNotFound();
     expect($user->fresh()->last_workspace_id)->toBe($ownWorkspace->id);
 });
 

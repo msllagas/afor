@@ -54,17 +54,11 @@ class WorkspaceController extends Controller
         return redirect()->route('dashboard');
     }
 
-    public function home(Workspace $workspace): Response|RedirectResponse
+    public function home(Workspace $workspace): Response
     {
+        Gate::authorize('view', $workspace);
+
         $user = auth()->user();
-
-        $canAccess = $workspace->owner_id === $user->id
-            || $workspace->users()->whereKey($user->id)->exists();
-
-        if (!$canAccess) {
-            return redirect()->route('dashboard');
-        }
-
         $canInvite = $user->can('invite', $workspace);
 
         return Inertia::render('workspaces/Home', [
@@ -98,14 +92,11 @@ class WorkspaceController extends Controller
         ]);
     }
 
-    public function members(Workspace $workspace): Response|RedirectResponse
+    public function members(Workspace $workspace): Response
     {
+        Gate::authorize('view', $workspace);
+
         $user = auth()->user();
-
-        if (!$workspace->isAccessibleBy($user)) {
-            return redirect()->route('dashboard');
-        }
-
         $canInvite = $user->can('invite', $workspace);
 
         return Inertia::render('workspaces/Member', [
@@ -154,11 +145,9 @@ class WorkspaceController extends Controller
         return to_route('boards.index');
     }
 
-    public function settings(Workspace $workspace): Response|RedirectResponse
+    public function settings(Workspace $workspace): Response
     {
-        if (auth()->user()->cannot('update', $workspace)) {
-            return redirect()->route('dashboard');
-        }
+        Gate::authorize('update', $workspace);
 
         return Inertia::render('workspaces/Settings', [
             'workspace'   => fn () => new WorkspaceResource($workspace->load('logoFile')),

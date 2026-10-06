@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * A member leaves the workspace in one tab while its board is still open in another.
- * Nothing the board page can send should work for them afterwards.
+ * Nothing the board or workspace pages can send should work for them afterwards.
  */
 beforeEach(function () {
     $this->member = User::factory()->create();
@@ -32,6 +32,8 @@ beforeEach(function () {
  * @return array<string, Closure(): array{0: string, 1: string, 2?: array<string, mixed>}>
  */
 dataset('workspace requests', [
+    'open the workspace home'   => fn () => ['get', route('workspaces.home', $this->workspace)],
+    'see the workspace members' => fn () => ['get', route('workspaces.members', $this->workspace)],
     'open the board'            => fn () => ['get', route('boards.show', $this->board)],
     'rename the board'          => fn () => ['patch', route('boards.update', $this->board), ['name' => 'Hijacked']],
     'archive the board'         => fn () => ['patch', route('boards.archive', $this->board)],
