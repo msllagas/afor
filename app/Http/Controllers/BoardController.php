@@ -61,14 +61,6 @@ class BoardController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
      * Store a newly created resource in storage.
      */
     public function store(StoreBoardsRequest $request, Workspace $workspace): RedirectResponse
@@ -88,14 +80,6 @@ class BoardController extends Controller
         Gate::authorize('view', $board);
 
         return $this->renderBoardPage($board, auth()->user());
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Board $boards)
-    {
-        //
     }
 
     /**
