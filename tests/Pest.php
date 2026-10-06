@@ -1,6 +1,9 @@
 <?php
 
+use App\Models\BoardList;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Pest\Browser\Api\AwaitableWebpage;
+use Pest\Browser\Api\PendingAwaitablePage;
 use Tests\TestCase;
 
 /*
@@ -16,7 +19,7 @@ use Tests\TestCase;
 
 pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
-    ->in('Feature', 'Unit');
+    ->in('Browser', 'Feature', 'Unit');
 
 /*
 |--------------------------------------------------------------------------
@@ -44,7 +47,28 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+/**
+ * Drag one element onto another with the mouse, moving in small steps the way a person does.
+ * The page's drag() jumps straight to the target, which SortableJS's mouse fallback never takes for a drag.
+ */
+function dragWithMouse(AwaitableWebpage|PendingAwaitablePage $page, string $from, string $to): void
 {
-    // ..
+    $browserPage = $page->page();
+    $browserPage->locator($from)->dragTo($browserPage->locator($to), ['steps' => 10]);
+}
+
+/**
+ * A browser script that reads the names of the cards a board list shows, top to bottom.
+ */
+function cardNamesShownIn(BoardList $boardList): string
+{
+    return "Array.from(document.querySelectorAll('[data-list-id=\"{$boardList->id}\"] .board-card button > span:first-child'), (name) => name.textContent.trim())";
+}
+
+/**
+ * A browser script that reads the names of the lists a board shows, left to right.
+ */
+function listNamesShown(): string
+{
+    return "Array.from(document.querySelectorAll('[data-list-id] [data-list-handle] h2'), (name) => name.textContent.trim())";
 }

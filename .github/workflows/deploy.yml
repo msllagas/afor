@@ -145,9 +145,23 @@ jobs:
       - name: Build Assets
         run: npm run build
 
+      # The board page's browser tests drive Chromium through Playwright.
+      - name: Install Playwright Browser
+        run: npx playwright install --with-deps chromium
+
       # The tests refresh the database themselves, so this also proves every migration runs on PostgreSQL.
       - name: Run Tests
-        run: ./vendor/bin/pest --ci
+        run: ./vendor/bin/pest --ci --trace
+
+      - name: Upload Browser Test Screenshots and Traces
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: browser-tests
+          path: |
+            tests/Browser/Screenshots
+            tests/Browser/Traces
+          if-no-files-found: ignore
 
   deploy:
     name: Deploy to Prod
