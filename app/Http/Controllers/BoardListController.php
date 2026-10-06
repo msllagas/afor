@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ReorderBoardListsRequest;
 use App\Http\Requests\StoreBoardListRequest;
 use App\Http\Requests\UpdateBoardListRequest;
 use App\Models\Board;
 use App\Models\BoardList;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\DB;
 
 class BoardListController extends Controller
 {
@@ -40,17 +40,18 @@ class BoardListController extends Controller
         return back();
     }
 
-    public function reorder(Request $request, Board $board): RedirectResponse
+    /**
+     * Save the order of the board's lists. Lists of other boards in the payload are left alone.
+     */
+    public function reorder(ReorderBoardListsRequest $request, Board $board): RedirectResponse
     {
-        Gate::authorize('update', $board);
-
-        $boardLists = $request->input('boardLists', []);
-
-        foreach ($boardLists as $boardList) {
-            BoardList::query()->where('id', $boardList['id'])
-                ->where('board_id', $board->id)
-                ->update(['order' => $boardList['order']]);
-        }
+        DB::transaction(function () use ($request, $board) {
+            foreach ($request->validated('boardLists') as $boardList) {
+                BoardList::query()->where('id', $boardList['id'])
+                    ->where('board_id', $board->id)
+                    ->update(['order' => $boardList['order']]);
+            }
+        });
 
         return back();
     }

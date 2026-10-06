@@ -48,3 +48,25 @@ test('users can reorder cards in board list', function () {
         'order' => 0,
     ]);
 });
+
+test('card reorders must be a list of card ids and positions', function (array $payload, string $invalidField) {
+    $user = User::factory()->create();
+    $boardList = BoardList::factory()->for(Board::factory()->for(Workspace::factory()->forUser($user)))->create();
+    $card = Card::factory()->for($boardList)->create(['order' => 0]);
+
+    $this->actingAs($user)
+        ->patch(route('board-lists.cards.reorder', $boardList), $payload)
+        ->assertInvalid([$invalidField]);
+
+    expect($card->refresh()->order)->toBe(0);
+})->with([
+    'no cards'                => [[], 'cards'],
+    'cards that are text'     => [['cards' => 'first'], 'cards'],
+    'an id that is no id'     => [['cards' => [['id' => 'not-an-id', 'order' => 1]]], 'cards.0.id'],
+    'a negative position'     => [['cards' => [['id' => '0199a1b2-7c3d-7e4f-8a5b-6c7d8e9f0a1b', 'order' => -1]]], 'cards.0.order'],
+    'a position that is text' => [['cards' => [['id' => '0199a1b2-7c3d-7e4f-8a5b-6c7d8e9f0a1b', 'order' => 'first']]], 'cards.0.order'],
+    'the same card twice'     => [['cards' => [
+        ['id' => '0199a1b2-7c3d-7e4f-8a5b-6c7d8e9f0a1b', 'order' => 0],
+        ['id' => '0199a1b2-7c3d-7e4f-8a5b-6c7d8e9f0a1b', 'order' => 1],
+    ]], 'cards.0.id'],
+]);

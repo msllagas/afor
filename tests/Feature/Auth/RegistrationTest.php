@@ -1,6 +1,9 @@
 <?php
 
+use App\Listeners\CreateDefaultWorkspace;
+use App\Models\Card;
 use App\Models\User;
+use Illuminate\Auth\Events\Registered;
 
 use function Pest\Laravel\assertDatabaseHas;
 
@@ -69,4 +72,31 @@ test('registering a user automatically creates a default workspace with a board,
         'board_list_id' => $todoList->id,
         'name'          => 'Welcome to your board 🎉',
     ]);
+});
+
+test('registration attempts are rate limited', function () {
+    foreach (range(1, 6) as $attempt) {
+        $this->post(route('register.store'), ['email' => 'not-an-email']);
+    }
+
+    $this->post(route('register.store'), [
+        'name'                  => 'Test User',
+        'email'                 => 'test@example.com',
+        'password'              => 'password',
+        'password_confirmation' => 'password',
+    ])->assertTooManyRequests();
+
+    $this->assertGuest();
+});
+
+test('a failed default workspace setup leaves no part of it behind', function () {
+    $user = User::factory()->create();
+    Card::creating(fn () => throw new RuntimeException('The card could not be saved.'));
+
+    expect(fn () => (new CreateDefaultWorkspace)->handle(new Registered($user)))
+        ->toThrow(RuntimeException::class)
+        ->and($user->ownedWorkspaces()->exists())->toBeFalse();
+
+    $this->assertDatabaseCount('boards', 0);
+    $this->assertDatabaseCount('board_lists', 0);
 });

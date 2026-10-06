@@ -69,6 +69,32 @@ test('replace deletes existing file and uploads new one', function () {
     $this->assertDatabaseCount('files', 1);
 });
 
+test('replace keeps the existing file when the new one cannot be stored', function () {
+    $this->service->upload(new FileUploadData(
+        model: $this->workspace,
+        file: UploadedFile::fake()->image('first.png'),
+        collection: FileCollection::WORKSPACE_LOGO,
+        path: "workspaces/{$this->workspace->id}/logo",
+        uploadedBy: $this->user,
+    ));
+    $existingRecord = $this->workspace->logoFile()->first();
+
+    $unstorableFile = Mockery::mock(UploadedFile::class)->makePartial();
+    $unstorableFile->shouldReceive('store')->andReturnFalse();
+
+    expect(fn () => $this->service->replace(new FileUploadData(
+        model: $this->workspace,
+        file: $unstorableFile,
+        collection: FileCollection::WORKSPACE_LOGO,
+        path: "workspaces/{$this->workspace->id}/logo",
+        uploadedBy: $this->user,
+    )))->toThrow(RuntimeException::class);
+
+    Storage::disk('public')->assertExists($existingRecord->path);
+    $this->assertDatabaseHas('files', ['id' => $existingRecord->id]);
+    $this->assertDatabaseCount('files', 1);
+});
+
 test('replace uploads file even if no existing file is present', function () {
     $file = UploadedFile::fake()->image('logo.png');
 
