@@ -1002,6 +1002,26 @@ function onCardsChange(list: BoardListType, event: SortableChangeEvent<Card>) {
     }
 }
 
+/** Move a card within its list from the card's menu, the keyboard way to drag it. */
+async function reorderCard(card: Card, to: number) {
+    const list = lists.value.find(({ id }) => id === card.board_list_id);
+    const from = list?.cards.findIndex(({ id }) => id === card.id) ?? -1;
+
+    if (!list || from === -1 || from === to || to < 0 || to >= list.cards.length) {
+        return;
+    }
+
+    list.cards.splice(to, 0, ...list.cards.splice(from, 1));
+    persistCardOrder(list);
+    announce(`Moved card ${card.name} to position ${to + 1} of ${list.cards.length} in ${list.name}.`);
+
+    // Keep the card in sight behind the dialog, so it's where the user expects once the dialog closes.
+    await nextTick();
+    canvas.value
+        ?.querySelector(`[data-card-id="${card.id}"]`)
+        ?.scrollIntoView({ behavior: scrollBehavior(), block: 'nearest', inline: 'nearest' });
+}
+
 function renameCard(card: Card, name: string) {
     card.name = name;
     send(
@@ -1389,6 +1409,7 @@ function restoreCard(card: Card, index: number) {
             @describe="describeCard"
             @move="moveCard"
             @rename="renameCard"
+            @reorder="reorderCard"
         />
 
         <BoardMembersDialog

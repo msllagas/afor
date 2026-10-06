@@ -22,6 +22,7 @@ const emit = defineEmits<{
     rename: [card: Card, name: string];
     describe: [card: Card, description: string];
     move: [card: Card, boardListId: string];
+    reorder: [card: Card, position: number];
     delete: [card: Card];
 }>();
 
@@ -144,9 +145,11 @@ function onOpenChange(isOpen: boolean) {
                     <div class="mt-1.5 flex shrink-0 items-center gap-1">
                         <CardActionsMenu
                             :board-lists="boardLists"
+                            :card-id="displayedCard.id"
                             :current-list-id="displayedCard.board_list_id"
                             @delete="confirmDelete"
                             @move="emit('move', displayedCard, $event)"
+                            @reorder="emit('reorder', displayedCard, $event)"
                         />
                         <DialogClose as-child>
                             <Button

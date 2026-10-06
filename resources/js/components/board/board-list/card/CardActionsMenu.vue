@@ -3,17 +3,31 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
 import type { BoardList } from '@/types';
-import { ArrowLeft, ArrowRightLeft, Check, ChevronRight, Ellipsis, Search, Trash2 } from 'lucide-vue-next';
+import {
+    ArrowDown,
+    ArrowDownToLine,
+    ArrowLeft,
+    ArrowRightLeft,
+    ArrowUp,
+    ArrowUpToLine,
+    Check,
+    ChevronRight,
+    Ellipsis,
+    Search,
+    Trash2,
+} from 'lucide-vue-next';
 import { ListboxContent, ListboxFilter, ListboxItem, ListboxRoot } from 'reka-ui';
-import { computed, nextTick, ref, useTemplateRef, watch } from 'vue';
+import { computed, nextTick, ref, useId, useTemplateRef, watch } from 'vue';
 
 const props = defineProps<{
     boardLists: BoardList[];
     currentListId: string;
+    cardId: string;
 }>();
 
 const emit = defineEmits<{
     move: [boardListId: string];
+    reorder: [position: number];
     delete: [];
 }>();
 
@@ -22,11 +36,40 @@ const view = ref<'actions' | 'move'>('actions');
 const query = ref('');
 const listbox = useTemplateRef<{ highlightFirstItem: () => void }>('listbox');
 const moveButton = useTemplateRef<HTMLButtonElement>('move-button');
+const positionGroup = useTemplateRef<HTMLElement>('position-group');
 
 // "Delete card" hands focus to the dialog's delete prompt, so the popover must not pull it back.
 let isMovingFocus = false;
 
 const canMove = computed(() => props.boardLists.length > 1);
+
+const cardsInList = computed(() => props.boardLists.find(({ id }) => id === props.currentListId)?.cards ?? []);
+const position = computed(() => cardsInList.value.findIndex(({ id }) => id === props.cardId));
+const canMoveUp = computed(() => position.value > 0);
+const canMoveDown = computed(() => position.value !== -1 && position.value < cardsInList.value.length - 1);
+const positionLabelId = useId();
+
+const positionActions = computed(() => [
+    { label: 'Move to top', icon: ArrowUpToLine, to: 0, isEnabled: canMoveUp.value },
+    { label: 'Move up', icon: ArrowUp, to: position.value - 1, isEnabled: canMoveUp.value },
+    { label: 'Move down', icon: ArrowDown, to: position.value + 1, isEnabled: canMoveDown.value },
+    { label: 'Move to bottom', icon: ArrowDownToLine, to: cardsInList.value.length - 1, isEnabled: canMoveDown.value },
+]);
+
+/** The menu stays open so the card can be nudged again; focus leaves a button the move just disabled. */
+async function reorder(to: number) {
+    const isMovingUp = to < position.value;
+    emit('reorder', to);
+    await nextTick();
+
+    if (document.activeElement instanceof HTMLButtonElement && !document.activeElement.disabled) {
+        return;
+    }
+
+    const enabledButtons = Array.from(positionGroup.value?.querySelectorAll('button:not(:disabled)') ?? []);
+    const nextFocus = isMovingUp ? enabledButtons[0] : enabledButtons.at(-1);
+    ((nextFocus as HTMLElement | undefined) ?? moveButton.value)?.focus();
+}
 
 const matchingLists = computed(() => {
     const search = query.value.trim().toLocaleLowerCase();
@@ -102,6 +145,24 @@ watch(isOpen, (open) => {
         >
             <div v-if="view === 'actions'" class="p-1">
                 <p class="px-2 py-1.5 text-sm font-medium">Card Actions</p>
+                <Separator class="my-1" />
+                <div ref="position-group" :aria-labelledby="positionLabelId" role="group">
+                    <p :id="positionLabelId" class="px-2 pt-1 pb-1.5 text-xs text-muted-foreground tabular-nums">
+                        <template v-if="position === -1">Position in list</template>
+                        <template v-else>Position {{ position + 1 }} of {{ cardsInList.length }}</template>
+                    </p>
+                    <button
+                        v-for="action in positionActions"
+                        :key="action.label"
+                        :disabled="!action.isEnabled"
+                        class="flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm outline-none select-none hover:bg-accent hover:text-accent-foreground focus-visible:bg-accent focus-visible:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
+                        type="button"
+                        @click="reorder(action.to)"
+                    >
+                        <component :is="action.icon" aria-hidden="true" class="size-4 text-muted-foreground" />
+                        {{ action.label }}
+                    </button>
+                </div>
                 <Separator class="my-1" />
                 <button
                     ref="move-button"
