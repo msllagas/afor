@@ -8,7 +8,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Archive, Ellipsis, Plus, Users } from 'lucide-vue-next';
+import { Archive, ArchiveRestore, Ellipsis, Plus, Users } from 'lucide-vue-next';
 
 defineProps<{
     isArchiving?: boolean;
@@ -17,6 +17,7 @@ defineProps<{
 const emit = defineEmits<{
     addList: [];
     archiveBoard: [];
+    showArchivedItems: [];
     showMembers: [];
 }>();
 
@@ -54,6 +55,11 @@ function onCloseAutoFocus(event: Event) {
                 <Users />
                 <span>Members</span>
             </DropdownMenuItem>
+            <DropdownMenuItem class="cursor-pointer" @select="emit('showArchivedItems')">
+                <ArchiveRestore />
+                <span>Archived items</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
             <DropdownMenuItem :disabled="isArchiving" class="cursor-pointer" @select="emit('archiveBoard')">
                 <Archive />
                 <span>{{ isArchiving ? 'Archiving…' : 'Archive board' }}</span>

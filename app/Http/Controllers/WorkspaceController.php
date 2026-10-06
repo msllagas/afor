@@ -79,7 +79,7 @@ class WorkspaceController extends Controller
                 ->with([
                     'boardLists' => fn ($query) => $query
                         ->select('id', 'board_id', 'color', 'order')
-                        ->active()
+                        ->unarchived()
                         ->withCount('cards'),
                 ])
                 ->oldest()

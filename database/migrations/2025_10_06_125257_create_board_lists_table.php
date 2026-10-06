@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Board;
+use App\Models\User;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -21,12 +22,18 @@ return new class extends Migration
                 ->constrained()
                 ->cascadeOnDelete();
 
-            $table->boolean('is_archived')->default(false);
+            $table->foreignIdFor(User::class, 'archived_by')
+                ->nullable()
+                ->constrained()
+                ->nullOnDelete();
+
+            $table->timestamp('archived_at')->nullable();
 
             $table->timestamps();
             $table->softDeletes();
 
             $table->index(['board_id', 'order']);
+            $table->index('archived_by');
         });
     }
 

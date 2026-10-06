@@ -80,10 +80,14 @@ test('lists and cards are not found through a board or list they do not belong t
 
     $response->assertNotFound();
     expect($this->boardList->fresh()->name)->not->toBe('Hijacked')
+        ->and($this->boardList->fresh()->archived_at)->toBeNull()
         ->and($this->card->fresh()->name)->not->toBe('Hijacked');
 })->with([
     'rename a list through another board' => fn (Board $otherBoard) => [
         'patch', route('boards.board-lists.update', [$otherBoard, $this->boardList]),
+    ],
+    'archive a list through another board' => fn (Board $otherBoard) => [
+        'patch', route('boards.board-lists.archive', [$otherBoard, $this->boardList]),
     ],
     'open a card through another list' => fn (Board $otherBoard, BoardList $otherList) => [
         'get', route('board-lists.cards.show', [$otherList, $this->card]),

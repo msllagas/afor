@@ -29,6 +29,24 @@ export interface Board {
     archiver?: { id: string; name: string } | null;
 }
 
+/** A list archived from a board, as the board's archived items show it. */
+export interface ArchivedBoardList extends Pick<BoardList, 'id' | 'name' | 'color' | 'board_id'> {
+    archived_at: string;
+    archiver: { id: string; name: string } | null;
+    cards_count: number;
+}
+
+/** A card deleted from one of the board's lists, as the board's archived items show it. */
+export interface DeletedCard extends Pick<Card, 'id' | 'name' | 'board_list_id'> {
+    deleted_at: string;
+    board_list: Pick<BoardList, 'id' | 'name' | 'color'>;
+}
+
+export interface ArchivedItems {
+    board_lists: ArchivedBoardList[];
+    cards: DeletedCard[];
+}
+
 /** The payload of vuedraggable's `change` event. */
 export interface SortableChangeEvent<T> {
     moved?: { element: T; oldIndex: number; newIndex: number };

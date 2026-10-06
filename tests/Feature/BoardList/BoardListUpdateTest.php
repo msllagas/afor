@@ -16,21 +16,18 @@ test('users can archive a board list', function () {
     $board = Board::factory()->for(Workspace::factory()->forUser($user))->create();
     $boardList = BoardList::factory()->for($board)->create();
 
-    expect($boardList->is_archived)->tobeFalse();
-
-    $response = patch(route('boards.board-lists.update', [
+    $response = patch(route('boards.board-lists.archive', [
         'board'      => $board,
         'board_list' => $boardList,
-    ]), [
-        'is_archived' => true,
-    ]);
+    ]));
 
     $response->assertRedirect();
 
     assertDatabaseHas('board_lists', [
         'id'          => $boardList->id,
-        'is_archived' => true,
+        'archived_by' => $user->id,
     ]);
+    expect($boardList->fresh()->archived_at)->not->toBeNull();
 });
 
 test('users can change board list color', function () {

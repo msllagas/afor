@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\BoardList;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -18,12 +19,21 @@ class BoardListFactory extends Factory
     public function definition(): array
     {
         return [
-            'name'        => fake()->name(),
-            'board_id'    => BoardFactory::new(),
-            'order'       => 0,
-            'is_archived' => false,
-            'created_at'  => now(),
-            'updated_at'  => now(),
+            'name'       => fake()->name(),
+            'board_id'   => BoardFactory::new(),
+            'order'      => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
         ];
+    }
+
+    public function archived(?User $archiver = null): static
+    {
+        $archiver ??= User::factory()->create();
+
+        return $this->state(fn (array $attributes) => [
+            'archived_at' => now(),
+            'archived_by' => $archiver->id,
+        ]);
     }
 }

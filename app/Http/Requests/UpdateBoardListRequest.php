@@ -27,9 +27,8 @@ class UpdateBoardListRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'is_archived' => 'sometimes|boolean',
-            'color'       => ['sometimes', 'nullable', new Enum(BoardListColor::class)],
-            'name'        => 'sometimes|string|max:255',
+            'color' => ['sometimes', 'nullable', new Enum(BoardListColor::class)],
+            'name'  => 'sometimes|string|max:255',
         ];
     }
 }

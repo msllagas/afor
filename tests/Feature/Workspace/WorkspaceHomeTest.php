@@ -131,7 +131,7 @@ test('workspace home previews each board with its active lists and card counts',
     $workspace = Workspace::factory()->forUser($user)->create();
     $board = Board::factory()->for($workspace)->create();
     $activeList = BoardList::factory()->for($board)->create(['color' => 'angel']);
-    BoardList::factory()->for($board)->create(['is_archived' => true]);
+    BoardList::factory()->for($board)->archived()->create();
     Card::factory()->count(3)->for($activeList)->create();
 
     $response = $this->actingAs($user)

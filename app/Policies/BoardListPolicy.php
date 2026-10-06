@@ -21,7 +21,7 @@ class BoardListPolicy
     }
 
     /**
-     * Determine whether the user can update the list, including archiving it and reordering its cards.
+     * Determine whether the user can update the list, including archiving and restoring it and reordering its cards.
      */
     public function update(User $user, BoardList $boardList): Response
     {

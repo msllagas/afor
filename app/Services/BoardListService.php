@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Board;
 use App\Models\BoardList;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
 class BoardListService
@@ -34,5 +35,28 @@ class BoardListService
                 $board->boardLists()->whereKey($position['id'])->update(['order' => $position['order']]);
             }
         });
+    }
+
+    public function archive(BoardList $boardList, User $archiver): BoardList
+    {
+        $boardList->update([
+            'archived_by' => $archiver->id,
+            'archived_at' => now(),
+        ]);
+
+        return $boardList;
+    }
+
+    /**
+     * Bring the list back to the place it was archived from, along with its cards.
+     */
+    public function unarchive(BoardList $boardList): BoardList
+    {
+        $boardList->update([
+            'archived_by' => null,
+            'archived_at' => null,
+        ]);
+
+        return $boardList;
     }
 }

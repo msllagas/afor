@@ -97,7 +97,7 @@ test('the owner can delete an archived board whose archiver deleted their accoun
 test('archived boards are previewed with their active lists and the user star', function () {
     $board = Board::factory()->for($this->workspace)->archived($this->user)->create();
     $activeList = BoardList::factory()->for($board)->create(['color' => 'angel']);
-    BoardList::factory()->for($board)->create(['is_archived' => true]);
+    BoardList::factory()->for($board)->archived()->create();
     Card::factory()->count(2)->for($activeList)->create();
     $this->user->favoriteBoards()->attach($board);
 

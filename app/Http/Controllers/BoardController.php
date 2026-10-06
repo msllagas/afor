@@ -5,11 +5,15 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Concerns\RendersBoardPage;
 use App\Http\Requests\StoreBoardsRequest;
 use App\Http\Requests\UpdateBoardsRequest;
+use App\Http\Resources\BoardListResource;
 use App\Http\Resources\BoardResource;
+use App\Http\Resources\CardResource;
 use App\Http\Resources\WorkspaceResource;
 use App\Models\Board;
+use App\Models\Card;
 use App\Models\Workspace;
 use App\Services\BoardService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response as HttpResponse;
@@ -49,7 +53,7 @@ class BoardController extends Controller
                     ->with([
                         'boardLists' => fn ($query) => $query
                             ->select('id', 'board_id', 'color', 'order')
-                            ->active()
+                            ->unarchived()
                             ->withCount('cards'),
                     ])
                     ->oldest(),
@@ -144,11 +148,39 @@ class BoardController extends Controller
                 'archiver:id,name',
                 'boardLists' => fn ($query) => $query
                     ->select('id', 'board_id', 'color', 'order')
-                    ->active()
+                    ->unarchived()
                     ->withCount('cards'),
             ])
             ->latest('archived_at')
             ->get());
+    }
+
+    /**
+     * The board's archived lists and the deleted cards of its other lists, most recent first, so they can be restored.
+     * Cards deleted from an archived list come back into view once the list is restored.
+     */
+    public function archivedItems(Board $board): JsonResponse
+    {
+        Gate::authorize('view', $board);
+
+        $unarchivedListIds = $board->boardLists()->reorder()->unarchived()->select('id');
+
+        return response()->json([
+            'board_lists' => BoardListResource::collection($board->boardLists()
+                ->reorder()
+                ->select('id', 'name', 'color', 'board_id', 'archived_at', 'archived_by')
+                ->archived()
+                ->with('archiver:id,name')
+                ->withCount('cards')
+                ->latest('archived_at')
+                ->get()),
+            'cards' => CardResource::collection(Card::onlyTrashed()
+                ->select('id', 'name', 'board_list_id', 'deleted_at')
+                ->whereIn('board_list_id', $unarchivedListIds)
+                ->with('boardList:id,name,color')
+                ->latest('deleted_at')
+                ->get()),
+        ]);
     }
 
     public function toggleFavorite(Workspace $workspace, Board $board): BoardResource

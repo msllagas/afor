@@ -98,6 +98,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::patch('/{board}/unarchive', [BoardController::class, 'unarchive'])
                 ->name('unarchive');
 
+            Route::get('/{board}/archived-items', [BoardController::class, 'archivedItems'])
+                ->name('archived-items');
+
             Route::patch('/{board}/board-lists/reorder', [BoardListController::class, 'reorder'])
                 ->name('board-lists.reorder');
 
@@ -134,6 +137,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::resource('boards.board-lists', BoardListController::class)
             ->only(['store', 'update']);
+
+        Route::patch('boards/{board}/board-lists/{board_list}/archive', [BoardListController::class, 'archive'])
+            ->name('boards.board-lists.archive');
+
+        Route::patch('boards/{board}/board-lists/{board_list}/unarchive', [BoardListController::class, 'unarchive'])
+            ->name('boards.board-lists.unarchive');
 
         Route::resource('board-lists.cards', CardController::class)
             ->only(['store', 'show', 'update', 'destroy']);

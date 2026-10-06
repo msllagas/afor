@@ -24,7 +24,7 @@ trait RendersBoardPage
         return Inertia::render('boards/Show', [
             // Card descriptions stay off the board, which only flags them; the open card brings its own.
             'board' => fn () => $board->load([
-                'boardLists' => fn ($query) => $query->active()->with([
+                'boardLists' => fn ($query) => $query->unarchived()->with([
                     'cards' => fn ($query) => $query
                         ->select('id', 'name', 'order', 'board_list_id')
                         ->selectRaw('description is not null as has_description')

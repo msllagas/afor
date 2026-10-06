@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import BoardListController from '@/actions/App/Http/Controllers/BoardListController';
+import ArchivedItemsSheet from '@/components/board/ArchivedItemsSheet.vue';
 import BoardList from '@/components/board/board-list/BoardList.vue';
 import BoardDropdownMenu from '@/components/board/BoardDropdownMenu.vue';
 import BoardMembersDialog from '@/components/board/BoardMembersDialog.vue';
@@ -18,10 +19,12 @@ import { dashboard } from '@/routes';
 import { home } from '@/routes/workspaces';
 import { favorite } from '@/routes/workspaces/boards';
 import type {
+    ArchivedBoardList,
     Board,
     BoardList as BoardListType,
     BreadcrumbItem,
     Card,
+    DeletedCard,
     SortableChangeEvent,
     WorkspaceMember,
 } from '@/types';
@@ -229,6 +232,7 @@ function send(
     data: RequestPayload,
     failureMessage: string,
     onSuccess?: () => void,
+    onFailure?: () => void,
 ) {
     pendingRequests++;
 
@@ -241,14 +245,19 @@ function send(
         preserveState: true,
         only: ['board'],
         onSuccess: () => onSuccess?.(),
-        onError: (errors) => rollback(Object.values(errors)[0] ?? failureMessage),
+        onError: (errors) => {
+            rollback(Object.values(errors)[0] ?? failureMessage);
+            onFailure?.();
+        },
         onHttpException: (response) => {
             rollback(failureMessage, response.status);
+            onFailure?.();
 
             return false;
         },
         onNetworkError: () => {
             rollback(`${failureMessage} Check your connection.`);
+            onFailure?.();
 
             return false;
         },
@@ -727,6 +736,10 @@ function updateListUrl(list: BoardListType) {
     return boardListRoutes.update({ board: props.board.id, board_list: list.id }).url;
 }
 
+function listRouteArgs(list: Pick<BoardListType, 'id'>) {
+    return { board: props.board.id, board_list: list.id };
+}
+
 function renameList(list: BoardListType, name: string) {
     list.name = name;
     send('patch', updateListUrl(list), { name }, 'Could not rename the list.');
@@ -745,9 +758,10 @@ function archiveList(list: BoardListType) {
     }
 
     lists.value.splice(index, 1);
-    send('patch', updateListUrl(list), { is_archived: true }, 'Could not archive the list.');
+    send('patch', boardListRoutes.archive(listRouteArgs(list)).url, {}, 'Could not archive the list.');
 
     toast(`Archived “${list.name}”`, {
+        description: 'You can restore it from Archived items.',
         action: { label: 'Undo', onClick: () => restoreList(list, index) },
     });
 }
@@ -758,8 +772,46 @@ function restoreList(list: BoardListType, index: number) {
     }
 
     lists.value.splice(Math.min(index, lists.value.length), 0, list);
-    send('patch', updateListUrl(list), { is_archived: false }, 'Could not restore the list.');
+    send('patch', boardListRoutes.unarchive(listRouteArgs(list)).url, {}, 'Could not restore the list.');
     announce(`Restored list ${list.name}.`);
+}
+
+/*
+|--------------------------------------------------------------------------
+| Archived items
+|--------------------------------------------------------------------------
+| Archived lists and deleted cards come back from the sheet. They take
+| their old places on the board when the server sends it back; a failed
+| restore reloads the sheet so it shows what is still archived.
+*/
+
+const showArchivedItems = ref(false);
+const archivedItemsSheet = useTemplateRef<InstanceType<typeof ArchivedItemsSheet>>('archived-items-sheet');
+
+function reloadArchivedItems() {
+    archivedItemsSheet.value?.reload();
+}
+
+function restoreArchivedList(list: ArchivedBoardList) {
+    send(
+        'patch',
+        boardListRoutes.unarchive(listRouteArgs(list)).url,
+        {},
+        `Could not restore “${list.name}”.`,
+        undefined,
+        reloadArchivedItems,
+    );
+}
+
+function restoreDeletedCard(card: DeletedCard) {
+    send(
+        'patch',
+        cardRoutes.restore({ board_list: card.board_list_id, card: card.id }).url,
+        {},
+        `Could not restore “${card.name}”.`,
+        undefined,
+        reloadArchivedItems,
+    );
 }
 
 const isAddingList = ref(lists.value.length === 0);
@@ -1034,6 +1086,7 @@ function deleteCard(card: Card) {
             'Could not delete the card.',
             () =>
                 toast(`Deleted “${card.name}”`, {
+                    description: 'You can restore it from Archived items.',
                     action: { label: 'Undo', onClick: () => restoreCard(card, index) },
                 }),
         ),
@@ -1175,6 +1228,7 @@ function restoreCard(card: Card, index: number) {
                         :is-archiving="isArchiving"
                         @add-list="openListComposer"
                         @archive-board="archiveBoard"
+                        @show-archived-items="showArchivedItems = true"
                         @show-members="showMembersDialog = true"
                     />
                 </div>
@@ -1347,6 +1401,15 @@ function restoreCard(card: Card, index: number) {
             :owner="owner"
             :workspace-name="workspaceName"
             @not-found="onMemberNotFound"
+        />
+
+        <ArchivedItemsSheet
+            ref="archived-items-sheet"
+            v-model:open="showArchivedItems"
+            :board-id="board.id"
+            :board-name="boardName"
+            @restore-card="restoreDeletedCard"
+            @restore-list="restoreArchivedList"
         />
 
         <p aria-live="polite" class="sr-only" role="status">{{ announcement }}</p>

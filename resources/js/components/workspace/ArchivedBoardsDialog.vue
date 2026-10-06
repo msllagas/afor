@@ -5,6 +5,7 @@ import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTi
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { formatTimeAgo } from '@/lib/relativeTime';
 import boardRoutes from '@/routes/boards';
 import workspaceRoutes from '@/routes/workspaces';
 import type { Board, Workspace } from '@/types';
@@ -18,14 +19,6 @@ type BoardAction = 'restore' | 'delete';
 const SEARCH_THRESHOLD = 5;
 const PREVIEW_LIST_CAP = 4;
 const PREVIEW_CARD_CAP = 3;
-const TIME_UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
-    ['year', 31_536_000],
-    ['month', 2_592_000],
-    ['week', 604_800],
-    ['day', 86_400],
-    ['hour', 3_600],
-    ['minute', 60],
-];
 
 const props = defineProps<{
     workspace: Workspace;
@@ -40,7 +33,6 @@ const open = defineModel<boolean>('open', { default: false });
 const page = usePage();
 const archivedBoardsRequest = useHttp();
 const boardRequest = useHttp();
-const relativeTime = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' });
 
 const archivedBoards = ref<Board[] | null>(null);
 const hasLoadFailed = ref(false);
@@ -81,11 +73,7 @@ function formatArchivedAt(board: Board) {
         return `Archived${byline}`;
     }
 
-    const seconds = (Date.parse(board.archived_at) - Date.now()) / 1000;
-    const [unit, size] = TIME_UNITS.find(([, unitSize]) => Math.abs(seconds) >= unitSize) ?? [];
-    const when = unit && size ? relativeTime.format(Math.round(seconds / size), unit) : 'just now';
-
-    return `Archived ${when}${byline}`;
+    return `Archived ${formatTimeAgo(board.archived_at)}${byline}`;
 }
 
 function describeContents(board: Board) {

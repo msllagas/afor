@@ -19,6 +19,7 @@ beforeEach(function () {
     $this->archivedBoard = Board::factory()->for($this->workspace)->withMembers($this->member)->archived()->create();
     $this->boardList = BoardList::factory()->for($this->board)->create(['name' => 'Doing']);
     $this->otherList = BoardList::factory()->for($this->board)->create();
+    $this->archivedList = BoardList::factory()->for($this->board)->archived()->create();
     $this->card = Card::factory()->for($this->boardList)->create(['name' => 'Ship it']);
 
     $this->actingAs($this->member)
@@ -27,7 +28,7 @@ beforeEach(function () {
 });
 
 /**
- * Everything the board page, card dialog and archived boards dialog can request.
+ * Everything the board page, card dialog, archived items and archived boards dialog can request.
  *
  * @return array<string, Closure(): array{0: string, 1: string, 2?: array<string, mixed>}>
  */
@@ -49,10 +50,10 @@ dataset('workspace requests', [
     'rename a list' => fn () => ['patch', route('boards.board-lists.update', [$this->board, $this->boardList]), [
         'name' => 'Hijacked',
     ]],
-    'archive a list' => fn () => ['patch', route('boards.board-lists.update', [$this->board, $this->boardList]), [
-        'is_archived' => true,
-    ]],
-    'reorder cards' => fn () => ['patch', route('board-lists.cards.reorder', $this->boardList), [
+    'archive a list'      => fn () => ['patch', route('boards.board-lists.archive', [$this->board, $this->boardList])],
+    'restore a list'      => fn () => ['patch', route('boards.board-lists.unarchive', [$this->board, $this->archivedList])],
+    'see archived items'  => fn () => ['get', route('boards.archived-items', $this->board)],
+    'reorder cards'       => fn () => ['patch', route('board-lists.cards.reorder', $this->boardList), [
         'cards' => [['id' => $this->card->id, 'order' => 5]],
     ]],
     'add a card'    => fn () => ['post', route('board-lists.cards.store', $this->boardList), ['name' => 'New card']],
