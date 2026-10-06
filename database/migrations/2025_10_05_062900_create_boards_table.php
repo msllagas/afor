@@ -31,7 +31,8 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->index(['workspace_id', 'archived_at', 'archived_by']);
+            $table->index(['workspace_id', 'archived_at']);
+            $table->index('archived_by');
         });
     }
 

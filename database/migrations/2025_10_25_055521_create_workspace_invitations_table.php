@@ -14,10 +14,9 @@ return new class extends Migration
     {
         Schema::create('workspace_invitations', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->string('token')->unique()->index();
+            $table->string('token')->unique();
 
             $table->foreignIdFor(Workspace::class)
-                ->index()
                 ->constrained()
                 ->cascadeOnDelete();
 
@@ -27,6 +26,7 @@ return new class extends Migration
                 ->cascadeOnDelete();
 
             $table->unique(['workspace_id', 'token', 'invited_by'], 'unique_workspace_invitation');
+            $table->index('invited_by');
 
             $table->timestamps();
         });

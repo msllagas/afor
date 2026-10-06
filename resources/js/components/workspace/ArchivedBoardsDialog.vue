@@ -81,7 +81,7 @@ function formatArchivedAt(board: Board) {
         return `Archived${byline}`;
     }
 
-    const seconds = board.archived_at - Date.now() / 1000;
+    const seconds = (Date.parse(board.archived_at) - Date.now()) / 1000;
     const [unit, size] = TIME_UNITS.find(([, unitSize]) => Math.abs(seconds) >= unitSize) ?? [];
     const when = unit && size ? relativeTime.format(Math.round(seconds / size), unit) : 'just now';
 

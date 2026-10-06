@@ -23,7 +23,7 @@ export interface Board {
     board_lists: BoardList[];
     is_favorited?: boolean;
     created_at: string;
-    archived_at?: number | null;
+    archived_at?: string | null;
     archiver?: { id: string; name: string } | null;
 }
 

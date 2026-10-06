@@ -22,6 +22,7 @@ return new class extends Migration
 
             // Prevent duplicate users in a workspace
             $table->unique(['workspace_id', 'user_id']);
+            $table->index('user_id');
             $table->timestamps();
         });
     }

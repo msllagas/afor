@@ -28,6 +28,7 @@ return new class extends Migration
 
             $table->timestamps();
             $table->index(['fileable_type', 'fileable_id', 'collection']);
+            $table->index('uploaded_by');
         });
     }
 

@@ -68,6 +68,33 @@ test('archived boards are listed most recently archived first with their archive
         ->assertJsonPath('1.id', $olderBoard->id);
 });
 
+test('boards stay archived after the member who archived them deletes their account', function () {
+    $archiver = User::factory()->create();
+    $board = Board::factory()->for($this->workspace)->archived($archiver)->create();
+
+    $archiver->delete();
+
+    $this->actingAs($this->user)
+        ->getJson(route('workspaces.boards.archived', $this->workspace))
+        ->assertOk()
+        ->assertJsonCount(1)
+        ->assertJsonPath('0.id', $board->id)
+        ->assertJsonPath('0.archiver', null);
+});
+
+test('the owner can delete an archived board whose archiver deleted their account', function () {
+    $archiver = User::factory()->create();
+    $board = Board::factory()->for($this->workspace)->archived($archiver)->create();
+
+    $archiver->delete();
+
+    $this->actingAs($this->user)
+        ->deleteJson(route('boards.destroy', $board))
+        ->assertNoContent();
+
+    $this->assertModelMissing($board);
+});
+
 test('archived boards are previewed with their active lists and the user star', function () {
     $board = Board::factory()->for($this->workspace)->archived($this->user)->create();
     $activeList = BoardList::factory()->for($board)->create(['color' => 'angel']);

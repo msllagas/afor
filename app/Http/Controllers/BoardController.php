@@ -100,7 +100,7 @@ class BoardController extends Controller
         Gate::authorize('delete', $board);
 
         // for now, only allow force deletion of archived boards
-        if (!($board->archived_by && $board->archived_at)) {
+        if (!$board->isArchived()) {
             // if trash bins have been implemented, that's when soft deletion can be done, but for now
             // we'll just return errors
             return response()->json([

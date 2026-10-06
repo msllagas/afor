@@ -24,7 +24,6 @@ use Illuminate\Support\Facades\Storage;
  * @property string $owner_id
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- * @property string|null $deleted_at
  * @property-read Collection<int, Board> $boards
  * @property-read int|null $boards_count
  * @property-read mixed $logo
@@ -38,7 +37,6 @@ use Illuminate\Support\Facades\Storage;
  * @method static Builder<static>|Workspace newQuery()
  * @method static Builder<static>|Workspace query()
  * @method static Builder<static>|Workspace whereCreatedAt($value)
- * @method static Builder<static>|Workspace whereDeletedAt($value)
  * @method static Builder<static>|Workspace whereDescription($value)
  * @method static Builder<static>|Workspace whereId($value)
  * @method static Builder<static>|Workspace whereName($value)

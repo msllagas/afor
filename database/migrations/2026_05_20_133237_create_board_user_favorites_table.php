@@ -20,6 +20,7 @@ return new class extends Migration
             $table->timestamp('created_at')->useCurrent();
 
             $table->primary(['user_id', 'board_id']);
+            $table->index('board_id');
         });
     }
 

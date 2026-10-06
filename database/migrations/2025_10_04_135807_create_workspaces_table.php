@@ -22,7 +22,8 @@ return new class extends Migration
                 ->cascadeOnDelete();
 
             $table->timestamps();
-            $table->softDeletes();
+
+            $table->index('owner_id');
         });
 
         Schema::table('users', function (Blueprint $table) {

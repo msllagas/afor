@@ -20,7 +20,7 @@ use Illuminate\Support\Carbon;
  * @property string $name
  * @property string $workspace_id
  * @property string|null $archived_by
- * @property int|null $archived_at
+ * @property Carbon|null $archived_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property Carbon|null $deleted_at
@@ -62,21 +62,27 @@ class Board extends Model
     protected $guarded = ['id'];
 
     protected $casts = [
-        'archived_at' => 'timestamp',
+        'archived_at' => 'datetime',
     ];
 
+    /**
+     * Boards that were archived. Only archived_at decides: archived_by is cleared when the archiver deletes their account.
+     */
     #[Scope]
     public function archived(Builder $query): Builder
     {
-        return $query->whereNotNull('archived_at')
-            ->whereNotNull('archived_by');
+        return $query->whereNotNull('archived_at');
     }
 
     #[Scope]
     public function unarchived(Builder $query): Builder
     {
-        return $query->whereNull('archived_at')
-            ->whereNull('archived_by');
+        return $query->whereNull('archived_at');
+    }
+
+    public function isArchived(): bool
+    {
+        return $this->archived_at !== null;
     }
 
     /**
