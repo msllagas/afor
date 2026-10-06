@@ -22,8 +22,14 @@ trait RendersBoardPage
         $canManageMembers = $user->can('manageMembers', $board);
 
         return Inertia::render('boards/Show', [
+            // Card descriptions stay off the board, which only flags them; the open card brings its own.
             'board' => fn () => $board->load([
-                'boardLists' => fn ($query) => $query->with('cards')->active(),
+                'boardLists' => fn ($query) => $query->active()->with([
+                    'cards' => fn ($query) => $query
+                        ->select('id', 'name', 'order', 'board_list_id')
+                        ->selectRaw('description is not null as has_description')
+                        ->withCasts(['has_description' => 'boolean']),
+                ]),
             ]),
             'selectedCard' => $selectedCard,
             'colors'       => Inertia::once(fn () => BoardListColor::cases()),

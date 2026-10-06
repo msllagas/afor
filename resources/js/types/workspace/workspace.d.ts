@@ -1,7 +1,9 @@
 export interface Card {
     id: string;
     name: string;
+    /** Only the open card carries its description; the board's cards just flag that they have one. */
     description?: string | null;
+    has_description?: boolean;
     order: number;
     board_list_id: string;
 }

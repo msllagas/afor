@@ -3,6 +3,7 @@ import CardActionsMenu from '@/components/board/board-list/card/CardActionsMenu.
 import Tiptap from '@/components/Tiptap.vue';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
+import { Skeleton } from '@/components/ui/skeleton';
 import { X } from 'lucide-vue-next';
 import { useTextAreaAutoResize } from '@/composables/useTextAreaAutoResize';
 import type { BoardList, Card } from '@/types';
@@ -10,6 +11,8 @@ import { nextTick, ref, useTemplateRef, watch } from 'vue';
 
 const props = defineProps<{
     card: Card | null;
+    /** The open card's description, which the board's cards leave out. Undefined while it loads. */
+    description?: string | null;
     boardLists: BoardList[];
     boardName: string;
 }>();
@@ -26,6 +29,7 @@ const { autoResize } = useTextAreaAutoResize();
 
 // Keeps the last card on screen while the dialog animates closed.
 const displayedCard = ref<Card | null>(props.card);
+const displayedDescription = ref(props.description);
 const draftName = ref(props.card?.name ?? '');
 const isConfirmingDelete = ref(false);
 const nameInput = useTemplateRef<HTMLTextAreaElement>('name-input');
@@ -55,6 +59,15 @@ watch(
     { immediate: true },
 );
 
+watch(
+    () => props.description,
+    (description) => {
+        if (props.card) {
+            displayedDescription.value = description;
+        }
+    },
+);
+
 const listName = (card: Card) => props.boardLists.find((list) => list.id === card.board_list_id)?.name ?? 'a list';
 
 function saveName(card: Card) {
@@ -76,7 +89,7 @@ function cancelName(card: Card) {
 }
 
 function saveDescription(card: Card, description: string) {
-    if (description !== (card.description ?? '')) {
+    if (description !== (displayedDescription.value ?? '')) {
         emit('describe', card, description);
     }
 }
@@ -176,11 +189,22 @@ function onOpenChange(isOpen: boolean) {
                 <div class="min-h-0 flex-1 space-y-2 overflow-y-auto px-5 py-5 sm:px-6">
                     <h3 class="text-sm font-medium">Description</h3>
                     <div
+                        v-if="displayedDescription === undefined"
+                        aria-busy="true"
+                        aria-label="Loading description"
+                        class="min-h-42 space-y-2.5 rounded-xl border px-4 py-3.5"
+                    >
+                        <Skeleton class="h-4 w-3/4" />
+                        <Skeleton class="h-4 w-1/2" />
+                        <Skeleton class="h-4 w-2/3" />
+                    </div>
+                    <div
+                        v-else
                         class="w-full overflow-clip rounded-xl border border-input bg-muted/30 shadow-xs transition-[color,box-shadow] focus-within:border-primary/60 focus-within:ring-[3px] focus-within:ring-primary/20 dark:bg-input/20"
                     >
                         <Tiptap
                             :key="displayedCard.id"
-                            :model-value="displayedCard.description ?? ''"
+                            :model-value="displayedDescription ?? ''"
                             name="description"
                             @blur="saveDescription(displayedCard, $event)"
                         />

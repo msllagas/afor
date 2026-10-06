@@ -52,8 +52,6 @@ watch(
     },
 );
 
-const descriptionText = (card: Card) => card.description?.replace(/<[^>]*>/g, '').trim() ?? '';
-
 async function startEditingName() {
     draftName.value = props.boardList.name;
     isEditingName.value = true;
@@ -226,7 +224,7 @@ function onRequestFailed(response?: { status: number }) {
                         >
                             <span class="block break-words">{{ element.name }}</span>
                             <span
-                                v-if="descriptionText(element)"
+                                v-if="element.has_description"
                                 class="mt-1.5 flex items-center gap-1 text-xs text-muted-foreground"
                             >
                                 <AlignLeft aria-hidden="true" class="size-3.5" />

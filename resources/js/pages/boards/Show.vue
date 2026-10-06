@@ -24,7 +24,7 @@ import type {
     SortableChangeEvent,
     WorkspaceMember,
 } from '@/types';
-import type { RequestPayload } from '@inertiajs/core';
+import type { CancelToken, RequestPayload } from '@inertiajs/core';
 import { Form, Head, Link, router, useHttp, usePage } from '@inertiajs/vue3';
 import { onClickOutside, useMediaQuery } from '@vueuse/core';
 import { Plus, Star, X } from 'lucide-vue-next';
@@ -200,7 +200,13 @@ function rollback(message: string, status?: number) {
     }
 
     toast.error(message);
-    router.reload({ only: ['board'], async: true, onHttpException: () => false, onNetworkError: () => false });
+    // The open card's description is reloaded too, in case it was the change that failed.
+    router.reload({
+        only: ['board', 'selectedCard'],
+        async: true,
+        onHttpException: () => false,
+        onNetworkError: () => false,
+    });
 }
 
 function onHttpFailure(response: { status: number }, showFailure: () => void) {
@@ -803,6 +809,7 @@ function onCardRequestFailed(message: string, status?: number) {
 |--------------------------------------------------------------------------
 | The open card lives in the URL so it can be shared, but opening and
 | closing it are client-side visits: the board already has the card.
+| Only its description is fetched, since the board leaves those out.
 */
 
 const activeCard = computed<Card | null>(() => {
@@ -823,6 +830,9 @@ const activeCard = computed<Card | null>(() => {
     return props.selectedCard ?? null;
 });
 
+// Undefined until the open card's description has loaded.
+const activeCardDescription = computed(() => props.selectedCard?.description);
+
 // Stays true after the first card opens so the dialog can animate closed.
 const hasOpenedCard = ref(!!props.selectedCard);
 
@@ -841,12 +851,43 @@ function cardUrl(card: Pick<Card, 'id' | 'board_list_id'>) {
 }
 
 function showCard(card: Card | null, url: string, onFinish?: () => void) {
+    // A card that stays open keeps the description it already loaded.
+    const description = card && card.id === props.selectedCard?.id ? props.selectedCard.description : undefined;
+
     router.replace({
         url,
-        props: (currentProps) => ({ ...currentProps, selectedCard: card ? { ...card } : null }),
+        props: (currentProps) => ({ ...currentProps, selectedCard: card ? { ...card, description } : null }),
         preserveScroll: true,
         preserveState: true,
         onFinish,
+    });
+}
+
+let descriptionRequest: CancelToken | null = null;
+
+/** Fetch the open card's description. A failure closes the card, since it can't be edited without it. */
+function loadActiveCardDescription() {
+    let request: CancelToken | null = null;
+
+    router.reload({
+        only: ['selectedCard'],
+        async: true,
+        onCancelToken: (token) => (request = descriptionRequest = token),
+        onHttpException: (response) => {
+            closeCard(() => onCardRequestFailed('Could not open the card.', response.status));
+
+            return false;
+        },
+        onNetworkError: () => {
+            closeCard(() => toast.error('Could not open the card. Check your connection.'));
+
+            return false;
+        },
+        onFinish: () => {
+            if (descriptionRequest === request) {
+                descriptionRequest = null;
+            }
+        },
     });
 }
 
@@ -856,10 +897,17 @@ function openCard(card: Card) {
         return;
     }
 
-    showCard(card, cardUrl(card));
+    descriptionRequest?.cancel();
+    showCard(card, cardUrl(card), () => {
+        if (activeCardDescription.value === undefined) {
+            loadActiveCardDescription();
+        }
+    });
 }
 
 function closeCard(onFinish?: () => void) {
+    // A description still loading would reopen the card when it arrives.
+    descriptionRequest?.cancel();
     showCard(null, boardRoutes.show(props.board.id).url, onFinish);
 }
 
@@ -907,7 +955,19 @@ function renameCard(card: Card, name: string) {
 }
 
 function describeCard(card: Card, description: string) {
-    card.description = description;
+    card.has_description = description.replace(/<[^>]*>/g, '').trim() !== '';
+    router.replace({
+        props: (currentProps) => {
+            const selectedCard = currentProps.selectedCard as Card | null | undefined;
+
+            return {
+                ...currentProps,
+                selectedCard: selectedCard?.id === card.id ? { ...selectedCard, description } : selectedCard,
+            };
+        },
+        preserveScroll: true,
+        preserveState: true,
+    });
     send(
         'patch',
         cardRoutes.update({ board_list: card.board_list_id, card: card.id }).url,
@@ -932,6 +992,9 @@ function moveCard(card: Card, boardListId: string) {
     toList.cards.push(card);
     announce(`Moved card ${card.name} to ${toList.name}.`);
 
+    // A description still loading is asked for at the old address, so it is fetched again once the card has moved.
+    descriptionRequest?.cancel();
+
     // Point the URL at the card's new list first: the server redirects back to it after saving.
     showCard(card, cardUrl(card), () =>
         send(
@@ -939,6 +1002,11 @@ function moveCard(card: Card, boardListId: string) {
             cardRoutes.update({ board_list: fromList.id, card: card.id }).url,
             { board_list_id: toList.id, order },
             'Could not move the card.',
+            () => {
+                if (activeCard.value?.id === card.id && activeCardDescription.value === undefined) {
+                    loadActiveCardDescription();
+                }
+            },
         ),
     );
 }
@@ -1255,6 +1323,7 @@ function restoreCard(card: Card, index: number) {
             :board-lists="lists"
             :board-name="boardName"
             :card="activeCard"
+            :description="activeCardDescription"
             @close="closeCard()"
             @delete="deleteCard"
             @describe="describeCard"

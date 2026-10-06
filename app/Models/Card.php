@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Database\Factories\CardFactory;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -50,5 +51,16 @@ class Card extends Model
     public function boardList(): BelongsTo
     {
         return $this->belongsTo(BoardList::class);
+    }
+
+    /**
+     * A description with no text, such as the editor's empty paragraph, is stored as null,
+     * so whether a card has a description can be read without loading it.
+     */
+    public function description(): Attribute
+    {
+        return Attribute::make(
+            set: fn (?string $value) => blank(strip_tags((string) $value)) ? null : $value,
+        );
     }
 }

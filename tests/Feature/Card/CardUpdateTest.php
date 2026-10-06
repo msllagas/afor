@@ -120,3 +120,19 @@ test('cards cannot be moved to a list on another board', function () {
         ->assertJsonValidationErrors(['board_list_id' => 'The selected board list id is invalid.']);
     expect($card->refresh()->board_list_id)->toBe($boardList->id);
 });
+
+test('a description with no text is saved as no description', function (string $description) {
+    $user = User::factory()->create();
+    $boardList = BoardList::factory()->for(Board::factory()->for(Workspace::factory()->forUser($user)))->create();
+    $card = Card::factory()->for($boardList)->create(['description' => '<p>Pack the tent</p>']);
+
+    $response = $this->actingAs($user)->patch(route('board-lists.cards.update', [$boardList, $card]), [
+        'description' => $description,
+    ]);
+
+    $response->assertRedirect();
+    expect($card->refresh()->description)->toBeNull();
+})->with([
+    'an empty paragraph'    => '<p></p>',
+    'a paragraph of spaces' => '<p>   </p>',
+]);
