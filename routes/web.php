@@ -4,6 +4,7 @@ use App\Http\Controllers\BoardController;
 use App\Http\Controllers\BoardListController;
 use App\Http\Controllers\BoardMemberController;
 use App\Http\Controllers\CardController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\WorkspaceController;
 use App\Http\Controllers\WorkspaceInvitationController;
 use Illuminate\Support\Facades\Route;
@@ -35,7 +36,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     | Dashboard
     |--------------------------------------------------------------------------
     */
-    Route::get('dashboard', fn () => Inertia::render('Dashboard'))
+    Route::get('dashboard', DashboardController::class)
         ->name('dashboard');
 
     /*
@@ -150,6 +151,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::resource('board-lists.cards', CardController::class)
             ->only(['store', 'show', 'update', 'destroy']);
+
+        Route::patch('board-lists/{board_list}/cards/{card}/restore', [CardController::class, 'restore'])
+            ->name('board-lists.cards.restore')
+            ->withTrashed();
     });
 
 });

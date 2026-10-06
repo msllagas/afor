@@ -945,6 +945,7 @@ function moveCard(card: Card, boardListId: string) {
 
 function deleteCard(card: Card) {
     const list = lists.value.find(({ id }) => id === card.board_list_id);
+    const index = list?.cards.indexOf(card) ?? -1;
 
     if (list) {
         list.cards = list.cards.filter(({ id }) => id !== card.id);
@@ -957,9 +958,30 @@ function deleteCard(card: Card) {
             cardRoutes.destroy({ board_list: card.board_list_id, card: card.id }).url,
             {},
             'Could not delete the card.',
-            () => toast.success(`Deleted “${card.name}”`),
+            () =>
+                toast(`Deleted “${card.name}”`, {
+                    action: { label: 'Undo', onClick: () => restoreCard(card, index) },
+                }),
         ),
     );
+}
+
+/** Put a deleted card back where it was. If its list was archived meanwhile, it returns with that list. */
+function restoreCard(card: Card, index: number) {
+    const list = lists.value.find(({ id }) => id === card.board_list_id);
+
+    if (list?.cards.some(({ id }) => id === card.id)) {
+        return;
+    }
+
+    list?.cards.splice(index === -1 ? list.cards.length : Math.min(index, list.cards.length), 0, card);
+    send(
+        'patch',
+        cardRoutes.restore({ board_list: card.board_list_id, card: card.id }).url,
+        {},
+        'Could not restore the card.',
+    );
+    announce(`Restored card ${card.name}.`);
 }
 </script>
 

@@ -153,7 +153,7 @@ function onOpenChange(isOpen: boolean) {
                     class="flex flex-wrap items-center gap-2 border-b bg-destructive/10 px-5 py-3 sm:px-6"
                     role="alert"
                 >
-                    <p class="mr-auto text-sm">Delete this card? This can't be undone.</p>
+                    <p class="mr-auto text-sm">Delete this card? You can undo it right after.</p>
                     <Button
                         ref="cancel-delete-button"
                         class="cursor-pointer"

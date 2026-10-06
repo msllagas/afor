@@ -62,7 +62,8 @@ dataset('workspace requests', [
         'board_list_id' => $this->otherList->id,
         'order'         => 0,
     ]],
-    'delete a card' => fn () => ['delete', route('board-lists.cards.destroy', [$this->boardList, $this->card])],
+    'delete a card'  => fn () => ['delete', route('board-lists.cards.destroy', [$this->boardList, $this->card])],
+    'restore a card' => fn () => ['patch', route('board-lists.cards.restore', [$this->boardList, $this->card])],
 ]);
 
 test('members who left a workspace get not found for its boards, lists and cards', function (Closure $request) {

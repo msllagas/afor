@@ -20,7 +20,11 @@ createInertiaApp({
             .use(plugin)
             .mount(el);
     },
-    progress: false,
+    // Page visits only: the board's background saves are async and don't show it.
+    progress: {
+        delay: 250,
+        color: 'var(--primary)',
+    },
 });
 
 // This will set light / dark mode on page load...

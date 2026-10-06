@@ -43,4 +43,12 @@ class CardPolicy
     {
         return $this->onBoard($user, $card->boardList->board);
     }
+
+    /**
+     * Determine whether the user can bring back a deleted card.
+     */
+    public function restore(User $user, Card $card): Response
+    {
+        return $this->onBoard($user, $card->boardList->board);
+    }
 }

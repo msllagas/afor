@@ -54,7 +54,7 @@ test('pages outside a workspace use the last workspace as the current workspace'
     $workspace = Workspace::factory()->forUser($user)->create();
     $user->forceFill(['last_workspace_id' => $workspace->id])->save();
 
-    $response = $this->actingAs($user)->get(route('dashboard'));
+    $response = $this->actingAs($user)->get(route('profile.edit'));
 
     $response->assertInertia(fn (Assert $page) => $page->where('currentWorkspaceId', $workspace->id));
 });

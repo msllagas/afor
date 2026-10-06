@@ -19,18 +19,13 @@ import workspacesRoutes from '@/routes/workspaces';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
 import { useEventListener } from '@vueuse/core';
-import { House, Kanban, LayoutGrid, Settings, SquareKanban, Users } from 'lucide-vue-next';
+import { House, Kanban, Settings, SquareKanban, Users } from 'lucide-vue-next';
 import { computed, nextTick, ref, watch } from 'vue';
 import AppLogo from './AppLogo.vue';
 
 const STARRED_LIMIT = 8;
 
 const mainNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        href: dashboard(),
-        icon: LayoutGrid,
-    },
     {
         title: 'Boards',
         href: boards.index(),

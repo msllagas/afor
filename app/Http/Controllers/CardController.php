@@ -69,6 +69,18 @@ class CardController extends Controller
     }
 
     /**
+     * Bring back a deleted card, such as from the undo offered right after deleting it.
+     */
+    public function restore(BoardList $boardList, Card $card): RedirectResponse
+    {
+        Gate::authorize('restore', $card);
+
+        $card->restore();
+
+        return back();
+    }
+
+    /**
      * Save the order of the list's cards. Cards of other lists in the payload are left alone.
      */
     public function reorder(ReorderCardsRequest $request, BoardList $boardList): RedirectResponse
