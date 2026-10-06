@@ -21,7 +21,7 @@ class WorkspaceResource extends JsonResource
             'name'         => $this->name,
             'description'  => $this->description ?? null,
             'boards'       => $this->whenLoaded('boards', fn () => $this->boards, []),
-            'logo'         => $this->whenLoaded('logoFile', fn () => $this->logo, []),
+            'logo'         => $this->whenLoaded('logoFile', fn () => $this->logo),
         ];
     }
 }

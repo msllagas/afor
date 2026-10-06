@@ -7,6 +7,7 @@ test('guests can view the public pages', function (string $routeName, string $co
 
     $response->assertInertia(fn (Assert $page) => $page->component($component));
 })->with([
+    'home'           => ['home', 'Welcome'],
     'about'          => ['about', 'About'],
     'privacy policy' => ['privacy-policy', 'PrivacyPolicy'],
     'terms of use'   => ['terms-of-use', 'TermsOfUse'],

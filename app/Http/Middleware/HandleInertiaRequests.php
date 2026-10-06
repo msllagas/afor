@@ -5,7 +5,6 @@ namespace App\Http\Middleware;
 use App\Http\Resources\UserResource;
 use App\Http\Resources\WorkspaceResource;
 use App\Models\Board;
-use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -39,15 +38,12 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
-
         $user = $request->user();
 
         return [
             ...parent::share($request),
             'name'   => config('app.name'),
             'appUrl' => config('app.url'),
-            'quote'  => ['message' => trim($message), 'author' => trim($author)],
             'auth'   => [
                 'user' => $user ? new UserResource($user->loadMissing('avatarFile')) : null,
             ],

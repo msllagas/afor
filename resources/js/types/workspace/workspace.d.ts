@@ -41,7 +41,7 @@ export interface Workspace {
     name: string;
     description?: string;
     boards: Board[];
-    logo?: string; // url path
+    logo?: string | null; // url path
 }
 
 /** A workspace and its boards that pass the boards page's search and scope. */

@@ -19,17 +19,12 @@ trait RendersBoardPage
      */
     protected function renderBoardPage(Board $board, User $user, ?Card $selectedCard = null): Response
     {
-        $board->load([
-            'boardLists' => function ($query) {
-                $query->with('cards')
-                    ->active();
-            },
-        ]);
-
         $canManageMembers = $user->can('manageMembers', $board);
 
         return Inertia::render('boards/Show', [
-            'board'        => $board,
+            'board' => fn () => $board->load([
+                'boardLists' => fn ($query) => $query->with('cards')->active(),
+            ]),
             'selectedCard' => $selectedCard,
             'colors'       => Inertia::once(fn () => BoardListColor::cases()),
             'owner'        => fn () => new WorkspaceMemberResource(
