@@ -5,12 +5,12 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import ArchivedBoardsDialog from '@/components/workspace/ArchivedBoardsDialog.vue';
+import { useBoardStar } from '@/composables/useBoardStar';
 import { useInitials } from '@/composables/useInitials';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { home, members as workspaceMembers } from '@/routes/workspaces';
-import { favorite } from '@/routes/workspaces/boards';
 import type { Board, BreadcrumbItem, Workspace, WorkspaceMember } from '@/types';
-import { Deferred, Head, Link, router, useHttp } from '@inertiajs/vue3';
+import { Deferred, Head, Link } from '@inertiajs/vue3';
 import { Archive, Check, Link as LinkIcon, Star } from 'lucide-vue-next';
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { toast } from 'vue-sonner';
@@ -35,7 +35,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 const { getInitials } = useInitials();
-const http = useHttp();
+const { toggleStar } = useBoardStar();
 
 const boards = ref<Board[]>(props.boards ?? []);
 const isInviteLinkCopied = ref(false);
@@ -91,20 +91,7 @@ function handleUnarchiveBoard(board: Board) {
 
 function handleStarBoard(board: Board, isStarred: boolean) {
     board.is_favorited = isStarred;
-
-    const rollback = () => {
-        toast.error('Could not update the star. Try again.');
-        board.is_favorited = !isStarred;
-    };
-
-    http.post(favorite({ workspace: props.workspace.id, board: board.id }).url, {
-        // Refresh the sidebar's Starred section; if that fails it catches up on the next visit.
-        onSuccess: () =>
-            router.reload({ only: ['starredBoards'], onHttpException: () => false, onNetworkError: () => false }),
-        onError: rollback,
-        onHttpException: rollback,
-        onNetworkError: rollback,
-    }).catch(() => {});
+    toggleStar(board, () => (board.is_favorited = !isStarred));
 }
 
 onBeforeUnmount(() => clearTimeout(copiedResetTimer));

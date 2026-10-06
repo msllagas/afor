@@ -9,15 +9,16 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import WorkspaceAvatar from '@/components/workspace/WorkspaceAvatar.vue';
+import { useBoardStar } from '@/composables/useBoardStar';
 import { useInitials } from '@/composables/useInitials';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { reloadQuietly } from '@/lib/reloadQuietly';
 import { cn } from '@/lib/utils';
 import cardRoutes from '@/routes/board-lists/cards';
 import boardRoutes from '@/routes/boards';
 import boardListRoutes from '@/routes/boards/board-lists';
 import { dashboard } from '@/routes';
 import { home } from '@/routes/workspaces';
-import { favorite } from '@/routes/workspaces/boards';
 import type {
     ArchivedBoardList,
     Board,
@@ -29,7 +30,7 @@ import type {
     WorkspaceMember,
 } from '@/types';
 import type { CancelToken, RequestPayload } from '@inertiajs/core';
-import { Form, Head, Link, router, useHttp, usePage } from '@inertiajs/vue3';
+import { Form, Head, Link, router, usePage } from '@inertiajs/vue3';
 import { onClickOutside, useMediaQuery } from '@vueuse/core';
 import { Plus, Star, X } from 'lucide-vue-next';
 import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, provide, ref, useTemplateRef, watch } from 'vue';
@@ -210,12 +211,7 @@ function rollback(message: string, status?: number) {
 
     toast.error(message);
     // The open card's description is reloaded too, in case it was the change that failed.
-    router.reload({
-        only: ['board', 'selectedCard'],
-        async: true,
-        onHttpException: () => false,
-        onNetworkError: () => false,
-    });
+    reloadQuietly(['board', 'selectedCard']);
 }
 
 function onHttpFailure(response: { status: number }, showFailure: () => void) {
@@ -321,14 +317,14 @@ function saveName(shouldRestoreFocus = false) {
 |--------------------------------------------------------------------------
 */
 
-const starHttp = useHttp();
+const { isStarring, toggleStar: toggleBoardStar } = useBoardStar();
 const isStarred = ref(false);
 const isArchiving = ref(false);
 
 watch(
     () => page.props.starredBoards,
     (starredBoards) => {
-        if (!starHttp.processing) {
+        if (!isStarring.value) {
             isStarred.value = starredBoards.some(({ id }) => id === props.board.id);
         }
     },
@@ -336,33 +332,13 @@ watch(
 );
 
 function toggleStar() {
-    if (starHttp.processing) {
+    if (isStarring.value) {
         return;
     }
 
     const shouldStar = !isStarred.value;
     isStarred.value = shouldStar;
-
-    const undoStar = () => {
-        isStarred.value = !shouldStar;
-        toast.error('Could not update the star. Try again.');
-    };
-
-    starHttp
-        .post(favorite({ workspace: props.board.workspace_id, board: props.board.id }).url, {
-            // Refresh the sidebar's Starred section; if that fails it catches up on the next visit.
-            onSuccess: () =>
-                router.reload({
-                    only: ['starredBoards'],
-                    async: true,
-                    onHttpException: () => false,
-                    onNetworkError: () => false,
-                }),
-            onError: undoStar,
-            onHttpException: (response) => onHttpFailure(response, undoStar),
-            onNetworkError: undoStar,
-        })
-        .catch(() => {});
+    toggleBoardStar(props.board, () => (isStarred.value = !shouldStar), onHttpFailure);
 }
 
 function archiveBoard() {
@@ -430,12 +406,7 @@ const peopleLabel = computed(() => {
 function onMemberNotFound(failureMessage: string) {
     confirmBoardAccess(() => {
         toast.error(failureMessage, { description: 'The member list changed. It has been refreshed.' });
-        router.reload({
-            only: ['members', 'addableMembers'],
-            async: true,
-            onHttpException: () => false,
-            onNetworkError: () => false,
-        });
+        reloadQuietly(['members', 'addableMembers']);
     });
 }
 

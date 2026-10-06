@@ -5,9 +5,9 @@ import BoardsToolbar from '@/components/board/BoardsToolbar.vue';
 import WorkspaceBoardsSection from '@/components/board/WorkspaceBoardsSection.vue';
 import WorkspaceIndex from '@/components/board/WorkspaceIndex.vue';
 import { Button } from '@/components/ui/button';
+import { useBoardStar } from '@/composables/useBoardStar';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { index } from '@/routes/boards';
-import { favorite } from '@/routes/workspaces/boards';
 import type {
     Board,
     BoardsScope,
@@ -17,11 +17,10 @@ import type {
     WorkspaceBoardsGroup,
     WorkspaceBoardsMatch,
 } from '@/types';
-import { Head, router, useHttp, usePage } from '@inertiajs/vue3';
+import { Head, router, usePage } from '@inertiajs/vue3';
 import { refDebounced, useDebounceFn, useElementSize, useMediaQuery } from '@vueuse/core';
 import { Star } from 'lucide-vue-next';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue';
-import { toast } from 'vue-sonner';
 
 const VIEW_STORAGE_KEY = 'boards-index:view';
 const OPEN_SECTIONS_STORAGE_KEY = 'boards-index:open-sections';
@@ -47,7 +46,7 @@ const props = defineProps<{
 }>();
 
 const page = usePage();
-const http = useHttp();
+const { toggleStar } = useBoardStar();
 const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
 
 const initialParams = new URLSearchParams(page.url.split('?')[1] ?? '');
@@ -362,20 +361,7 @@ onBeforeUnmount(() => sectionObserver?.disconnect());
 
 function handleStarBoard(board: Board, isStarred: boolean) {
     board.is_favorited = isStarred;
-
-    const rollback = () => {
-        toast.error('Could not update the star. Try again.');
-        board.is_favorited = !isStarred;
-    };
-
-    http.post(favorite({ workspace: board.workspace_id, board: board.id }).url, {
-        // Refresh the sidebar's Starred section; if that fails it catches up on the next visit.
-        onSuccess: () =>
-            router.reload({ only: ['starredBoards'], onHttpException: () => false, onNetworkError: () => false }),
-        onError: rollback,
-        onHttpException: rollback,
-        onNetworkError: rollback,
-    }).catch(() => {});
+    toggleStar(board, () => (board.is_favorited = !isStarred));
 }
 </script>
 
