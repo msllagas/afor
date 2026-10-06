@@ -3,8 +3,10 @@
 namespace App\Providers;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Validation\Rules\File;
 use Inertia\ExceptionResponse;
 use Inertia\Inertia;
 
@@ -35,6 +37,11 @@ class AppServiceProvider extends ServiceProvider
             $this->app->register(\Laravel\Telescope\TelescopeServiceProvider::class);
             $this->app->register(TelescopeServiceProvider::class);
         }
+
+        JsonResource::withoutWrapping();
+
+        // Every upload is an avatar or a logo, so both accept the same images.
+        File::defaults(fn () => File::image()->types(['jpeg', 'jpg', 'png', 'gif', 'webp'])->max(2 * 1024));
 
         Inertia::handleExceptionsUsing(fn (ExceptionResponse $response) => $this->renderErrorPage($response));
     }

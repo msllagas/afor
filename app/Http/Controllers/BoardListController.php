@@ -7,25 +7,21 @@ use App\Http\Requests\StoreBoardListRequest;
 use App\Http\Requests\UpdateBoardListRequest;
 use App\Models\Board;
 use App\Models\BoardList;
+use App\Services\BoardListService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\DB;
 
 class BoardListController extends Controller
 {
+    public function __construct(
+        private readonly BoardListService $boardListService,
+    ) {}
+
     /**
      * Store a newly created resource in storage.
      */
     public function store(StoreBoardListRequest $request, Board $board): RedirectResponse
     {
-        $nextOrder = $board->boardLists()->max('order');
-        $nextOrder = is_null($nextOrder) ? 0 : $nextOrder + 1;
-        BoardList::query()->create(array_merge(
-            $request->validated(),
-            [
-                'board_id' => $board->id,
-                'order'    => $nextOrder,
-            ]
-        ));
+        $this->boardListService->create($board, $request->validated());
 
         return back();
     }
@@ -45,13 +41,7 @@ class BoardListController extends Controller
      */
     public function reorder(ReorderBoardListsRequest $request, Board $board): RedirectResponse
     {
-        DB::transaction(function () use ($request, $board) {
-            foreach ($request->validated('boardLists') as $boardList) {
-                BoardList::query()->where('id', $boardList['id'])
-                    ->where('board_id', $board->id)
-                    ->update(['order' => $boardList['order']]);
-            }
-        });
+        $this->boardListService->reorder($board, $request->validated('boardLists'));
 
         return back();
     }

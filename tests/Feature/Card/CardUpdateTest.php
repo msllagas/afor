@@ -136,3 +136,14 @@ test('a description with no text is saved as no description', function (string $
     'an empty paragraph'    => '<p></p>',
     'a paragraph of spaces' => '<p>   </p>',
 ]);
+
+test('cards cannot be moved to a negative position', function () {
+    $user = User::factory()->create();
+    $boardList = BoardList::factory()->for(Board::factory()->for(Workspace::factory()->forUser($user)))->create();
+    $card = Card::factory()->for($boardList)->create(['order' => 0]);
+
+    $response = $this->actingAs($user)->patchJson(route('board-lists.cards.update', [$boardList, $card]), ['order' => -1]);
+
+    $response->assertInvalid(['order']);
+    expect($card->refresh()->order)->toBe(0);
+});

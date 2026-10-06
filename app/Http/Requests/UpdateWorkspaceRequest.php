@@ -6,6 +6,7 @@ use Illuminate\Auth\Access\Response;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rules\File;
 
 class UpdateWorkspaceRequest extends FormRequest
 {
@@ -29,7 +30,7 @@ class UpdateWorkspaceRequest extends FormRequest
         return [
             'name'        => 'sometimes|required|string|max:65',
             'description' => 'sometimes|nullable|string|max:255',
-            'logo'        => 'sometimes|nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'logo'        => ['sometimes', 'nullable', File::default()],
             'remove_logo' => 'sometimes|boolean',
         ];
     }

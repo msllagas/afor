@@ -8,26 +8,12 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\WorkspaceController;
 use App\Http\Controllers\WorkspaceInvitationController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
-Route::get('/', function () {
-    return Inertia::render('Welcome');
-})->name('home');
-
-Route::get('/about', function () {
-    return Inertia::render('About');
-})->name('about');
-Route::get('/privacy-policy', function () {
-    return Inertia::render('PrivacyPolicy');
-})->name('privacy-policy');
-
-Route::get('/terms-of-use', function () {
-    return Inertia::render('TermsOfUse');
-})->name('terms-of-use');
-
-Route::get('/contact', function () {
-    return Inertia::render('Contact');
-})->name('contact');
+Route::inertia('/', 'Welcome')->name('home');
+Route::inertia('/about', 'About')->name('about');
+Route::inertia('/privacy-policy', 'PrivacyPolicy')->name('privacy-policy');
+Route::inertia('/terms-of-use', 'TermsOfUse')->name('terms-of-use');
+Route::inertia('/contact', 'Contact')->name('contact');
 
 Route::middleware(['auth', 'verified'])->group(function () {
 

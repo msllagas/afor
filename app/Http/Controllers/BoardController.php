@@ -5,13 +5,16 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Concerns\RendersBoardPage;
 use App\Http\Requests\StoreBoardsRequest;
 use App\Http\Requests\UpdateBoardsRequest;
+use App\Http\Resources\BoardResource;
 use App\Http\Resources\WorkspaceResource;
 use App\Models\Board;
 use App\Models\Workspace;
 use App\Services\BoardService;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -93,21 +96,16 @@ class BoardController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Permanently delete an archived board. Boards are archived first, so nothing is deleted in one step.
+     *
+     * @throws ValidationException when the board is not archived
      */
-    public function destroy(Board $board)
+    public function destroy(Board $board): HttpResponse
     {
         Gate::authorize('delete', $board);
 
-        // for now, only allow force deletion of archived boards
         if (!$board->isArchived()) {
-            // if trash bins have been implemented, that's when soft deletion can be done, but for now
-            // we'll just return errors
-            return response()->json([
-                'errors' => [
-                    'board' => ['Only archived boards can be deleted.'],
-                ],
-            ], 422);
+            throw ValidationException::withMessages(['board' => 'Only archived boards can be deleted.']);
         }
 
         $board->forceDelete();
@@ -124,18 +122,18 @@ class BoardController extends Controller
         return back();
     }
 
-    public function unarchive(Board $board): Board
+    public function unarchive(Board $board): BoardResource
     {
         Gate::authorize('update', $board);
 
-        return $this->boardService->unarchive($board);
+        return new BoardResource($this->boardService->unarchive($board));
     }
 
-    public function archived(Workspace $workspace): Collection
+    public function archived(Workspace $workspace): AnonymousResourceCollection
     {
         Gate::authorize('view', $workspace);
 
-        return $workspace->boards()
+        return BoardResource::collection($workspace->boards()
             ->select('id', 'name', 'workspace_id', 'created_at', 'archived_at', 'archived_by')
             ->archived()
             ->visibleTo(auth()->user())
@@ -150,13 +148,13 @@ class BoardController extends Controller
                     ->withCount('cards'),
             ])
             ->latest('archived_at')
-            ->get();
+            ->get());
     }
 
-    public function toggleFavorite(Workspace $workspace, Board $board): Board
+    public function toggleFavorite(Workspace $workspace, Board $board): BoardResource
     {
         Gate::authorize('view', $board);
 
-        return $this->boardService->toggleFavorite($board, auth()->user());
+        return new BoardResource($this->boardService->toggleFavorite($board, auth()->user()));
     }
 }

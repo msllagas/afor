@@ -56,18 +56,6 @@ test('service resets the invitation link by replacing every existing invitation'
     ]);
 });
 
-test('service refuses to let the owner leave their workspace', function () {
-    expect(fn () => $this->service->leaveWorkspace($this->workspace, $this->user))
-        ->toThrow(InvalidArgumentException::class, 'The workspace owner cannot leave it.');
-});
-
-test('service refuses to let a non-member leave the workspace', function () {
-    $outsider = User::factory()->create();
-
-    expect(fn () => $this->service->leaveWorkspace($this->workspace, $outsider))
-        ->toThrow(InvalidArgumentException::class, 'User is not a member of this workspace.');
-});
-
 test('service removes a removed member\'s stars on the workspace boards', function () {
     $member = User::factory()->create();
     $this->workspace->users()->attach($member->id);
@@ -96,9 +84,3 @@ test('service throws InvalidArgumentException when trying to remove the workspac
 
     $this->service->removeMember($this->workspace, $this->user);
 })->throws(InvalidArgumentException::class, 'Cannot remove the workspace owner.');
-
-test('service throws InvalidArgumentException when trying to remove a non-member', function () {
-    $nonMember = User::factory()->create();
-
-    $this->service->removeMember($this->workspace, $nonMember);
-})->throws(InvalidArgumentException::class, 'User is not a member of this workspace.');

@@ -270,6 +270,7 @@ test('logo upload validates file type', function (string $filename, string $mime
     'png is allowed'  => ['image.png', 'image/png', 302, true],
     'jpg is allowed'  => ['image.jpg', 'image/jpg', 302, true],
     'webp is allowed' => ['image.webp', 'image/webp', 302, true],
+    'gif is allowed'  => ['image.gif', 'image/gif', 302, true],
     'pdf is rejected' => ['file.pdf', 'application/pdf', 422, false],
     'svg is rejected' => ['file.svg', 'image/svg+xml', 422, false],
     'mp4 is rejected' => ['file.mp4', 'video/mp4', 422, false],

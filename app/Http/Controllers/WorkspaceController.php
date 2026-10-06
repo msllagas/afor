@@ -22,17 +22,16 @@ use InvalidArgumentException;
 class WorkspaceController extends Controller
 {
     public function __construct(
-        private readonly WorkspaceService $workspaceService
+        private readonly WorkspaceService $workspaceService,
+        private readonly FileUploadService $fileUploadService,
     ) {}
 
     public function update(UpdateWorkspaceRequest $request, Workspace $workspace): RedirectResponse
     {
         $workspace->update($request->safe()->only(['name', 'description']));
 
-        $fileUploadService = app(FileUploadService::class);
-
         if ($request->hasFile('logo')) {
-            $fileUploadService->replace(new FileUploadData(
+            $this->fileUploadService->replace(new FileUploadData(
                 model: $workspace,
                 file: $request->file('logo'),
                 collection: FileCollection::WORKSPACE_LOGO,
@@ -40,7 +39,7 @@ class WorkspaceController extends Controller
                 uploadedBy: $request->user()
             ));
         } elseif ($request->boolean('remove_logo')) {
-            $fileUploadService->delete($workspace, FileCollection::WORKSPACE_LOGO);
+            $this->fileUploadService->delete($workspace, FileCollection::WORKSPACE_LOGO);
         }
 
         return back();
@@ -150,7 +149,7 @@ class WorkspaceController extends Controller
     {
         Gate::authorize('leave', $workspace);
 
-        $this->workspaceService->leaveWorkspace($workspace, auth()->user());
+        $this->workspaceService->removeMember($workspace, auth()->user());
 
         return to_route('boards.index');
     }

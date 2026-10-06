@@ -7,8 +7,6 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class WorkspaceMemberResource extends JsonResource
 {
-    public static $wrap = null; // disable wrapping
-
     /**
      * Transform the resource into an array.
      *

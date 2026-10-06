@@ -10,6 +10,7 @@ import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { IMAGE_UPLOAD_MAX_BYTES, IMAGE_UPLOAD_TYPES } from '@/lib/imageUpload';
 import { useInitials } from '@/composables/useInitials';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
@@ -46,12 +47,12 @@ async function handleAvatarChange(event: Event) {
 
     if (!file) return;
 
-    if (file.size > 2 * 1024 * 1024) {
+    if (file.size > IMAGE_UPLOAD_MAX_BYTES) {
         avatarError.value = 'Image must be smaller than 2MB.';
         return;
     }
 
-    if (!['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(file.type)) {
+    if (!IMAGE_UPLOAD_TYPES.includes(file.type)) {
         avatarError.value = 'Please upload a valid image file.';
         return;
     }
@@ -185,14 +186,14 @@ function removeAvatar() {
                                 >
                                     Remove
                                 </button>
-                                <p class="text-xs text-muted-foreground">JPG, PNG or GIF. Max 2MB.</p>
+                                <p class="text-xs text-muted-foreground">JPG, PNG, GIF or WebP. Max 2MB.</p>
                             </div>
 
                             <input
                                 ref="fileInputRef"
                                 type="file"
                                 name="avatar"
-                                accept="image/jpeg,image/png,image/gif,image/webp"
+                                :accept="IMAGE_UPLOAD_TYPES.join(',')"
                                 class="hidden"
                                 @change="handleAvatarChange"
                             />

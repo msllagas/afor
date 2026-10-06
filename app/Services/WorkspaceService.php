@@ -54,6 +54,13 @@ class WorkspaceService
         return route('workspace-invitations.show', [$workspace, $invitation->token]);
     }
 
+    /**
+     * Take a member out of the workspace, whether the owner removes them or they leave. They lose what they kept
+     * from it: their place on its boards, their stars on them, and the workspace as the one they last opened.
+     * Rejoining later starts with no boards. Routes and policies make sure the user is a member.
+     *
+     * @throws \InvalidArgumentException when the user owns the workspace
+     */
     public function removeMember(Workspace $workspace, User $user): void
     {
         // todo: implement a database-level mechanism that prevent the owner of the workspace to attach itself on its own workspace as a member
@@ -61,49 +68,6 @@ class WorkspaceService
             throw new \InvalidArgumentException('Cannot remove the workspace owner.');
         }
 
-        if (!$workspace->users()->where('user_id', $user->id)->exists()) {
-            throw new \InvalidArgumentException('User is not a member of this workspace.');
-        }
-
-        $this->endMembership($workspace, $user);
-    }
-
-    /**
-     * Take the user out of a workspace they're a member of, at their own request.
-     *
-     * @throws \InvalidArgumentException when the user owns the workspace or isn't a member of it
-     */
-    public function leaveWorkspace(Workspace $workspace, User $user): void
-    {
-        if ($workspace->owner_id === $user->id) {
-            throw new \InvalidArgumentException('The workspace owner cannot leave it.');
-        }
-
-        if (!$workspace->users()->whereKey($user->id)->exists()) {
-            throw new \InvalidArgumentException('User is not a member of this workspace.');
-        }
-
-        $this->endMembership($workspace, $user);
-    }
-
-    /**
-     * Permanently delete the workspace. Its boards, lists, cards, memberships
-     * and invitations cascade at the database level; the logo file is removed
-     * from storage once the workspace is gone.
-     */
-    public function deleteWorkspace(Workspace $workspace): void
-    {
-        $workspace->delete();
-
-        $this->fileUploadService->delete($workspace, FileCollection::WORKSPACE_LOGO);
-    }
-
-    /**
-     * Remove the membership along with what the user kept from it: their place on its boards, their stars
-     * on them, and the workspace as the one they last opened. Rejoining later starts with no boards.
-     */
-    private function endMembership(Workspace $workspace, User $user): void
-    {
         DB::transaction(function () use ($workspace, $user) {
             $workspace->users()->detach($user->id);
 
@@ -116,6 +80,18 @@ class WorkspaceService
                 $user->forceFill(['last_workspace_id' => null])->saveQuietly();
             }
         });
+    }
+
+    /**
+     * Permanently delete the workspace. Its boards, lists, cards, memberships
+     * and invitations cascade at the database level; the logo file is removed
+     * from storage once the workspace is gone.
+     */
+    public function deleteWorkspace(Workspace $workspace): void
+    {
+        $workspace->delete();
+
+        $this->fileUploadService->delete($workspace, FileCollection::WORKSPACE_LOGO);
     }
 
     private function newInvitationToken(): string

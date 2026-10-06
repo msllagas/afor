@@ -39,7 +39,6 @@ test('user can unarchive boards', function () {
             'board' => $board,
         ]))->assertJson([
             'id'          => $board->id,
-            'archived_by' => null,
             'archived_at' => null,
         ]);
 
@@ -137,6 +136,17 @@ test('users outside the workspace cannot unarchive its boards', function () {
         ->assertNotFound();
 
     expect($board->refresh()->archived_at)->not->toBeNull();
+});
+
+test('boards must be archived before they can be deleted', function () {
+    $board = Board::factory()->for($this->workspace)->unarchived()->create();
+
+    $this->actingAs($this->user)
+        ->deleteJson(route('boards.destroy', $board))
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['board' => 'Only archived boards can be deleted.']);
+
+    $this->assertModelExists($board);
 });
 
 test('users outside the workspace cannot delete its archived boards', function () {

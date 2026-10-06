@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\Settings;
 
+use App\DTOs\FileUploadData;
+use App\Enums\FileCollection;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
-use App\Models\User;
-use App\Services\UserAvatarService;
+use App\Http\Requests\Settings\UpdateAvatarRequest;
+use App\Services\FileUploadService;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -16,7 +18,7 @@ use Inertia\Response;
 class ProfileController extends Controller
 {
     public function __construct(
-        private readonly UserAvatarService $userAvatarService
+        private readonly FileUploadService $fileUploadService
     ) {}
 
     /**
@@ -59,7 +61,7 @@ class ProfileController extends Controller
 
         Auth::logout();
 
-        $this->userAvatarService->delete($user);
+        $this->fileUploadService->delete($user, FileCollection::AVATAR);
         $user->delete();
 
         $request->session()->invalidate();
@@ -68,25 +70,25 @@ class ProfileController extends Controller
         return redirect('/');
     }
 
-    public function updateAvatar(Request $request): RedirectResponse
+    /**
+     * Replace the user's avatar. The current one is only removed once the new one is saved.
+     */
+    public function updateAvatar(UpdateAvatarRequest $request): RedirectResponse
     {
-        $request->validate([
-            'avatar' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-        ]);
-
-        $this->userAvatarService->update(
-            user: $request->user(),
-            file: $request->file('avatar')
-        );
+        $this->fileUploadService->replace(new FileUploadData(
+            model: $request->user(),
+            file: $request->file('avatar'),
+            collection: FileCollection::AVATAR,
+            path: 'avatars',
+            uploadedBy: $request->user(),
+        ));
 
         return back();
     }
 
-    public function deleteAvatar(): RedirectResponse
+    public function deleteAvatar(Request $request): RedirectResponse
     {
-        $user = auth()->user();
-
-        $this->userAvatarService->delete($user);
+        $this->fileUploadService->delete($request->user(), FileCollection::AVATAR);
 
         return back();
     }

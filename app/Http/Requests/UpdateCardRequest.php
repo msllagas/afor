@@ -33,7 +33,7 @@ class UpdateCardRequest extends FormRequest
                 'sometimes',
                 Rule::exists('board_lists', 'id')->where('board_id', $this->route('board_list')->board_id),
             ],
-            'order'         => 'sometimes|integer',
+            'order'         => 'sometimes|integer|min:0',
         ];
     }
 }

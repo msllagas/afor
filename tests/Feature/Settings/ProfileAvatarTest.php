@@ -87,6 +87,17 @@ it('returns 302 if the file exceeds 2MB', function () {
         ->assertInvalid(['avatar']);
 });
 
+test('avatars accept the same images as workspace logos', function (string $filename) {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->patch(route('profile.update-avatar'), ['avatar' => UploadedFile::fake()->image($filename)])
+        ->assertValid()
+        ->assertRedirect();
+
+    expect($user->avatarFile()->exists())->toBeTrue();
+})->with(['avatar.jpg', 'avatar.png', 'avatar.gif', 'avatar.webp']);
+
 test('requires authentication when uploading avatar', function () {
     $this->patch(route('profile.update-avatar'), [
         'avatar' => UploadedFile::fake()->image('avatar.jpg'),

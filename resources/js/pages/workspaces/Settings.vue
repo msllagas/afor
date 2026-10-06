@@ -16,6 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useInitials } from '@/composables/useInitials';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { IMAGE_UPLOAD_MAX_BYTES, IMAGE_UPLOAD_TYPES } from '@/lib/imageUpload';
 import { dashboard } from '@/routes';
 import workspaceRoutes from '@/routes/workspaces';
 import type { BreadcrumbItem, Workspace } from '@/types';
@@ -26,8 +27,6 @@ import { toast } from 'vue-sonner';
 
 const NAME_MAX_LENGTH = 65;
 const DESCRIPTION_MAX_LENGTH = 255;
-const LOGO_MAX_BYTES = 2 * 1024 * 1024;
-const LOGO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 const props = defineProps<{
     workspace: Workspace;
@@ -100,13 +99,13 @@ function chooseLogo() {
 }
 
 function selectLogo(file: File) {
-    if (!LOGO_TYPES.includes(file.type)) {
-        form.setError('logo', 'Choose a JPG, PNG or WebP image.');
+    if (!IMAGE_UPLOAD_TYPES.includes(file.type)) {
+        form.setError('logo', 'Choose a JPG, PNG, GIF or WebP image.');
 
         return;
     }
 
-    if (file.size > LOGO_MAX_BYTES) {
+    if (file.size > IMAGE_UPLOAD_MAX_BYTES) {
         form.setError('logo', 'Choose an image that is 2 MB or smaller.');
 
         return;
@@ -341,7 +340,7 @@ onBeforeUnmount(() => {
                                     </Button>
                                 </div>
                                 <p id="logo-hint" class="text-xs text-muted-foreground">
-                                    JPG, PNG or WebP, up to 2 MB. Drop an image on the logo to replace it.
+                                    JPG, PNG, GIF or WebP, up to 2 MB. Drop an image on the logo to replace it.
                                 </p>
                                 <InputError id="logo-error" :message="form.errors.logo" role="alert" />
                             </div>
@@ -349,7 +348,7 @@ onBeforeUnmount(() => {
 
                         <input
                             ref="fileInput"
-                            :accept="LOGO_TYPES.join(',')"
+                            :accept="IMAGE_UPLOAD_TYPES.join(',')"
                             aria-labelledby="logo-label"
                             class="sr-only"
                             tabindex="-1"
