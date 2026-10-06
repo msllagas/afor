@@ -96,15 +96,13 @@ test('users cannot update a card they do not own', function () {
 
     // Update card owned by the other user
     $response = patchJson(route('board-lists.cards.update', [
-        'board_list' => $otherUserBoard->boardLists()->first()->id,
+        'board_list' => $otherUserBoardList,
         'card'       => $anotherUserBoardListCard,
     ]), $payload);
 
-    $response->assertForbidden()
-        ->assertJson([
-            'message' => 'You do not own this card.',
-        ]);
-})->skip();
+    $response->assertNotFound();
+    expect($anotherUserBoardListCard->refresh()->name)->not->toBe('Updated Board Name');
+});
 
 test('cards cannot be moved to a list on another board', function () {
     $user = User::factory()->create();

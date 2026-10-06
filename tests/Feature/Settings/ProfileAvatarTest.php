@@ -4,8 +4,6 @@ use App\Models\File;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 
-use function PHPUnit\Framework\assertSame;
-
 beforeEach(function () {
     Storage::fake('public');
 });
@@ -52,8 +50,20 @@ test('replaces the old avatar when uploading a new one', function () {
 });
 
 test('deletes the avatar when the user is deleted', function () {
-    assertSame(1, 1);
-})->skip('Implement this test once deleting users has side effects of also deleting their avatar');
+    $user = User::factory()->create();
+    $this->actingAs($user)
+        ->patch(route('profile.update-avatar'), [
+            'avatar' => UploadedFile::fake()->image('avatar.jpg'),
+        ]);
+    $avatarFile = $user->avatarFile()->first();
+
+    $this->actingAs($user)
+        ->delete(route('profile.destroy'), ['password' => 'password'])
+        ->assertRedirect('/');
+
+    Storage::disk('public')->assertMissing($avatarFile->path);
+    $this->assertModelMissing($avatarFile);
+});
 
 test('returns 302 if the file is not an image', function () {
     $user = User::factory()->create();

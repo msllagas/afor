@@ -6,8 +6,6 @@ use App\Models\Card;
 use App\Models\User;
 use App\Models\Workspace;
 
-use function PHPUnit\Framework\assertEquals;
-
 beforeEach(function () {
     $this->user = User::factory()->create();
     $this->workspace = Workspace::factory()->forUser($this->user)->create();
@@ -56,5 +54,15 @@ test('board members can delete the board list cards', function () {
 });
 
 test('non-members cannot delete a card in a workspace they do not belong', function () {
-    assertEquals(1, 1);
-})->skip('Implement this test once card destroy route has implemented the logic');
+    $boardList = BoardList::factory()->for(Board::factory()->for($this->workspace))->create();
+    $card = Card::factory()->for($boardList)->create();
+
+    $this->actingAs(User::factory()->create())
+        ->delete(route('board-lists.cards.destroy', [
+            'board_list' => $boardList,
+            'card'       => $card,
+        ]))
+        ->assertNotFound();
+
+    $this->assertNotSoftDeleted($card);
+});
