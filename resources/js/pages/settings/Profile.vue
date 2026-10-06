@@ -14,12 +14,13 @@ import { IMAGE_UPLOAD_MAX_BYTES, IMAGE_UPLOAD_TYPES } from '@/lib/imageUpload';
 import { useInitials } from '@/composables/useInitials';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
-import { type BreadcrumbItem } from '@/types';
+import { type BreadcrumbItem, type OwnedWorkspaceSummary } from '@/types';
 import { computed, ref } from 'vue';
 
 interface Props {
     mustVerifyEmail: boolean;
     status?: string;
+    ownedWorkspacesToDelete: OwnedWorkspaceSummary[];
 }
 
 defineProps<Props>();
@@ -271,7 +272,7 @@ function removeAvatar() {
                 </Form>
             </div>
 
-            <DeleteUser />
+            <DeleteUser :owned-workspaces="ownedWorkspacesToDelete" />
         </SettingsLayout>
     </AppLayout>
 </template>

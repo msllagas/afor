@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
 use App\Http\Requests\Settings\UpdateAvatarRequest;
 use App\Services\FileUploadService;
+use App\Services\UserService;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -18,7 +19,8 @@ use Inertia\Response;
 class ProfileController extends Controller
 {
     public function __construct(
-        private readonly FileUploadService $fileUploadService
+        private readonly FileUploadService $fileUploadService,
+        private readonly UserService $userService,
     ) {}
 
     /**
@@ -29,6 +31,13 @@ class ProfileController extends Controller
         return Inertia::render('settings/Profile', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status'          => $request->session()->get('status'),
+            // The account deletion dialog names what goes with the account.
+            'ownedWorkspacesToDelete' => fn () => $request->user()->ownedWorkspaces()
+                ->select('id', 'name')
+                ->withCount('users as members_count')
+                ->orderBy('name')
+                ->get()
+                ->map->only('id', 'name', 'members_count'),
         ]);
     }
 
@@ -61,8 +70,7 @@ class ProfileController extends Controller
 
         Auth::logout();
 
-        $this->fileUploadService->delete($user, FileCollection::AVATAR);
-        $user->delete();
+        $this->userService->deleteAccount($user);
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();

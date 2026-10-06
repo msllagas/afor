@@ -73,6 +73,18 @@ readonly class FileUploadService
         }
     }
 
+    /**
+     * Remove the files from storage and their records, which may already be gone along with what they belonged to.
+     *
+     * @param  iterable<File>  $files
+     */
+    public function deleteMany(iterable $files): void
+    {
+        foreach ($files as $file) {
+            $this->remove($file);
+        }
+    }
+
     private function find(Model $model, FileCollection $collection): ?File
     {
         return File::query()

@@ -46,6 +46,13 @@ export interface Workspace {
     logo?: string | null; // url path
 }
 
+/** A workspace the user owns, as the account deletion dialog lists it. */
+export interface OwnedWorkspaceSummary {
+    id: string;
+    name: string;
+    members_count: number;
+}
+
 /** A workspace and its boards that pass the boards page's search and scope. */
 export interface WorkspaceBoardsMatch {
     workspace: Workspace;
