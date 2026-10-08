@@ -1,23 +1,18 @@
 <script lang="ts" setup>
-import BoardListController from '@/actions/App/Http/Controllers/BoardListController';
 import ArchivedItemsSheet from '@/components/board/ArchivedItemsSheet.vue';
 import BoardList from '@/components/board/board-list/BoardList.vue';
-import BoardDropdownMenu from '@/components/board/BoardDropdownMenu.vue';
+import BoardHeader from '@/components/board/BoardHeader.vue';
 import BoardMembersDialog from '@/components/board/BoardMembersDialog.vue';
-import InputError from '@/components/InputError.vue';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import WorkspaceAvatar from '@/components/workspace/WorkspaceAvatar.vue';
+import ListComposer from '@/components/board/ListComposer.vue';
 import { useBoardStar } from '@/composables/useBoardStar';
-import { useInitials } from '@/composables/useInitials';
+import { useBoardSync } from '@/composables/useBoardSync';
+import { useCanvasScroll } from '@/composables/useCanvasScroll';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { reloadQuietly } from '@/lib/reloadQuietly';
 import { cn } from '@/lib/utils';
 import cardRoutes from '@/routes/board-lists/cards';
 import boardRoutes from '@/routes/boards';
 import boardListRoutes from '@/routes/boards/board-lists';
-import { dashboard } from '@/routes';
 import { home } from '@/routes/workspaces';
 import type {
     ArchivedBoardList,
@@ -29,11 +24,10 @@ import type {
     SortableChangeEvent,
     WorkspaceMember,
 } from '@/types';
-import type { CancelToken, RequestPayload } from '@inertiajs/core';
-import { Form, Head, Link, router, usePage } from '@inertiajs/vue3';
-import { onClickOutside, useMediaQuery } from '@vueuse/core';
-import { Plus, Star, X } from 'lucide-vue-next';
-import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, provide, ref, useTemplateRef, watch } from 'vue';
+import type { CancelToken } from '@inertiajs/core';
+import { Head, router, usePage } from '@inertiajs/vue3';
+import { useMediaQuery } from '@vueuse/core';
+import { computed, defineAsyncComponent, nextTick, provide, ref, useTemplateRef, watch } from 'vue';
 import { toast } from 'vue-sonner';
 import draggable from 'vuedraggable';
 
@@ -57,44 +51,24 @@ provide('colors', props.colors);
 const page = usePage();
 const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
 
-/*
-|--------------------------------------------------------------------------
-| Local board state
-|--------------------------------------------------------------------------
-| Lists and cards are edited optimistically on a local copy. Server
-| snapshots replace it only when nothing is being dragged or saved,
-| so a slow response can't snap a card back mid-move.
-*/
+const boardHeader = useTemplateRef<InstanceType<typeof BoardHeader>>('board-header');
 
-function cloneLists(boardLists: BoardListType[]): BoardListType[] {
-    return boardLists.map((list) => ({ ...list, cards: list.cards.map((card) => ({ ...card })) }));
-}
-
-const lists = ref<BoardListType[]>(cloneLists(props.board.board_lists));
-const boardName = ref(props.board.name);
-// What is being dragged: empty lists only invite a drop while a card is in flight, not a whole list.
-const draggedItem = ref<'card' | 'list' | null>(null);
-const isDragging = computed(() => draggedItem.value !== null);
-let pendingRequests = 0;
-let hasPendingSync = false;
-let lastDragEndedAt = 0;
-
-function applyServerBoard() {
-    if (isDragging.value || pendingRequests > 0) {
-        hasPendingSync = true;
-
-        return;
-    }
-
-    hasPendingSync = false;
-    lists.value = cloneLists(props.board.board_lists);
-
-    if (!isEditingName.value) {
-        boardName.value = props.board.name;
-    }
-}
-
-watch(() => props.board, applyServerBoard);
+const {
+    lists,
+    boardName,
+    draggedItem,
+    isDragging,
+    isDraggingOrJustDropped,
+    onDragStart,
+    onDragEnd,
+    send,
+    onHttpFailure,
+    confirmBoardAccess,
+} = useBoardSync({
+    board: () => props.board,
+    isEditingName: () => boardHeader.value?.isEditingName ?? false,
+    cancelDescriptionRequest: () => descriptionRequest?.cancel(),
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -139,174 +113,11 @@ async function announce(message: string) {
 
 /*
 |--------------------------------------------------------------------------
-| Saving changes
-|--------------------------------------------------------------------------
-| Every change runs as an async visit so they never cancel each other,
-| and only the board prop comes back. On any failure the board falls
-| back to the last server snapshot and re-fetches it.
-*/
-
-let hasLostAccess = false;
-
-/**
- * The board was deleted, or the user was taken off it or out of its workspace (maybe in another tab).
- * The dashboard opens the workspace home if they're still in the workspace, and their boards if not.
- */
-function leaveInaccessibleBoard() {
-    if (hasLostAccess) {
-        return;
-    }
-
-    hasLostAccess = true;
-    // The toast waits for the next page, since the board page's toasts go with it.
-    router.visit(dashboard().url, {
-        replace: true,
-        onFinish: () =>
-            toast.error('You no longer have access to this board', {
-                description: 'It was deleted, or you were removed from it.',
-            }),
-    });
-}
-
-/**
- * A 404 means either one card or list is gone, or the whole board is out of reach.
- * Re-fetching the board tells which: losing access sends the user away, anything else is an ordinary failure.
- * The board's own address is asked for, not an open card's, since that card may be what's gone; the card closes.
- */
-function confirmBoardAccess(onStillAccessible: () => void) {
-    descriptionRequest?.cancel();
-    router.visit(boardRoutes.show(props.board.id).url, {
-        only: ['board', 'selectedCard'],
-        async: true,
-        replace: true,
-        preserveScroll: true,
-        preserveState: true,
-        onSuccess: onStillAccessible,
-        onHttpException: (response) => {
-            if (response.status === 404) {
-                leaveInaccessibleBoard();
-            } else {
-                onStillAccessible();
-            }
-
-            return false;
-        },
-        onNetworkError: () => {
-            onStillAccessible();
-
-            return false;
-        },
-    });
-}
-
-function rollback(message: string, status?: number) {
-    lists.value = cloneLists(props.board.board_lists);
-    boardName.value = props.board.name;
-
-    if (status === 404) {
-        confirmBoardAccess(() => toast.error(message));
-
-        return;
-    }
-
-    toast.error(message);
-    // The open card's description is reloaded too, in case it was the change that failed.
-    reloadQuietly(['board', 'selectedCard']);
-}
-
-function onHttpFailure(response: { status: number }, showFailure: () => void) {
-    if (response.status === 404) {
-        confirmBoardAccess(showFailure);
-    } else {
-        showFailure();
-    }
-}
-
-function send(
-    method: 'patch' | 'delete',
-    url: string,
-    data: RequestPayload,
-    failureMessage: string,
-    onSuccess?: () => void,
-    onFailure?: () => void,
-) {
-    pendingRequests++;
-
-    router.visit(url, {
-        method,
-        data,
-        async: true,
-        replace: true,
-        preserveScroll: true,
-        preserveState: true,
-        only: ['board'],
-        onSuccess: () => onSuccess?.(),
-        onError: (errors) => {
-            rollback(Object.values(errors)[0] ?? failureMessage);
-            onFailure?.();
-        },
-        onHttpException: (response) => {
-            rollback(failureMessage, response.status);
-            onFailure?.();
-
-            return false;
-        },
-        onNetworkError: () => {
-            rollback(`${failureMessage} Check your connection.`);
-            onFailure?.();
-
-            return false;
-        },
-        onFinish: () => {
-            pendingRequests = Math.max(pendingRequests - 1, 0);
-
-            if (hasPendingSync) {
-                applyServerBoard();
-            }
-        },
-    });
-}
-
-/*
-|--------------------------------------------------------------------------
 | Board name
 |--------------------------------------------------------------------------
 */
 
-const isEditingName = ref(false);
-const draftName = ref(boardName.value);
-const nameInput = useTemplateRef<HTMLInputElement>('board-name-input');
-const nameButton = useTemplateRef<HTMLButtonElement>('board-name-button');
-
-async function startEditingName() {
-    draftName.value = boardName.value;
-    isEditingName.value = true;
-    await nextTick();
-    nameInput.value?.select();
-}
-
-/** Keyboard saves and cancels hand focus back to the name; a blur leaves it where the user clicked. */
-async function stopEditingName(shouldRestoreFocus: boolean) {
-    isEditingName.value = false;
-
-    if (shouldRestoreFocus) {
-        await nextTick();
-        nameButton.value?.focus();
-    }
-}
-
-function saveName(shouldRestoreFocus = false) {
-    if (!isEditingName.value) {
-        return;
-    }
-
-    stopEditingName(shouldRestoreFocus);
-    const name = draftName.value.trim();
-
-    if (!name || name === boardName.value) {
-        return;
-    }
-
+function renameBoard(name: string) {
     boardName.value = name;
     send('patch', boardRoutes.update(props.board.id).url, { name }, 'Could not rename the board.');
 }
@@ -388,19 +199,7 @@ function archiveBoard() {
 |--------------------------------------------------------------------------
 */
 
-const MEMBER_AVATAR_CAP = 3;
-
-const { getInitials } = useInitials();
 const showMembersDialog = ref(false);
-const boardPeople = computed(() => [props.owner, ...props.members]);
-const hiddenPeopleCount = computed(() => Math.max(boardPeople.value.length - MEMBER_AVATAR_CAP, 0));
-// Keep the bubble the size of an avatar however big the board gets; the dialog lists everyone.
-const hiddenPeopleLabel = computed(() => (hiddenPeopleCount.value > 99 ? '99+' : `+${hiddenPeopleCount.value}`));
-const peopleLabel = computed(() => {
-    const count = boardPeople.value.length;
-
-    return `${count} ${count === 1 ? 'person' : 'people'} on this board`;
-});
 
 /** A member change came back 404: the person was already gone, or the user lost the board itself. */
 function onMemberNotFound(failureMessage: string) {
@@ -418,146 +217,17 @@ function onMemberNotFound(failureMessage: string) {
 
 const canvas = useTemplateRef<HTMLElement>('canvas');
 const listNav = useTemplateRef<HTMLElement>('list-nav');
-const activeListIndex = ref(0);
-let scrollFrame = 0;
-
-function columnElements() {
-    return Array.from(canvas.value?.querySelectorAll<HTMLElement>('[data-list-id]') ?? []);
-}
-
-function updateActiveList() {
-    scrollFrame = 0;
-    const scroller = canvas.value;
-
-    if (!scroller) {
-        return;
-    }
-
-    const center = scroller.scrollLeft + scroller.clientWidth / 2;
-    let closestIndex = 0;
-    let closestDistance = Infinity;
-
-    columnElements().forEach((column, index) => {
-        const distance = Math.abs(column.offsetLeft + column.offsetWidth / 2 - center);
-
-        if (distance < closestDistance) {
-            closestDistance = distance;
-            closestIndex = index;
-        }
-    });
-
-    activeListIndex.value = closestIndex;
-}
-
-function onCanvasScroll() {
-    if (!scrollFrame) {
-        scrollFrame = requestAnimationFrame(updateActiveList);
-    }
-}
-
-// Turn vertical wheel movement into horizontal scrolling, except over a list that scrolls itself.
-function onCanvasWheel(event: WheelEvent) {
-    const scroller = canvas.value;
-
-    if (!scroller || event.ctrlKey || Math.abs(event.deltaY) <= Math.abs(event.deltaX)) {
-        return;
-    }
-
-    const cardScroller = (event.target as HTMLElement).closest<HTMLElement>('[data-card-scroller]');
-
-    if (cardScroller && cardScroller.scrollHeight > cardScroller.clientHeight) {
-        return;
-    }
-
-    // Line-based wheels (mostly Firefox) report rows rather than pixels.
-    const distance = event.deltaMode === WheelEvent.DOM_DELTA_LINE ? event.deltaY * WHEEL_LINE_HEIGHT : event.deltaY;
-
-    // Trackpads already send a smooth stream of small steps, and phones snap list by list.
-    const isTrackpad = event.deltaMode === WheelEvent.DOM_DELTA_PIXEL && Math.abs(distance) < 50;
-
-    if (prefersReducedMotion.value || isTrackpad) {
-        stopWheelScroll();
-        scroller.scrollLeft += distance;
-
-        return;
-    }
-
-    if (getComputedStyle(scroller).scrollSnapType !== 'none') {
-        scroller.scrollBy({ left: distance, behavior: 'smooth' });
-
-        return;
-    }
-
-    // Glide towards a target that each notch pushes further, so fast scrolling stays fluid.
-    const maxScrollLeft = scroller.scrollWidth - scroller.clientWidth;
-    wheelTarget = Math.min(Math.max((wheelTarget ?? scroller.scrollLeft) + distance, 0), maxScrollLeft);
-
-    if (!wheelFrame) {
-        wheelFrame = requestAnimationFrame(stepWheelScroll);
-    }
-}
-
-const WHEEL_LINE_HEIGHT = 40;
-const WHEEL_EASING = 0.18;
-let wheelTarget: number | null = null;
-let wheelFrame = 0;
-
-function stepWheelScroll() {
-    const scroller = canvas.value;
-
-    if (!scroller || wheelTarget === null) {
-        stopWheelScroll();
-
-        return;
-    }
-
-    const remaining = wheelTarget - scroller.scrollLeft;
-
-    if (Math.abs(remaining) < 1) {
-        scroller.scrollLeft = wheelTarget;
-        stopWheelScroll();
-
-        return;
-    }
-
-    // Move at least a pixel per frame so rounding can't stall the glide.
-    scroller.scrollLeft += Math.sign(remaining) * Math.max(Math.abs(remaining) * WHEEL_EASING, 1);
-    wheelFrame = requestAnimationFrame(stepWheelScroll);
-}
-
-/** Hand control back to the user or to another scroll, such as jumping to a list. */
-function stopWheelScroll() {
-    cancelAnimationFrame(wheelFrame);
-    wheelFrame = 0;
-    wheelTarget = null;
-}
-
-function scrollBehavior(): ScrollBehavior {
-    return prefersReducedMotion.value ? 'auto' : 'smooth';
-}
-
-function jumpToList(index: number) {
-    stopWheelScroll();
-    columnElements()[index]?.scrollIntoView({ behavior: scrollBehavior(), block: 'nearest', inline: 'center' });
-}
-
-function scrollListIntoView(listId: string) {
-    stopWheelScroll();
-    columnElements()
-        .find((column) => column.dataset.listId === listId)
-        ?.scrollIntoView({ behavior: scrollBehavior(), block: 'nearest', inline: 'nearest' });
-}
-
-watch(activeListIndex, (index) => {
-    listNav.value
-        ?.querySelectorAll('button')
-        [index]?.scrollIntoView({ behavior: scrollBehavior(), block: 'nearest', inline: 'nearest' });
-});
-
-onBeforeUnmount(() => {
-    cancelAnimationFrame(scrollFrame);
-    stopWheelScroll();
-});
+const {
+    activeListIndex,
+    columnElements,
+    onCanvasScroll,
+    onCanvasWheel,
+    stopWheelScroll,
+    scrollBehavior,
+    jumpToList,
+    scrollListIntoView,
+    scrollToEnd,
+} = useCanvasScroll(canvas, listNav, prefersReducedMotion);
 
 /*
 |--------------------------------------------------------------------------
@@ -599,19 +269,6 @@ const cardDragOptions = computed(() => ({
     draggable: '.board-card',
     emptyInsertThreshold: 24,
 }));
-
-function onDragStart(item: 'card' | 'list') {
-    draggedItem.value = item;
-}
-
-function onDragEnd() {
-    draggedItem.value = null;
-    lastDragEndedAt = Date.now();
-
-    if (hasPendingSync) {
-        applyServerBoard();
-    }
-}
 
 /*
 |--------------------------------------------------------------------------
@@ -785,46 +442,19 @@ function restoreDeletedCard(card: DeletedCard) {
     );
 }
 
-const isAddingList = ref(lists.value.length === 0);
-const listInput = useTemplateRef<HTMLInputElement>('list-input');
-const listComposer = useTemplateRef<HTMLElement>('list-composer');
+const listComposer = useTemplateRef<InstanceType<typeof ListComposer>>('list-composer');
 
-async function openListComposer() {
-    isAddingList.value = true;
-    await nextTick();
-    listInput.value?.focus({ preventScroll: true });
-    stopWheelScroll();
-    canvas.value?.scrollTo({ left: canvas.value.scrollWidth, behavior: scrollBehavior() });
+function openListComposer() {
+    listComposer.value?.open();
 }
-
-function closeListComposer() {
-    isAddingList.value = false;
-}
-
-// Clicking anywhere else on the page puts the composer away, like pressing Escape.
-onClickOutside(listComposer, closeListComposer);
 
 async function onListAdded() {
     announce('List added.');
     await nextTick();
-    stopWheelScroll();
-    canvas.value?.scrollTo({ left: canvas.value.scrollWidth, behavior: scrollBehavior() });
-    listInput.value?.focus({ preventScroll: true });
+    scrollToEnd();
 }
 
-function onFormRequestFailed() {
-    toast.error('Could not save. Check your connection and try again.');
-
-    return false;
-}
-
-function onFormHttpException(response: { status: number }) {
-    onHttpFailure(response, onFormRequestFailed);
-
-    return false;
-}
-
-function onCardRequestFailed(message: string, status?: number) {
+function onRequestFailed(message: string, status?: number) {
     if (status === 404) {
         confirmBoardAccess(() => toast.error(message));
     } else {
@@ -903,7 +533,7 @@ function loadActiveCardDescription() {
         async: true,
         onCancelToken: (token) => (request = descriptionRequest = token),
         onHttpException: (response) => {
-            closeCard(() => onCardRequestFailed('Could not open the card.', response.status));
+            closeCard(() => onRequestFailed('Could not open the card.', response.status));
 
             return false;
         },
@@ -922,7 +552,7 @@ function loadActiveCardDescription() {
 
 function openCard(card: Card) {
     // A drop can fire a click on the card that was just dragged.
-    if (isDragging.value || Date.now() - lastDragEndedAt < 250) {
+    if (isDraggingOrJustDropped()) {
         return;
     }
 
@@ -1108,122 +738,24 @@ function restoreCard(card: Card, index: number) {
         <Head :title="pageTitle" />
 
         <div class="flex min-h-0 flex-1 flex-col">
-            <header class="flex items-center gap-3 border-b px-4 py-3 sm:px-6">
-                <Link
-                    :aria-label="`${workspaceName} home`"
-                    :href="workspaceHomeUrl"
-                    class="shrink-0 rounded-lg outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                >
-                    <WorkspaceAvatar
-                        :workspace="workspace ?? { name: workspaceName }"
-                        class="size-9 rounded-lg sm:size-11 sm:rounded-xl"
-                    />
-                </Link>
-
-                <div class="min-w-0 flex-1">
-                    <Link
-                        :href="workspaceHomeUrl"
-                        class="block max-w-full truncate text-xs font-medium text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:underline sm:text-sm"
-                    >
-                        {{ workspaceName }}
-                    </Link>
-                    <h1 v-if="!isEditingName" class="flex min-w-0">
-                        <button
-                            class="-mx-1.5 max-w-full cursor-pointer truncate rounded-md px-1.5 text-left text-lg leading-tight font-semibold tracking-tight transition-colors outline-none hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/50 sm:text-2xl"
-                            title="Rename board"
-                            type="button"
-                            ref="board-name-button"
-                            @click="startEditingName"
-                        >
-                            {{ boardName }}
-                        </button>
-                    </h1>
-                    <div v-else class="-mx-1.5 inline-grid max-w-full grid-cols-1">
-                        <span
-                            aria-hidden="true"
-                            class="invisible col-start-1 row-start-1 overflow-hidden px-1.5 text-lg leading-tight font-semibold tracking-tight whitespace-pre sm:text-2xl"
-                            >{{ draftName || ' ' }}</span
-                        >
-                        <input
-                            ref="board-name-input"
-                            v-model="draftName"
-                            aria-label="Board name"
-                            class="col-start-1 row-start-1 w-full min-w-24 rounded-md border border-ring bg-background px-1.5 text-lg leading-tight font-semibold tracking-tight ring-[3px] ring-ring/50 outline-none sm:text-2xl"
-                            maxlength="255"
-                            @blur="saveName()"
-                            @keydown.enter.prevent="saveName(true)"
-                            @keydown.esc.prevent="stopEditingName(true)"
-                        />
-                    </div>
-                </div>
-
-                <p class="hidden shrink-0 text-sm text-muted-foreground tabular-nums lg:block">{{ summary }}</p>
-
-                <div class="flex shrink-0 items-center gap-1">
-                    <button
-                        :aria-label="`Board members: ${peopleLabel}`"
-                        class="mr-1 hidden min-h-9 cursor-pointer items-center rounded-full p-0.5 transition-colors outline-none hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/50 sm:flex"
-                        type="button"
-                        @click="showMembersDialog = true"
-                    >
-                        <span aria-hidden="true" class="flex -space-x-2">
-                            <Avatar
-                                v-for="person in boardPeople.slice(0, MEMBER_AVATAR_CAP)"
-                                :key="person.id"
-                                class="size-7 ring-2 ring-background sm:size-8"
-                            >
-                                <AvatarImage :src="person.avatar ?? ''" alt="" class="object-cover" />
-                                <AvatarFallback class="bg-blush text-xs font-semibold text-blush-foreground">
-                                    {{ getInitials(person.name) }}
-                                </AvatarFallback>
-                            </Avatar>
-                            <span
-                                v-if="hiddenPeopleCount"
-                                class="relative flex size-7 items-center justify-center rounded-full bg-muted text-[10px] font-semibold text-muted-foreground tabular-nums ring-2 ring-background sm:size-8 sm:text-xs"
-                            >
-                                {{ hiddenPeopleLabel }}
-                            </span>
-                        </span>
-                    </button>
-                    <TooltipProvider>
-                        <Tooltip>
-                            <TooltipTrigger as-child>
-                                <Button
-                                    :aria-label="isStarred ? 'Unstar board' : 'Star board'"
-                                    :aria-pressed="isStarred"
-                                    class="cursor-pointer"
-                                    size="icon"
-                                    variant="ghost"
-                                    @click="toggleStar"
-                                >
-                                    <Star
-                                        :class="
-                                            cn(
-                                                'transition-colors',
-                                                isStarred
-                                                    ? 'fill-current text-primary'
-                                                    : 'fill-transparent text-muted-foreground',
-                                            )
-                                        "
-                                    />
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>{{ isStarred ? 'Unstar' : 'Star' }} this board</TooltipContent>
-                        </Tooltip>
-                    </TooltipProvider>
-                    <Button class="hidden cursor-pointer sm:inline-flex" variant="outline" @click="openListComposer">
-                        <Plus />
-                        Add list
-                    </Button>
-                    <BoardDropdownMenu
-                        :is-archiving="isArchiving"
-                        @add-list="openListComposer"
-                        @archive-board="archiveBoard"
-                        @show-archived-items="showArchivedItems = true"
-                        @show-members="showMembersDialog = true"
-                    />
-                </div>
-            </header>
+            <BoardHeader
+                ref="board-header"
+                :board-name="boardName"
+                :is-archiving="isArchiving"
+                :is-starred="isStarred"
+                :members="members"
+                :owner="owner"
+                :summary="summary"
+                :workspace="workspace"
+                :workspace-home-url="workspaceHomeUrl"
+                :workspace-name="workspaceName"
+                @add-list="openListComposer"
+                @archive-board="archiveBoard"
+                @rename="renameBoard"
+                @show-archived-items="showArchivedItems = true"
+                @show-members="showMembersDialog = true"
+                @toggle-star="toggleStar"
+            />
 
             <nav v-if="lists.length > 1" aria-label="Jump to list" class="border-b sm:hidden">
                 <ul ref="list-nav" class="flex [scrollbar-width:none] gap-1.5 overflow-x-auto px-4 py-2">
@@ -1291,79 +823,20 @@ function restoreCard(card: Card, index: number) {
                                 @open-card="openCard"
                                 @recolor="recolorList(element, $event)"
                                 @rename="renameList(element, $event)"
-                                @request-failed="onCardRequestFailed"
+                                @request-failed="onRequestFailed"
                             />
                         </li>
                     </template>
 
                     <template #footer>
-                        <li class="w-[calc(100vw-3rem)] max-w-80 shrink-0 snap-center sm:w-72">
-                            <div
-                                v-if="isAddingList"
-                                ref="list-composer"
-                                class="rounded-2xl border border-primary/25 bg-card p-3 shadow-sm ring-1 ring-primary/10 dark:border-primary/30 dark:ring-primary/15"
-                            >
-                                <p v-if="!lists.length" class="mb-3 text-sm text-muted-foreground">
-                                    Lists are the columns of your board, like
-                                    <span class="font-medium text-foreground">To do</span>,
-                                    <span class="font-medium text-foreground">Doing</span> and
-                                    <span class="font-medium text-foreground">Done</span>.
-                                </p>
-                                <Form
-                                    v-slot="{ errors, processing }"
-                                    :options="{ preserveScroll: true, preserveState: true, only: ['board'] }"
-                                    class="space-y-2"
-                                    reset-on-success
-                                    v-bind="BoardListController.store.form(board.id)"
-                                    @http-exception="onFormHttpException"
-                                    @network-error="onFormRequestFailed"
-                                    @success="onListAdded"
-                                >
-                                    <input
-                                        ref="list-input"
-                                        :aria-invalid="!!errors.name"
-                                        aria-label="List name"
-                                        autocomplete="off"
-                                        class="flex h-9 w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive sm:text-sm dark:bg-input/30"
-                                        maxlength="255"
-                                        name="name"
-                                        placeholder="Enter list name"
-                                        required
-                                        @keydown.esc.prevent="closeListComposer"
-                                    />
-                                    <InputError :message="errors.name" />
-                                    <div class="flex items-center gap-1.5">
-                                        <Button :disabled="processing" class="cursor-pointer" size="sm" type="submit">
-                                            {{ processing ? 'Adding…' : 'Add list' }}
-                                        </Button>
-                                        <Button
-                                            aria-label="Stop adding lists"
-                                            class="size-8 cursor-pointer"
-                                            size="icon"
-                                            type="button"
-                                            variant="ghost"
-                                            @click="closeListComposer"
-                                        >
-                                            <X />
-                                        </Button>
-                                    </div>
-                                </Form>
-                            </div>
-                            <button
-                                v-else
-                                class="group flex h-12 w-full cursor-pointer items-center gap-3 rounded-2xl border-2 border-dashed border-primary/40 bg-card/80 px-3 text-sm font-medium text-foreground/80 shadow-xs backdrop-blur-sm transition-colors outline-none hover:border-primary/70 hover:bg-blush hover:text-blush-foreground focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:border-primary/50 dark:bg-card/60 dark:text-foreground/85 dark:hover:border-primary/80"
-                                type="button"
-                                @click="openListComposer"
-                            >
-                                <span
-                                    aria-hidden="true"
-                                    class="flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground"
-                                >
-                                    <Plus class="size-4" />
-                                </span>
-                                {{ lists.length ? 'Add another list' : 'Add a list' }}
-                            </button>
-                        </li>
+                        <ListComposer
+                            ref="list-composer"
+                            :board-id="board.id"
+                            :has-lists="lists.length > 0"
+                            @added="onListAdded"
+                            @opened="scrollToEnd"
+                            @request-failed="onRequestFailed"
+                        />
                     </template>
                 </draggable>
             </div>
