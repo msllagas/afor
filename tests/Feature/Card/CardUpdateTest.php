@@ -137,6 +137,49 @@ test('a description with no text is saved as no description', function (string $
     'a paragraph of spaces' => '<p>   </p>',
 ]);
 
+test('unsafe markup in a description is removed before it is saved', function () {
+    $user = User::factory()->create();
+    $boardList = BoardList::factory()->for(Board::factory()->for(Workspace::factory()->forUser($user)))->create();
+    $card = Card::factory()->for($boardList)->create();
+
+    $response = $this->actingAs($user)->patch(route('board-lists.cards.update', [$boardList, $card]), [
+        'description' => '<p onclick="steal()">Bring <a href="javascript:steal()">the</a> tent</p>'
+            .'<img src="x" onerror="steal()"><script>steal()</script>',
+    ]);
+
+    $response->assertRedirect();
+    expect($card->refresh()->description)
+        ->toContain('Bring', 'the', 'tent')
+        ->not->toContain('onclick', 'javascript:', '<img', 'onerror', '<script', 'steal');
+});
+
+test('a description with only unsafe markup is saved as no description', function () {
+    $user = User::factory()->create();
+    $boardList = BoardList::factory()->for(Board::factory()->for(Workspace::factory()->forUser($user)))->create();
+    $card = Card::factory()->for($boardList)->create(['description' => '<p>Pack the tent</p>']);
+
+    $response = $this->actingAs($user)->patch(route('board-lists.cards.update', [$boardList, $card]), [
+        'description' => '<script>steal()</script>',
+    ]);
+
+    $response->assertRedirect();
+    expect($card->refresh()->description)->toBeNull();
+});
+
+test('editor markup in a description is saved as it was written', function () {
+    $user = User::factory()->create();
+    $boardList = BoardList::factory()->for(Board::factory()->for(Workspace::factory()->forUser($user)))->create();
+    $card = Card::factory()->for($boardList)->create();
+    $description = '<h2>Packing</h2><ul><li><p>The <strong>blue</strong> <mark class="list-blue">tent</mark></p></li></ul>';
+
+    $response = $this->actingAs($user)->patch(route('board-lists.cards.update', [$boardList, $card]), [
+        'description' => $description,
+    ]);
+
+    $response->assertRedirect();
+    expect($card->refresh()->description)->toBe($description);
+});
+
 test('cards cannot be moved to a negative position', function () {
     $user = User::factory()->create();
     $boardList = BoardList::factory()->for(Board::factory()->for(Workspace::factory()->forUser($user)))->create();

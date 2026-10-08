@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\CardDescriptionSanitizer;
 use Database\Factories\CardFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -54,13 +55,18 @@ class Card extends Model
     }
 
     /**
-     * A description with no text, such as the editor's empty paragraph, is stored as null,
+     * A description is cut down to the markup the editor produces before it is stored, so it is safe wherever
+     * it is shown later. One with no text left, such as the editor's empty paragraph, is stored as null,
      * so whether a card has a description can be read without loading it.
      */
     public function description(): Attribute
     {
         return Attribute::make(
-            set: fn (?string $value) => blank(strip_tags((string) $value)) ? null : $value,
+            set: function (?string $value) {
+                $description = app(CardDescriptionSanitizer::class)->sanitize((string) $value);
+
+                return blank(strip_tags($description)) ? null : $description;
+            },
         );
     }
 }
