@@ -42,7 +42,8 @@ export interface User {
     updated_at: string;
 }
 
-export type WorkspaceMember = Pick<User, 'id' | 'name' | 'email' | 'avatar'> & {
+/** Other people in a workspace; their email addresses stay private. */
+export type WorkspaceMember = Pick<User, 'id' | 'name' | 'avatar'> & {
     joined_at?: string | null;
 };
 

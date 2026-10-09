@@ -123,7 +123,10 @@ test('board members see the owner and every member of the board but not who else
         ->has('members', 2)
         ->where('members.0.id', $this->member->id)
         ->where('members.1.id', $otherMember->id)
+        ->missing('owner.email')
+        ->missing('members.0.email')
         ->where('canManageMembers', false)
+        ->where('canLeave', true)
         ->missing('addableMembers')
         ->reload(fn (Assert $reload) => $reload->missing('addableMembers'), only: 'addableMembers')
     );
@@ -137,7 +140,9 @@ test('the owner sees the workspace members who are not on the board yet', functi
 
     $response->assertInertia(fn (Assert $page) => $page
         ->where('canManageMembers', true)
+        ->where('canLeave', false)
         ->has('addableMembers', 1)
         ->where('addableMembers.0.id', $newcomer->id)
+        ->missing('addableMembers.0.email')
     );
 });

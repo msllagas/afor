@@ -39,6 +39,10 @@ import {
 import { computed, inject, nextTick, ref, useTemplateRef, watch } from 'vue';
 
 const model = defineModel<string>();
+const props = defineProps<{
+    /** Shows the description without letting it be edited, such as on an archived board. */
+    readonly?: boolean;
+}>();
 const emit = defineEmits<{
     blur: [html: string];
 }>();
@@ -152,6 +156,7 @@ function indentCodeBlock(view: EditorView, outdent: boolean): boolean {
 
 const editor = useEditor({
     content: (model.value ?? '') as Content,
+    editable: !props.readonly,
     extensions: [
         StarterKit.configure({
             heading: { levels: [...HEADING_LEVELS] },
@@ -168,11 +173,12 @@ const editor = useEditor({
         PlainTextAfterEnter,
     ],
     editorProps: {
-        attributes: {
+        attributes: () => ({
             'aria-label': 'Description',
             'aria-multiline': 'true',
+            'aria-readonly': props.readonly ? 'true' : 'false',
             role: 'textbox',
-        },
+        }),
         handleKeyDown: (view, event) => {
             if (event.key === 'Tab' && !event.ctrlKey && !event.metaKey && !event.altKey) {
                 const instance = editor.value!;
@@ -211,8 +217,9 @@ const editor = useEditor({
             return false;
         },
         // Links are editable text, so a plain click places the cursor; Ctrl/⌘-click follows the link.
+        // A read-only description has no cursor to place, so any click follows it.
         handleClick: (view, pos, event) => {
-            if (!(event.metaKey || event.ctrlKey)) {
+            if (!props.readonly && !(event.metaKey || event.ctrlKey)) {
                 return false;
             }
 
@@ -234,6 +241,11 @@ const editor = useEditor({
         emit('blur', editor.getHTML());
     },
 });
+
+watch(
+    () => props.readonly,
+    (readonly) => editor.value?.setEditable(!readonly),
+);
 
 // Picks up description changes made elsewhere, without disturbing what the user is typing.
 watch(
@@ -487,12 +499,12 @@ const popoverActionClass =
 
 <template>
     <div v-if="editor" class="flex flex-col">
-        <TooltipProvider :delay-duration="400">
+        <TooltipProvider v-if="!readonly" :delay-duration="400">
             <!-- mousedown.prevent keeps the editor focused, so formatting applies to the current selection. -->
             <div
                 ref="toolbar"
                 aria-label="Text formatting"
-                class="sticky top-0 z-10 flex flex-wrap items-center gap-0.5 rounded-t-[inherit] border-b bg-muted/70 px-2 py-1.5 dark:bg-muted/40"
+                class="sticky top-0 z-10 flex flex-wrap items-center gap-0.5 rounded-t-[inherit] border-b bg-border/50 px-2 py-1.5 dark:bg-muted/40"
                 role="toolbar"
                 @keydown="onToolbarKeydown"
             >
@@ -698,15 +710,16 @@ const popoverActionClass =
 
         <!-- The text scrolls inside the editor, so the toolbar stays put and the dialog keeps room below. -->
         <div
-            class="relative max-h-[min(22rem,45dvh)] min-h-32 cursor-text overflow-y-auto overscroll-contain bg-background px-4 py-3.5 dark:bg-card"
-            @mousedown.self.prevent="editor.commands.focus('end')"
+            :class="{ 'cursor-text': !readonly }"
+            class="relative max-h-[min(22rem,45dvh)] min-h-32 overflow-y-auto overscroll-contain bg-muted/50 px-4 py-3.5 dark:bg-card"
+            @mousedown.self.prevent="!readonly && editor.commands.focus('end')"
         >
             <p
                 v-if="editor.isEmpty"
                 aria-hidden="true"
                 class="pointer-events-none absolute top-3.5 left-4 text-base text-muted-foreground sm:text-sm"
             >
-                Add a more detailed description…
+                {{ readonly ? 'No description.' : 'Add a more detailed description…' }}
             </p>
             <EditorContent :editor="editor" />
         </div>

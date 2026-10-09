@@ -100,7 +100,7 @@ watch(isOpen, (open) => {
                             {{ group.title }}
                         </ListboxGroupLabel>
                         <ListboxItem
-                            v-for="{ workspace, boards } in group.matches"
+                            v-for="{ workspace } in group.matches"
                             :key="workspace.id"
                             :value="workspace.id"
                             class="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm outline-none select-none data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground"
@@ -113,9 +113,6 @@ watch(isOpen, (open) => {
                                 aria-label="You're here"
                                 class="size-4 shrink-0 text-primary"
                             />
-                            <span v-else class="shrink-0 text-xs text-muted-foreground tabular-nums">
-                                {{ boards.length }}
-                            </span>
                         </ListboxItem>
                     </ListboxGroup>
 

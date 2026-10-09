@@ -41,3 +41,12 @@ test('members who left the workspace cannot add lists to its boards or update th
     expect($this->member->can('create', [BoardList::class, $this->board]))->toBeFalse()
         ->and($this->member->can('update', $this->boardList))->toBeFalse();
 });
+
+test('nobody can add lists to an archived board or update them', function () {
+    $this->board->update(['archived_at' => now()]);
+
+    expect($this->owner->can('create', [BoardList::class, $this->board]))->toBeFalse()
+        ->and($this->owner->can('update', $this->boardList))->toBeFalse()
+        ->and($this->member->can('create', [BoardList::class, $this->board]))->toBeFalse()
+        ->and($this->member->can('update', $this->boardList))->toBeFalse();
+});

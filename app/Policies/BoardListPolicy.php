@@ -17,7 +17,7 @@ class BoardListPolicy
      */
     public function create(User $user, Board $board): Response
     {
-        return $this->onBoard($user, $board);
+        return $this->onEditableBoard($user, $board);
     }
 
     /**
@@ -25,6 +25,6 @@ class BoardListPolicy
      */
     public function update(User $user, BoardList $boardList): Response
     {
-        return $this->onBoard($user, $boardList->board);
+        return $this->onEditableBoard($user, $boardList->board);
     }
 }

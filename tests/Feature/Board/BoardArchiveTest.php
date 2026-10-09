@@ -5,6 +5,7 @@ use App\Models\BoardList;
 use App\Models\Card;
 use App\Models\User;
 use App\Models\Workspace;
+use Inertia\Testing\AssertableInertia as Assert;
 
 beforeEach(function () {
     $this->user = User::factory()->create();
@@ -29,6 +30,32 @@ test('users can archive boards', function () {
     ]);
 
     $this->assertNotNull($board->archived_at);
+});
+
+test('board members cannot archive the board', function () {
+    $member = User::factory()->create();
+    $this->workspace->users()->attach($member);
+    $board = Board::factory()->for($this->workspace)->withMembers($member)->unarchived()->create();
+
+    $this->actingAs($member)
+        ->patchJson(route('boards.archive', $board))
+        ->assertForbidden()
+        ->assertJsonPath('message', 'Only the workspace owner can archive boards.');
+
+    expect($board->refresh()->archived_at)->toBeNull();
+});
+
+test('only the workspace owner is offered archiving on the board page', function () {
+    $member = User::factory()->create();
+    $this->workspace->users()->attach($member);
+    $board = Board::factory()->for($this->workspace)->withMembers($member)->unarchived()->create();
+
+    $this->actingAs($this->user)
+        ->get(route('boards.show', $board))
+        ->assertInertia(fn (Assert $page) => $page->where('canArchive', true));
+    $this->actingAs($member)
+        ->get(route('boards.show', $board))
+        ->assertInertia(fn (Assert $page) => $page->where('canArchive', false));
 });
 
 test('user can unarchive boards', function () {
@@ -159,15 +186,38 @@ test('users outside the workspace cannot delete its archived boards', function (
     $this->assertModelExists($board);
 });
 
-test('archived boards leave out boards the member is not on', function () {
+test('workspace members cannot list its archived boards', function () {
     $member = User::factory()->create();
     $this->workspace->users()->attach($member);
-    $boardMemberIsOn = Board::factory()->for($this->workspace)->withMembers($member)->archived($this->user)->create();
-    Board::factory()->for($this->workspace)->archived($this->user)->create();
+    Board::factory()->for($this->workspace)->withMembers($member)->archived($this->user)->create();
 
     $this->actingAs($member)
         ->getJson(route('workspaces.boards.archived', $this->workspace))
-        ->assertOk()
-        ->assertJsonCount(1)
-        ->assertJsonPath('0.id', $boardMemberIsOn->id);
+        ->assertForbidden()
+        ->assertJsonPath('message', 'Only the workspace owner can see archived boards.');
+});
+
+test('board members cannot restore an archived board', function () {
+    $member = User::factory()->create();
+    $this->workspace->users()->attach($member);
+    $board = Board::factory()->for($this->workspace)->withMembers($member)->archived($this->user)->create();
+
+    $this->actingAs($member)
+        ->patchJson(route('boards.unarchive', $board))
+        ->assertForbidden()
+        ->assertJsonPath('message', 'Only the workspace owner can restore boards.');
+
+    expect($board->refresh()->archived_at)->not->toBeNull();
+});
+
+test('board members cannot delete an archived board', function () {
+    $member = User::factory()->create();
+    $this->workspace->users()->attach($member);
+    $board = Board::factory()->for($this->workspace)->withMembers($member)->archived($this->user)->create();
+
+    $this->actingAs($member)
+        ->deleteJson(route('boards.destroy', $board))
+        ->assertForbidden();
+
+    $this->assertModelExists($board);
 });

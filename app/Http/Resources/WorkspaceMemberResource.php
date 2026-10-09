@@ -17,7 +17,6 @@ class WorkspaceMemberResource extends JsonResource
         return [
             'id'        => $this->id,
             'name'      => $this->name,
-            'email'     => $this->whenHas('email'),
             'avatar'    => $this->whenLoaded('avatarFile', fn () => $this->avatar),
             'joined_at' => $this->whenPivotLoaded('workspace_user', fn () => $this->pivot->created_at?->toIso8601String()),
         ];

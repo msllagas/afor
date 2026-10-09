@@ -7,7 +7,7 @@ import { useInitials } from '@/composables/useInitials';
 import boardRoutes from '@/routes/boards';
 import type { WorkspaceMember } from '@/types';
 import { router, usePage } from '@inertiajs/vue3';
-import { Crown, LogOut, Search, UserRoundMinus, UserRoundPlus } from 'lucide-vue-next';
+import { Search, UserRoundMinus, UserRoundPlus } from 'lucide-vue-next';
 import { computed, nextTick, ref, watch } from 'vue';
 import { toast } from 'vue-sonner';
 
@@ -35,8 +35,6 @@ const page = usePage();
 const { getInitials } = useInitials();
 
 const pendingIds = ref(new Set<string>());
-const isConfirmingLeave = ref(false);
-const isLeaving = ref(false);
 const search = ref('');
 const announcement = ref('');
 const bodyRef = ref<HTMLElement | null>(null);
@@ -53,16 +51,12 @@ const filteredCandidates = computed(() => {
         return candidates.value;
     }
 
-    return candidates.value.filter(
-        (person) =>
-            person.name.toLocaleLowerCase().includes(query) || person.email?.toLocaleLowerCase().includes(query),
-    );
+    return candidates.value.filter((person) => person.name.toLocaleLowerCase().includes(query));
 });
 
 watch(open, (isOpen) => {
     if (!isOpen) {
         search.value = '';
-        isConfirmingLeave.value = false;
     }
 });
 
@@ -83,10 +77,6 @@ function isCurrentUser(person: WorkspaceMember) {
 function announce(message: string) {
     announcement.value = '';
     nextTick(() => (announcement.value = message));
-}
-
-function focusById(id: string) {
-    nextTick(() => document.getElementById(id)?.focus());
 }
 
 function setPending(person: WorkspaceMember, isPending: boolean) {
@@ -186,47 +176,6 @@ function removeMember(person: WorkspaceMember) {
         () => removeMember(person),
     );
 }
-
-function askToLeave() {
-    isConfirmingLeave.value = true;
-    focusById('cancel-leave-board');
-}
-
-function cancelLeave() {
-    isConfirmingLeave.value = false;
-    focusById('leave-board');
-}
-
-function leaveBoard() {
-    if (isLeaving.value) {
-        return;
-    }
-
-    const boardName = props.boardName;
-    const fail = (status?: number) => {
-        isLeaving.value = false;
-        handleFailure('Couldn’t leave the board', leaveBoard, status);
-    };
-
-    router.delete(boardRoutes.leave(props.boardId).url, {
-        replace: true,
-        onStart: () => (isLeaving.value = true),
-        onSuccess: () =>
-            toast.success(`You left “${boardName}”`, {
-                description: 'The workspace owner can add you back.',
-            }),
-        onHttpException: (response) => {
-            fail(response.status);
-
-            return false;
-        },
-        onNetworkError: () => {
-            fail();
-
-            return false;
-        },
-    });
-}
 </script>
 
 <template>
@@ -236,14 +185,7 @@ function leaveBoard() {
             @open-auto-focus="onOpenAutoFocus"
         >
             <DialogHeader class="gap-1.5 border-b px-5 pt-5 pr-12 pb-4 text-left sm:px-6">
-                <DialogTitle class="flex items-center gap-2 text-xl font-semibold tracking-tight">
-                    Board members
-                    <span
-                        class="rounded-full bg-muted px-2 py-0.5 font-sans text-xs font-medium text-muted-foreground tabular-nums"
-                    >
-                        {{ people.length }}
-                    </span>
-                </DialogTitle>
+                <DialogTitle class="text-xl font-semibold tracking-tight">Board members</DialogTitle>
                 <DialogDescription>
                     Only the people here can see {{ boardName }}. The workspace owner is on every board.
                 </DialogDescription>
@@ -282,14 +224,10 @@ function leaveBoard() {
                                         </span>
                                         <span
                                             v-if="isOwner(person)"
-                                            class="inline-flex shrink-0 items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary"
+                                            class="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary"
                                         >
-                                            <Crown aria-hidden="true" class="size-3" />
                                             Owner
                                         </span>
-                                    </p>
-                                    <p v-if="person.email" class="truncate text-xs text-muted-foreground">
-                                        {{ person.email }}
                                     </p>
                                 </div>
 
@@ -307,54 +245,6 @@ function leaveBoard() {
                                         {{ pendingIds.has(person.id) ? 'Removing…' : 'Remove' }}
                                     </span>
                                 </Button>
-                                <Button
-                                    v-else-if="isCurrentUser(person) && !isOwner(person) && !isConfirmingLeave"
-                                    id="leave-board"
-                                    :aria-label="`Leave ${boardName}`"
-                                    class="cursor-pointer text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                                    size="sm"
-                                    variant="ghost"
-                                    @click="askToLeave"
-                                >
-                                    <LogOut aria-hidden="true" />
-                                    <span class="hidden sm:inline">Leave</span>
-                                </Button>
-                            </div>
-
-                            <div
-                                v-if="isCurrentUser(person) && isConfirmingLeave"
-                                aria-labelledby="confirm-leave-board"
-                                class="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-lg border border-destructive/20 bg-destructive/5 p-3"
-                                role="group"
-                                @keydown.esc.stop.prevent="cancelLeave"
-                            >
-                                <p id="confirm-leave-board" class="text-sm">
-                                    Leave {{ boardName }}?
-                                    <span class="text-muted-foreground">
-                                        You stay in {{ workspaceName }}, but only the owner can add you back.
-                                    </span>
-                                </p>
-                                <div class="ml-auto flex gap-2">
-                                    <Button
-                                        id="cancel-leave-board"
-                                        :disabled="isLeaving"
-                                        class="cursor-pointer"
-                                        size="sm"
-                                        variant="outline"
-                                        @click="cancelLeave"
-                                    >
-                                        Cancel
-                                    </Button>
-                                    <Button
-                                        :disabled="isLeaving"
-                                        class="cursor-pointer"
-                                        size="sm"
-                                        variant="destructive"
-                                        @click="leaveBoard"
-                                    >
-                                        {{ isLeaving ? 'Leaving…' : 'Leave board' }}
-                                    </Button>
-                                </div>
                             </div>
                         </li>
                     </ul>
@@ -374,7 +264,7 @@ function leaveBoard() {
                                 v-model="search"
                                 aria-label="Search workspace members"
                                 class="h-8 pl-9"
-                                placeholder="Search by name or email"
+                                placeholder="Search by name"
                                 type="search"
                             />
                         </div>
@@ -407,9 +297,6 @@ function leaveBoard() {
                             </Avatar>
                             <div class="min-w-0">
                                 <p class="truncate text-sm">{{ person.name }}</p>
-                                <p v-if="person.email" class="truncate text-xs text-muted-foreground">
-                                    {{ person.email }}
-                                </p>
                             </div>
                             <Button
                                 :aria-label="`Add ${person.name} to ${boardName}`"

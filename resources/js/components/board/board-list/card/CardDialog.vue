@@ -15,6 +15,8 @@ const props = defineProps<{
     description?: string | null;
     boardLists: BoardList[];
     boardName: string;
+    /** The board is archived, so the card can be read but not changed. */
+    isReadOnly?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -72,6 +74,10 @@ watch(
 const listName = (card: Card) => props.boardLists.find((list) => list.id === card.board_list_id)?.name ?? 'a list';
 
 function saveName(card: Card) {
+    if (props.isReadOnly) {
+        return;
+    }
+
     const name = draftName.value.trim();
 
     if (!name || name === card.name) {
@@ -90,12 +96,16 @@ function cancelName(card: Card) {
 }
 
 function saveDescription(card: Card, description: string) {
-    if (description !== (displayedDescription.value ?? '')) {
+    if (!props.isReadOnly && description !== (displayedDescription.value ?? '')) {
         emit('describe', card, description);
     }
 }
 
 async function confirmDelete() {
+    if (props.isReadOnly) {
+        return;
+    }
+
     isConfirmingDelete.value = true;
     await nextTick();
     // Start on the safe choice.
@@ -128,8 +138,14 @@ function onOpenChange(isOpen: boolean) {
                         <textarea
                             ref="name-input"
                             v-model="draftName"
+                            :class="
+                                isReadOnly
+                                    ? 'cursor-default focus-visible:ring-[3px] focus-visible:ring-ring/50'
+                                    : 'hover:bg-muted focus-visible:border-ring focus-visible:bg-background focus-visible:ring-[3px] focus-visible:ring-ring/50'
+                            "
+                            :readonly="isReadOnly"
                             aria-label="Card title"
-                            class="-ml-2 block w-full resize-none overflow-hidden rounded-lg border border-transparent bg-transparent px-2 py-1 text-xl leading-snug font-semibold outline-none hover:bg-muted focus-visible:border-ring focus-visible:bg-background focus-visible:ring-[3px] focus-visible:ring-ring/50 sm:text-2xl"
+                            class="-ml-2 block w-full resize-none overflow-hidden rounded-lg border border-transparent bg-transparent px-2 py-1 text-xl leading-snug font-semibold outline-none sm:text-2xl"
                             maxlength="255"
                             rows="1"
                             @blur="saveName(displayedCard)"
@@ -144,9 +160,11 @@ function onOpenChange(isOpen: boolean) {
                     </div>
                     <div class="mt-1.5 flex shrink-0 items-center gap-1">
                         <CardActionsMenu
+                            v-if="!isReadOnly"
                             :board-lists="boardLists"
                             :card-id="displayedCard.id"
                             :current-list-id="displayedCard.board_list_id"
+                            :is-read-only="isReadOnly"
                             @delete="confirmDelete"
                             @move="emit('move', displayedCard, $event)"
                             @reorder="emit('reorder', displayedCard, $event)"
@@ -165,7 +183,7 @@ function onOpenChange(isOpen: boolean) {
                 </header>
 
                 <div
-                    v-if="isConfirmingDelete"
+                    v-if="isConfirmingDelete && !isReadOnly"
                     class="flex flex-wrap items-center gap-2 border-b bg-destructive/10 px-5 py-3 sm:px-6"
                     role="alert"
                 >
@@ -203,11 +221,12 @@ function onOpenChange(isOpen: boolean) {
                     </div>
                     <div
                         v-else
-                        class="w-full overflow-clip rounded-xl border border-input bg-muted/30 shadow-xs transition-[color,box-shadow] focus-within:border-primary/60 focus-within:ring-[3px] focus-within:ring-primary/20 dark:bg-input/20"
+                        class="w-full overflow-clip rounded-xl border border-input bg-muted/30 shadow-xs transition-[color,box-shadow] focus-within:border-primary/35 focus-within:ring-2 focus-within:ring-primary/10 dark:bg-input/20"
                     >
                         <Tiptap
                             :key="displayedCard.id"
                             :model-value="displayedDescription ?? ''"
+                            :readonly="isReadOnly"
                             name="description"
                             @blur="saveDescription(displayedCard, $event)"
                         />

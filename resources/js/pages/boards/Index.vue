@@ -84,13 +84,6 @@ const starredBoards = computed(() =>
 );
 const showsStarredSection = computed(() => scope.value === 'all' && !search.value && starredBoards.value.length > 0);
 
-const summary = computed(() => {
-    const boardCount = allWorkspaces.value.reduce((total, { boards }) => total + boards.length, 0);
-    const workspaceCount = allWorkspaces.value.length;
-
-    return `${pluralize(boardCount, 'board')} across ${pluralize(workspaceCount, 'workspace')}`;
-});
-
 const byName = (first: Workspace, second: Workspace) => first.name.localeCompare(second.name);
 const includesSearch = (text: string) => text.toLocaleLowerCase().includes(search.value);
 
@@ -375,7 +368,6 @@ function handleStarBoard(board: Board, isStarred: boolean) {
         >
             <header>
                 <h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">Boards</h1>
-                <p class="mt-1.5 text-sm text-muted-foreground">{{ summary }}</p>
             </header>
 
             <div

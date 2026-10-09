@@ -25,7 +25,7 @@ class CardPolicy
      */
     public function create(User $user, BoardList $boardList): Response
     {
-        return $this->onBoard($user, $boardList->board);
+        return $this->onEditableBoard($user, $boardList->board);
     }
 
     /**
@@ -33,7 +33,7 @@ class CardPolicy
      */
     public function update(User $user, Card $card): Response
     {
-        return $this->onBoard($user, $card->boardList->board);
+        return $this->onEditableBoard($user, $card->boardList->board);
     }
 
     /**
@@ -41,7 +41,7 @@ class CardPolicy
      */
     public function delete(User $user, Card $card): Response
     {
-        return $this->onBoard($user, $card->boardList->board);
+        return $this->onEditableBoard($user, $card->boardList->board);
     }
 
     /**
@@ -49,6 +49,6 @@ class CardPolicy
      */
     public function restore(User $user, Card $card): Response
     {
-        return $this->onBoard($user, $card->boardList->board);
+        return $this->onEditableBoard($user, $card->boardList->board);
     }
 }

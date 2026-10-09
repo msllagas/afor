@@ -40,20 +40,6 @@ const hasListPreview = computed(() => Array.isArray(props.board.board_lists));
 const previewLists = computed(() =>
     hasListPreview.value ? props.board.board_lists.slice(0, PREVIEW_LIST_CAP) : PLACEHOLDER_LISTS,
 );
-
-const cardCount = computed(() =>
-    (props.board.board_lists ?? []).reduce((total, list) => total + (list.cards_count ?? 0), 0),
-);
-
-const summary = computed(() => {
-    const listCount = props.board.board_lists?.length ?? 0;
-
-    if (listCount === 0) {
-        return 'No lists yet';
-    }
-
-    return `${listCount} ${listCount === 1 ? 'list' : 'lists'}, ${cardCount.value} ${cardCount.value === 1 ? 'card' : 'cards'}`;
-});
 </script>
 
 <template>
@@ -83,9 +69,8 @@ const summary = computed(() => {
                     Empty board
                 </p>
             </div>
-            <div class="flex flex-1 flex-col gap-0.5 px-4 py-3">
+            <div class="flex flex-1 flex-col px-4 py-3">
                 <HighlightMatch :query="query" :text="board.name" class="truncate text-sm font-semibold" />
-                <span v-if="hasListPreview" class="text-xs text-muted-foreground tabular-nums">{{ summary }}</span>
             </div>
         </Link>
         <TooltipProvider>

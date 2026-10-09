@@ -18,6 +18,8 @@ const props = defineProps<{
     canMoveRight: boolean;
     /** A card (not a list) is being dragged somewhere on the board. */
     isDraggingCard: boolean;
+    /** The board is archived: the list and its cards can be read but not changed. */
+    isReadOnly?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -53,6 +55,10 @@ watch(
 );
 
 async function startEditingName() {
+    if (props.isReadOnly) {
+        return;
+    }
+
     draftName.value = props.boardList.name;
     isEditingName.value = true;
     await nextTick();
@@ -93,6 +99,10 @@ function cancelEditingName() {
 }
 
 async function openCardComposer() {
+    if (props.isReadOnly) {
+        return;
+    }
+
     isAddingCard.value = true;
     await nextTick();
     focusCardComposer();
@@ -148,9 +158,16 @@ function onRequestFailed(response?: { status: number }) {
         :class="boardList.color ? `list-${boardList.color}` : 'list-default'"
         class="flex min-h-0 w-full flex-col rounded-2xl text-(--list-fg) shadow-sm ring-1 ring-black/5 [background:var(--list-bg)] dark:ring-white/5"
     >
-        <header class="flex cursor-grab items-start gap-1 px-2 pt-2 pb-1 active:cursor-grabbing" data-list-handle>
+        <header
+            :class="{ 'cursor-grab active:cursor-grabbing': !isReadOnly }"
+            :data-list-handle="isReadOnly ? undefined : ''"
+            class="flex items-start gap-1 px-2 pt-2 pb-1"
+        >
             <div class="min-w-0 flex-1">
-                <h2 v-if="!isEditingName">
+                <h2 v-if="isReadOnly" class="px-2 py-1.5 text-sm leading-5 font-semibold break-words">
+                    {{ boardList.name }}
+                </h2>
+                <h2 v-else-if="!isEditingName">
                     <button
                         class="w-full cursor-pointer rounded-lg px-2 py-1.5 text-left text-sm leading-5 font-semibold break-words transition-colors outline-none hover:bg-(--list-bg-hovered) focus-visible:ring-[3px] focus-visible:ring-ring/50"
                         title="Rename list"
@@ -175,18 +192,13 @@ function onRequestFailed(response?: { status: number }) {
                     @keydown.esc.stop.prevent="cancelEditingName"
                 />
             </div>
-            <span
-                :aria-label="`${boardList.cards.length} ${boardList.cards.length === 1 ? 'card' : 'cards'}`"
-                class="mt-1.5 shrink-0 rounded-full bg-(--list-bg-hovered) px-2 py-0.5 text-xs font-medium text-(--list-fg-muted) tabular-nums"
-                role="img"
-            >
-                {{ boardList.cards.length }}
-            </span>
             <BoardListDropdownMenu
+                v-if="!isReadOnly"
                 :can-move-left="canMoveLeft"
                 :can-move-right="canMoveRight"
                 :color="boardList.color ?? null"
                 :colors="colors"
+                :is-read-only="isReadOnly"
                 :list-name="boardList.name"
                 class="text-(--list-fg-muted) hover:bg-(--list-bg-hovered)! hover:text-(--list-fg)!"
                 @add-card="openCardComposer"
@@ -248,7 +260,7 @@ function onRequestFailed(response?: { status: number }) {
             </p>
 
             <Form
-                v-if="isAddingCard"
+                v-if="isAddingCard && !isReadOnly"
                 v-slot="{ errors, processing }"
                 :options="{ preserveScroll: true, preserveState: true, only: ['board'] }"
                 :class="boardList.cards.length ? 'mt-2' : 'mt-1'"
@@ -294,7 +306,7 @@ function onRequestFailed(response?: { status: number }) {
             </Form>
         </div>
 
-        <div v-if="!isAddingCard" class="px-2 pb-2">
+        <div v-if="!isAddingCard && !isReadOnly" class="px-2 pb-2">
             <Button
                 class="h-9 w-full cursor-pointer justify-start gap-2 rounded-lg px-2 text-(--list-fg-muted) hover:bg-(--list-bg-hovered)! hover:text-(--list-fg)!"
                 type="button"

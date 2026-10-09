@@ -25,6 +25,8 @@ const props = defineProps<{
     canInvite: boolean;
     /** Only the workspace owner can create boards; members see the boards they were added to. */
     canCreateBoards: boolean;
+    /** Only the workspace owner sees archived boards; members can still open the ones they're on by URL. */
+    canViewArchivedBoards: boolean;
     /** Only sent to the owner. */
     inviteLink?: string;
 }>();
@@ -54,12 +56,6 @@ const starredBoards = computed(() => boards.value.filter((board) => board.is_fav
 const visibleMembers = computed(() => props.members.slice(0, AVATAR_CAP));
 
 const hiddenMemberCount = computed(() => Math.max(props.members.length - AVATAR_CAP, 0));
-
-const memberSummary = computed(() => {
-    const count = props.members.length;
-
-    return count === 0 ? 'No members yet' : `${count} ${count === 1 ? 'member' : 'members'}`;
-});
 
 async function copyInviteLink() {
     if (!props.inviteLink) {
@@ -128,7 +124,8 @@ onBeforeUnmount(() => clearTimeout(copiedResetTimer));
                 <div class="flex flex-wrap items-center gap-2 sm:gap-3">
                     <Link
                         :href="workspaceMembers(workspace.id)"
-                        class="flex min-h-8 items-center gap-2 rounded-full py-0.5 pr-3 pl-0.5 text-xs font-medium transition-colors duration-200 outline-none hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/50 sm:min-h-9 sm:text-sm"
+                        :class="members.length ? 'pr-0.5' : 'pr-3'"
+                        class="flex min-h-8 items-center gap-2 rounded-full py-0.5 pl-0.5 text-xs font-medium transition-colors duration-200 outline-none hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/50 sm:min-h-9 sm:text-sm"
                     >
                         <span v-if="members.length" aria-hidden="true" class="flex -space-x-2">
                             <Avatar
@@ -148,7 +145,8 @@ onBeforeUnmount(() => clearTimeout(copiedResetTimer));
                                 +{{ hiddenMemberCount }}
                             </span>
                         </span>
-                        <span :class="{ 'pl-2.5': !members.length }" class="tabular-nums">{{ memberSummary }}</span>
+                        <span v-if="members.length" class="sr-only">Members</span>
+                        <span v-else class="pl-2.5">No members yet</span>
                     </Link>
 
                     <Button
@@ -186,19 +184,9 @@ onBeforeUnmount(() => clearTimeout(copiedResetTimer));
 
             <section aria-labelledby="boards-heading" class="mt-12">
                 <div class="mb-6 flex items-center justify-between gap-3 border-b pb-3">
-                    <h2
-                        id="boards-heading"
-                        class="flex items-baseline gap-2 text-xl font-semibold tracking-tight sm:text-2xl"
-                    >
-                        Boards
-                        <span
-                            v-if="boards.length"
-                            class="font-sans text-sm font-medium text-muted-foreground tabular-nums"
-                        >
-                            {{ boards.length }}
-                        </span>
-                    </h2>
+                    <h2 id="boards-heading" class="text-xl font-semibold tracking-tight sm:text-2xl">Boards</h2>
                     <Button
+                        v-if="canViewArchivedBoards"
                         class="cursor-pointer text-muted-foreground"
                         size="sm"
                         variant="ghost"
@@ -249,6 +237,7 @@ onBeforeUnmount(() => clearTimeout(copiedResetTimer));
         </div>
 
         <ArchivedBoardsDialog
+            v-if="canViewArchivedBoards"
             v-model:open="showArchivedBoardsDialog"
             :workspace="workspace"
             @unarchive-board="handleUnarchiveBoard"

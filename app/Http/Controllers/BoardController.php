@@ -119,7 +119,7 @@ class BoardController extends Controller
 
     public function archive(Board $board): RedirectResponse
     {
-        Gate::authorize('update', $board);
+        Gate::authorize('archive', $board);
 
         $this->boardService->archive($board, auth()->user());
 
@@ -128,19 +128,18 @@ class BoardController extends Controller
 
     public function unarchive(Board $board): BoardResource
     {
-        Gate::authorize('update', $board);
+        Gate::authorize('unarchive', $board);
 
         return new BoardResource($this->boardService->unarchive($board));
     }
 
     public function archived(Workspace $workspace): AnonymousResourceCollection
     {
-        Gate::authorize('view', $workspace);
+        Gate::authorize('viewArchived', [Board::class, $workspace]);
 
         return BoardResource::collection($workspace->boards()
             ->select('id', 'name', 'workspace_id', 'created_at', 'archived_at', 'archived_by')
             ->archived()
-            ->visibleTo(auth()->user())
             ->withExists([
                 'favoritedByUsers as is_favorited' => fn ($query) => $query->whereKey(auth()->id()),
             ])
@@ -185,7 +184,7 @@ class BoardController extends Controller
 
     public function toggleFavorite(Workspace $workspace, Board $board): BoardResource
     {
-        Gate::authorize('view', $board);
+        Gate::authorize('favorite', $board);
 
         return new BoardResource($this->boardService->toggleFavorite($board, auth()->user()));
     }

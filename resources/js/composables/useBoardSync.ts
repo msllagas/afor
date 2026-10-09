@@ -150,7 +150,11 @@ export function useBoardSync(options: {
             return;
         }
 
-        toast.error(message);
+        // A 403 means the board was archived meanwhile; the reload below shows it read-only.
+        toast.error(
+            message,
+            status === 403 ? { description: 'This board is archived. Restore it to make changes.' } : undefined,
+        );
         // The open card's description is reloaded too, in case it was the change that failed.
         reloadQuietly(['board', 'selectedCard']);
     }

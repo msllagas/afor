@@ -19,18 +19,6 @@ const emit = defineEmits<{
 }>();
 
 const lists = computed(() => props.board.board_lists ?? []);
-
-const summary = computed(() => {
-    const listCount = lists.value.length;
-
-    if (listCount === 0) {
-        return 'No lists yet';
-    }
-
-    const cardCount = lists.value.reduce((total, list) => total + (list.cards_count ?? 0), 0);
-
-    return `${listCount} ${listCount === 1 ? 'list' : 'lists'}, ${cardCount} ${cardCount === 1 ? 'card' : 'cards'}`;
-});
 </script>
 
 <template>
@@ -48,14 +36,7 @@ const summary = computed(() => {
                 />
                 <span v-if="!lists.length" class="h-5 w-full rounded-md border border-dashed" />
             </span>
-            <span class="min-w-0 flex-1 sm:flex sm:items-baseline sm:gap-3">
-                <HighlightMatch
-                    :query="query"
-                    :text="board.name"
-                    class="block truncate text-sm font-medium sm:flex-1"
-                />
-                <span class="block text-xs text-muted-foreground tabular-nums sm:shrink-0">{{ summary }}</span>
-            </span>
+            <HighlightMatch :query="query" :text="board.name" class="min-w-0 flex-1 truncate text-sm font-medium" />
         </Link>
         <button
             :aria-label="board.is_favorited ? `Unstar ${board.name}` : `Star ${board.name}`"

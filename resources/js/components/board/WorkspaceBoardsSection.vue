@@ -53,16 +53,6 @@ const visibleBoards = computed(() =>
 );
 
 const hiddenCount = computed(() => props.boards.length - Math.min(props.boards.length, Math.max(limit.value, 1)));
-
-const countLabel = computed(() => {
-    const total = props.workspace.boards.length;
-
-    if (props.boards.length !== total) {
-        return `${props.boards.length} of ${total} ${total === 1 ? 'board' : 'boards'}`;
-    }
-
-    return `${total} ${total === 1 ? 'board' : 'boards'}`;
-});
 </script>
 
 <template>
@@ -83,17 +73,14 @@ const countLabel = computed(() => {
                             class="size-4 shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]/trigger:rotate-90 motion-reduce:transition-none"
                         />
                         <WorkspaceAvatar :workspace="workspace" class="size-9 rounded-lg" />
-                        <span class="grid min-w-0 flex-1">
-                            <span class="flex min-w-0 items-center gap-2">
-                                <HighlightMatch :query="query" :text="workspace.name" class="truncate font-semibold" />
-                                <span
-                                    v-if="isCurrent"
-                                    class="shrink-0 rounded-full bg-blush px-2 py-0.5 text-[11px] font-medium text-blush-foreground"
-                                >
-                                    Current
-                                </span>
+                        <span class="flex min-w-0 flex-1 items-center gap-2">
+                            <HighlightMatch :query="query" :text="workspace.name" class="truncate font-semibold" />
+                            <span
+                                v-if="isCurrent"
+                                class="shrink-0 rounded-full bg-blush px-2 py-0.5 text-[11px] font-medium text-blush-foreground"
+                            >
+                                Current
                             </span>
-                            <span class="text-xs font-normal text-muted-foreground tabular-nums">{{ countLabel }}</span>
                         </span>
                     </CollapsibleTrigger>
                 </h3>
@@ -147,7 +134,7 @@ const countLabel = computed(() => {
                     type="button"
                     @click="emit('toggleShowAll')"
                 >
-                    {{ isShowingAll ? 'Show fewer boards' : `Show all ${boards.length} boards` }}
+                    {{ isShowingAll ? 'Show fewer boards' : 'Show all boards' }}
                 </button>
             </CollapsibleContent>
         </Collapsible>

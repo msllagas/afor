@@ -18,11 +18,16 @@ const props = defineProps<{
     workspaceName: string;
     workspaceHomeUrl: string;
     boardName: string;
-    summary: string;
     owner: WorkspaceMember;
     members: WorkspaceMember[];
     isStarred: boolean;
+    /** Only the workspace owner can archive the board. */
+    canArchive: boolean;
+    /** Board members can leave the board; the owner can't. */
+    canLeave: boolean;
     isArchiving: boolean;
+    /** The board is archived: it can be read, and its members seen, but nothing changed. */
+    isReadOnly?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -30,6 +35,7 @@ const emit = defineEmits<{
     toggleStar: [];
     addList: [];
     archiveBoard: [];
+    leaveBoard: [];
     showArchivedItems: [];
     showMembers: [];
 }>();
@@ -46,6 +52,10 @@ const nameInput = useTemplateRef<HTMLInputElement>('board-name-input');
 const nameButton = useTemplateRef<HTMLButtonElement>('board-name-button');
 
 async function startEditingName() {
+    if (props.isReadOnly) {
+        return;
+    }
+
     draftName.value = props.boardName;
     isEditingName.value = true;
     await nextTick();
@@ -63,7 +73,7 @@ async function stopEditingName(shouldRestoreFocus: boolean) {
 }
 
 function saveName(shouldRestoreFocus = false) {
-    if (!isEditingName.value) {
+    if (!isEditingName.value || props.isReadOnly) {
         return;
     }
 
@@ -118,7 +128,10 @@ const peopleLabel = computed(() => {
             >
                 {{ workspaceName }}
             </Link>
-            <h1 v-if="!isEditingName" class="flex min-w-0">
+            <h1 v-if="isReadOnly" class="truncate text-lg leading-tight font-semibold tracking-tight sm:text-2xl">
+                {{ boardName }}
+            </h1>
+            <h1 v-else-if="!isEditingName" class="flex min-w-0">
                 <button
                     class="-mx-1.5 max-w-full cursor-pointer truncate rounded-md px-1.5 text-left text-lg leading-tight font-semibold tracking-tight transition-colors outline-none hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/50 sm:text-2xl"
                     title="Rename board"
@@ -148,8 +161,6 @@ const peopleLabel = computed(() => {
             </div>
         </div>
 
-        <p class="hidden shrink-0 text-sm text-muted-foreground tabular-nums lg:block">{{ summary }}</p>
-
         <div class="flex shrink-0 items-center gap-1">
             <button
                 :aria-label="`Board members: ${peopleLabel}`"
@@ -176,7 +187,7 @@ const peopleLabel = computed(() => {
                     </span>
                 </span>
             </button>
-            <TooltipProvider>
+            <TooltipProvider v-if="!isReadOnly">
                 <Tooltip>
                     <TooltipTrigger as-child>
                         <Button
@@ -202,14 +213,24 @@ const peopleLabel = computed(() => {
                     <TooltipContent>{{ isStarred ? 'Unstar' : 'Star' }} this board</TooltipContent>
                 </Tooltip>
             </TooltipProvider>
-            <Button class="hidden cursor-pointer sm:inline-flex" variant="outline" @click="emit('addList')">
+            <Button
+                v-if="!isReadOnly"
+                class="hidden cursor-pointer sm:inline-flex"
+                variant="outline"
+                @click="emit('addList')"
+            >
                 <Plus />
                 Add list
             </Button>
             <BoardDropdownMenu
+                v-if="!isReadOnly"
+                :can-archive="canArchive"
+                :can-leave="canLeave"
                 :is-archiving="isArchiving"
+                :is-read-only="isReadOnly"
                 @add-list="emit('addList')"
                 @archive-board="emit('archiveBoard')"
+                @leave-board="emit('leaveBoard')"
                 @show-archived-items="emit('showArchivedItems')"
                 @show-members="emit('showMembers')"
             />

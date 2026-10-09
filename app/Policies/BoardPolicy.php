@@ -37,11 +37,58 @@ class BoardPolicy
     }
 
     /**
-     * Determine whether the user can update the board, including renaming, archiving and reordering its lists.
+     * Determine whether the user can see the workspace's archived boards.
+     *
+     * Only the owner can; members are refused and anyone else is told the workspace doesn't exist.
+     */
+    public function viewArchived(User $user, Workspace $workspace): Response
+    {
+        if ($workspace->owner_id === $user->id) {
+            return Response::allow();
+        }
+
+        return $workspace->isAccessibleBy($user)
+            ? Response::deny('Only the workspace owner can see archived boards.')
+            : Response::denyAsNotFound();
+    }
+
+    /**
+     * Determine whether the user can update the board, including renaming it and reordering its lists.
+     * Archived boards are read-only.
      */
     public function update(User $user, Board $board): Response
     {
-        return $this->onBoard($user, $board);
+        return $this->onEditableBoard($user, $board);
+    }
+
+    /**
+     * Determine whether the user can star or unstar the board. Archived boards keep their stars as they are.
+     */
+    public function favorite(User $user, Board $board): Response
+    {
+        return $this->onEditableBoard($user, $board);
+    }
+
+    /**
+     * Determine whether the user can archive the board. Only the owner can, and only once.
+     */
+    public function archive(User $user, Board $board): Response
+    {
+        $access = $this->ownerOnly($user, $board, 'Only the workspace owner can archive boards.');
+
+        if ($access->denied()) {
+            return $access;
+        }
+
+        return $this->onEditableBoard($user, $board);
+    }
+
+    /**
+     * Determine whether the user can restore the board from the archive.
+     */
+    public function unarchive(User $user, Board $board): Response
+    {
+        return $this->ownerOnly($user, $board, 'Only the workspace owner can restore boards.');
     }
 
     /**
@@ -54,10 +101,17 @@ class BoardPolicy
 
     /**
      * Determine whether the user can add workspace members to the board and remove them from it.
+     * Archived boards keep their members as they are.
      */
     public function manageMembers(User $user, Board $board): Response
     {
-        return $this->ownerOnly($user, $board, 'Only the workspace owner can add or remove board members.');
+        $access = $this->ownerOnly($user, $board, 'Only the workspace owner can add or remove board members.');
+
+        if ($access->denied()) {
+            return $access;
+        }
+
+        return $this->onEditableBoard($user, $board);
     }
 
     /**

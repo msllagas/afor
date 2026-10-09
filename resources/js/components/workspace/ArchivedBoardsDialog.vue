@@ -9,7 +9,7 @@ import { formatTimeAgo } from '@/lib/relativeTime';
 import boardRoutes from '@/routes/boards';
 import workspaceRoutes from '@/routes/workspaces';
 import type { Board, Workspace } from '@/types';
-import { useHttp, usePage } from '@inertiajs/vue3';
+import { Link, useHttp, usePage } from '@inertiajs/vue3';
 import { Archive, ArchiveRestore, CircleAlert, Search, Trash2 } from 'lucide-vue-next';
 import { computed, nextTick, ref, watch } from 'vue';
 import { toast } from 'vue-sonner';
@@ -231,17 +231,10 @@ watch(open, (isOpen) => {
             @escape-key-down="handleEscape"
         >
             <DialogHeader class="gap-1.5 border-b px-5 pt-5 pr-12 pb-4 text-left sm:px-6">
-                <DialogTitle class="flex items-center gap-2 text-xl font-semibold tracking-tight">
-                    Archived boards
-                    <span
-                        v-if="archivedBoards?.length"
-                        class="rounded-full bg-muted px-2 py-0.5 font-sans text-xs font-medium text-muted-foreground tabular-nums"
-                    >
-                        {{ archivedBoards.length }}
-                    </span>
-                </DialogTitle>
+                <DialogTitle class="text-xl font-semibold tracking-tight">Archived boards</DialogTitle>
                 <DialogDescription>
-                    Restore a board to put it back in {{ workspace.name }}, or delete it for good.
+                    Open a board to look through it, restore it to put it back in {{ workspace.name }}, or delete it for
+                    good.
                 </DialogDescription>
                 <div v-if="showSearch" class="relative mt-2">
                     <Search
@@ -309,7 +302,7 @@ watch(open, (isOpen) => {
                                     : 'bg-card hover:border-primary/30'
                             "
                             :data-exit="exitActions[board.id]"
-                            class="archived-row grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-3 rounded-xl border p-3 sm:grid-cols-[auto_minmax(0,1fr)_auto]"
+                            class="archived-row relative grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-3 rounded-xl border p-3 has-[[data-board-link]:focus-visible]:ring-[3px] has-[[data-board-link]:focus-visible]:ring-ring/50 sm:grid-cols-[auto_minmax(0,1fr)_auto]"
                         >
                             <div
                                 aria-hidden="true"
@@ -330,13 +323,20 @@ watch(open, (isOpen) => {
                             </div>
 
                             <div class="min-w-0">
-                                <p class="truncate text-sm font-medium">{{ board.name }}</p>
+                                <!-- The link covers the whole row; the row's own buttons sit above it. -->
+                                <Link
+                                    :href="boardRoutes.show(board.id).url"
+                                    class="block truncate text-sm font-medium outline-none after:absolute after:inset-0 after:rounded-xl hover:underline"
+                                    data-board-link
+                                >
+                                    {{ board.name }}
+                                </Link>
                                 <p class="text-xs text-muted-foreground sm:truncate">{{ formatArchivedAt(board) }}</p>
                             </div>
 
                             <div
                                 v-if="confirmingDeleteId === board.id"
-                                class="col-span-full flex flex-col gap-3 border-t border-destructive/20 pt-3 sm:flex-row sm:items-center sm:justify-between"
+                                class="relative z-10 col-span-full flex flex-col gap-3 border-t border-destructive/20 pt-3 sm:flex-row sm:items-center sm:justify-between"
                                 role="group"
                                 :aria-label="`Confirm deleting ${board.name}`"
                             >
@@ -366,7 +366,10 @@ watch(open, (isOpen) => {
                                 </div>
                             </div>
 
-                            <div v-else class="col-span-full flex items-center justify-end gap-1.5 sm:col-span-1">
+                            <div
+                                v-else
+                                class="relative z-10 col-span-full flex items-center justify-end gap-1.5 sm:col-span-1"
+                            >
                                 <Button
                                     class="cursor-pointer max-sm:flex-1"
                                     data-restore-button

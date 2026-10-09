@@ -20,7 +20,7 @@ test('workspace owner can access their workspace members', function () {
             ->has('owner', fn (Assert $page) => $page
                 ->where('id', $user->id)
                 ->where('name', $user->name)
-                ->where('email', $user->email)
+                ->missing('email')
                 ->where('avatar', $user->avatar)
             )
             ->has('members')
@@ -51,13 +51,13 @@ test('workspace members can access their workspace members', function () {
             ->has('owner', fn (Assert $page) => $page
                 ->where('id', $owner->id)
                 ->where('name', $owner->name)
-                ->where('email', $owner->email)
+                ->missing('email')
                 ->where('avatar', $owner->avatar)
             )
             ->has('members', 1, fn (Assert $page) => $page
                 ->where('id', $member->id)
                 ->where('name', $member->name)
-                ->where('email', $member->email)
+                ->missing('email')
                 ->where('avatar', $member->avatar)
                 ->has('joined_at')
             )

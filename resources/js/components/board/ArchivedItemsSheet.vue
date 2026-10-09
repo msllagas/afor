@@ -64,9 +64,7 @@ function load() {
 
 function describeList(list: ArchivedBoardList) {
     const archiver = list.archiver?.id === page.props.auth.user.id ? 'you' : list.archiver?.name;
-    const cards = `${list.cards_count} ${list.cards_count === 1 ? 'card' : 'cards'}`;
-
-    return `Archived ${formatTimeAgo(list.archived_at)}${archiver ? ` by ${archiver}` : ''} · ${cards}`;
+    return `Archived ${formatTimeAgo(list.archived_at)}${archiver ? ` by ${archiver}` : ''}`;
 }
 
 function describeCard(card: DeletedCard) {
@@ -134,15 +132,7 @@ defineExpose({ reload: load });
     <Sheet v-model:open="open">
         <SheetContent class="w-full gap-0 p-0 sm:max-w-md">
             <SheetHeader class="gap-1.5 border-b px-5 pt-5 pr-12 pb-4 sm:px-6">
-                <SheetTitle class="flex items-center gap-2 text-xl tracking-tight">
-                    Archived items
-                    <span
-                        v-if="itemCount"
-                        class="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground tabular-nums"
-                    >
-                        {{ itemCount }}
-                    </span>
-                </SheetTitle>
+                <SheetTitle class="text-xl tracking-tight">Archived items</SheetTitle>
                 <SheetDescription
                     >Restore archived lists and deleted cards to put them back on {{ boardName }}.</SheetDescription
                 >

@@ -58,6 +58,27 @@ test('board abilities follow the access matrix', function (string $ability, arra
         'formerMember'    => 404,
         'outsider'        => 404,
     ]],
+    'favorite' => ['favorite', [
+        'owner'           => 'allowed',
+        'boardMember'     => 'allowed',
+        'workspaceMember' => 404,
+        'formerMember'    => 404,
+        'outsider'        => 404,
+    ]],
+    'archive' => ['archive', [
+        'owner'           => 'allowed',
+        'boardMember'     => 403,
+        'workspaceMember' => 404,
+        'formerMember'    => 404,
+        'outsider'        => 404,
+    ]],
+    'unarchive' => ['unarchive', [
+        'owner'           => 'allowed',
+        'boardMember'     => 403,
+        'workspaceMember' => 404,
+        'formerMember'    => 404,
+        'outsider'        => 404,
+    ]],
     'delete' => ['delete', [
         'owner'           => 'allowed',
         'boardMember'     => 403,
@@ -80,6 +101,80 @@ test('board abilities follow the access matrix', function (string $ability, arra
         'outsider'        => 404,
     ]],
 ]);
+
+test('archived boards can be seen but not changed by the people on them', function (string $ability, array $expected) {
+    $this->board->update(['archived_at' => now()]);
+
+    $decisions = boardGateDecisions($this, array_keys($expected), $ability, $this->board);
+
+    expect($decisions)->toBe($expected);
+})->with([
+    'view' => ['view', [
+        'owner'           => 'allowed',
+        'boardMember'     => 'allowed',
+        'workspaceMember' => 404,
+        'outsider'        => 404,
+    ]],
+    'update' => ['update', [
+        'owner'           => 403,
+        'boardMember'     => 403,
+        'workspaceMember' => 404,
+        'outsider'        => 404,
+    ]],
+    'favorite' => ['favorite', [
+        'owner'           => 403,
+        'boardMember'     => 403,
+        'workspaceMember' => 404,
+        'outsider'        => 404,
+    ]],
+    'archive' => ['archive', [
+        'owner'           => 403,
+        'boardMember'     => 403,
+        'workspaceMember' => 404,
+        'outsider'        => 404,
+    ]],
+    'manage members' => ['manageMembers', [
+        'owner'           => 403,
+        'boardMember'     => 403,
+        'workspaceMember' => 404,
+        'outsider'        => 404,
+    ]],
+    'unarchive' => ['unarchive', [
+        'owner'           => 'allowed',
+        'boardMember'     => 403,
+        'workspaceMember' => 404,
+        'outsider'        => 404,
+    ]],
+    'delete' => ['delete', [
+        'owner'           => 'allowed',
+        'boardMember'     => 403,
+        'workspaceMember' => 404,
+        'outsider'        => 404,
+    ]],
+    'leave' => ['leave', [
+        'owner'           => 403,
+        'boardMember'     => 'allowed',
+        'workspaceMember' => 404,
+        'outsider'        => 404,
+    ]],
+]);
+
+test('only the workspace owner can see its archived boards', function () {
+    $decisions = boardGateDecisions(
+        $this,
+        ['owner', 'boardMember', 'workspaceMember', 'formerMember', 'outsider'],
+        'viewArchived',
+        [Board::class, $this->workspace],
+    );
+
+    expect($decisions)->toBe([
+        'owner'           => 'allowed',
+        'boardMember'     => 403,
+        'workspaceMember' => 403,
+        'formerMember'    => 404,
+        'outsider'        => 404,
+    ]);
+});
 
 test('only the workspace owner can add boards to it', function () {
     $decisions = boardGateDecisions(

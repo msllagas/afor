@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\DTOs\FileUploadData;
 use App\Enums\FileCollection;
 use App\Http\Requests\UpdateWorkspaceRequest;
-use App\Http\Resources\UserResource;
 use App\Http\Resources\WorkspaceMemberResource;
 use App\Http\Resources\WorkspaceResource;
 use App\Models\Board;
@@ -63,9 +62,9 @@ class WorkspaceController extends Controller
 
         return Inertia::render('workspaces/Home', [
             'workspace' => fn () => new WorkspaceResource($workspace->load('logoFile')),
-            'members'   => fn () => UserResource::collection(
+            'members'   => fn () => WorkspaceMemberResource::collection(
                 $workspace->users()
-                    ->select('users.id', 'users.name', 'users.email', 'users.email_verified_at')
+                    ->select('users.id', 'users.name')
                     ->with('avatarFile')
                     ->get()
             )->resolve(),
@@ -86,6 +85,8 @@ class WorkspaceController extends Controller
                 ->get()),
             'canInvite'       => $canInvite,
             'canCreateBoards' => $user->can('create', [Board::class, $workspace]),
+            // Archived boards are listed for the owner only; members can still open the ones they're on by URL.
+            'canViewArchivedBoards' => $user->can('viewArchived', [Board::class, $workspace]),
             ...($canInvite ? [
                 'inviteLink' => Inertia::defer(fn () => $this->workspaceService->generateInvitationLink($workspace, $user)),
             ] : []),
@@ -102,11 +103,11 @@ class WorkspaceController extends Controller
         return Inertia::render('workspaces/Member', [
             'workspace' => fn () => new WorkspaceResource($workspace->load('logoFile')),
             'owner'     => fn () => new WorkspaceMemberResource(
-                $workspace->owner()->select('id', 'name', 'email')->with('avatarFile')->firstOrFail()
+                $workspace->owner()->select('id', 'name')->with('avatarFile')->firstOrFail()
             )->resolve(),
             'members' => fn () => WorkspaceMemberResource::collection(
                 $workspace->users()
-                    ->select('users.id', 'users.name', 'users.email')
+                    ->select('users.id', 'users.name')
                     ->with('avatarFile')
                     ->orderBy('users.name')
                     ->get()

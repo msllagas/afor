@@ -24,6 +24,8 @@ const props = defineProps<{
     colors: Array<string>;
     canMoveLeft: boolean;
     canMoveRight: boolean;
+    /** The board is archived, so every action is off. */
+    isReadOnly?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -37,6 +39,10 @@ const emit = defineEmits<{
 let isMovingFocus = false;
 
 function onAddCard() {
+    if (props.isReadOnly) {
+        return;
+    }
+
     isMovingFocus = true;
     emit('addCard');
 }
@@ -52,7 +58,7 @@ function onCloseAutoFocus(event: Event) {
 function onColorChange(value: unknown) {
     const color = typeof value === 'string' && value !== '' ? value : null;
 
-    if (color !== props.color) {
+    if (!props.isReadOnly && color !== props.color) {
         emit('colorSelected', color);
     }
 }
@@ -78,20 +84,28 @@ function colorLabel(color: string) {
         <DropdownMenuContent align="end" class="w-56" @close-auto-focus="onCloseAutoFocus">
             <DropdownMenuLabel>List Actions</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem class="cursor-pointer" @select="onAddCard">
+            <DropdownMenuItem :disabled="isReadOnly" class="cursor-pointer" @select="onAddCard">
                 <Plus />
                 <span>Add card</span>
             </DropdownMenuItem>
-            <DropdownMenuItem :disabled="!canMoveLeft" class="cursor-pointer" @select="emit('move', -1)">
+            <DropdownMenuItem
+                :disabled="isReadOnly || !canMoveLeft"
+                class="cursor-pointer"
+                @select="!isReadOnly && emit('move', -1)"
+            >
                 <ArrowLeft />
                 <span>Move list left</span>
             </DropdownMenuItem>
-            <DropdownMenuItem :disabled="!canMoveRight" class="cursor-pointer" @select="emit('move', 1)">
+            <DropdownMenuItem
+                :disabled="isReadOnly || !canMoveRight"
+                class="cursor-pointer"
+                @select="!isReadOnly && emit('move', 1)"
+            >
                 <ArrowRight />
                 <span>Move list right</span>
             </DropdownMenuItem>
             <DropdownMenuSub>
-                <DropdownMenuSubTrigger class="cursor-pointer gap-2">
+                <DropdownMenuSubTrigger :disabled="isReadOnly" class="cursor-pointer gap-2">
                     <Palette class="size-4 text-muted-foreground" />
                     <span>List colour</span>
                 </DropdownMenuSubTrigger>
@@ -100,7 +114,7 @@ function colorLabel(color: string) {
                         class="max-h-(--reka-dropdown-menu-content-available-height) w-48 overflow-y-auto"
                     >
                         <DropdownMenuRadioGroup :model-value="color ?? ''" @update:model-value="onColorChange">
-                            <DropdownMenuRadioItem class="cursor-pointer" value="">
+                            <DropdownMenuRadioItem :disabled="isReadOnly" class="cursor-pointer" value="">
                                 <span
                                     aria-hidden="true"
                                     class="list-default size-4 rounded-full ring-1 ring-border [background:var(--list-bg)]"
@@ -110,6 +124,7 @@ function colorLabel(color: string) {
                             <DropdownMenuRadioItem
                                 v-for="option in colors"
                                 :key="option"
+                                :disabled="isReadOnly"
                                 :value="option"
                                 class="cursor-pointer"
                             >
@@ -125,7 +140,11 @@ function colorLabel(color: string) {
                 </DropdownMenuPortal>
             </DropdownMenuSub>
             <DropdownMenuSeparator />
-            <DropdownMenuItem class="cursor-pointer" @select="emit('archiveList')">
+            <DropdownMenuItem
+                :disabled="isReadOnly"
+                class="cursor-pointer"
+                @select="!isReadOnly && emit('archiveList')"
+            >
                 <Archive />
                 <span>Archive list</span>
             </DropdownMenuItem>

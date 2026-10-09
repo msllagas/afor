@@ -32,8 +32,10 @@ test('workspace owner can access their workspace home', function () {
                 ->where('0.id', $member->id)
                 ->where('0.name', $member->name)
                 ->where('0.avatar', $member->avatar)
+                ->missing('0.email')
             )
             ->where('canInvite', true)
+            ->where('canViewArchivedBoards', true)
             ->loadDeferredProps(fn (Assert $reload) => $reload
                 ->has('inviteLink')
                 ->has('boards')
@@ -52,6 +54,7 @@ test('workspace members get their workspace home without an invite link', functi
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->where('canInvite', false)
+            ->where('canViewArchivedBoards', false)
             ->missing('inviteLink')
             ->loadDeferredProps(fn (Assert $reload) => $reload->has('boards'))
             ->reload(fn (Assert $reload) => $reload->missing('inviteLink'), only: 'inviteLink')

@@ -23,6 +23,8 @@ const props = defineProps<{
     boardLists: BoardList[];
     currentListId: string;
     cardId: string;
+    /** The board is archived, so the card can't be moved or deleted. */
+    isReadOnly?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -41,12 +43,14 @@ const positionGroup = useTemplateRef<HTMLElement>('position-group');
 // "Delete card" hands focus to the dialog's delete prompt, so the popover must not pull it back.
 let isMovingFocus = false;
 
-const canMove = computed(() => props.boardLists.length > 1);
+const canMove = computed(() => !props.isReadOnly && props.boardLists.length > 1);
 
 const cardsInList = computed(() => props.boardLists.find(({ id }) => id === props.currentListId)?.cards ?? []);
 const position = computed(() => cardsInList.value.findIndex(({ id }) => id === props.cardId));
-const canMoveUp = computed(() => position.value > 0);
-const canMoveDown = computed(() => position.value !== -1 && position.value < cardsInList.value.length - 1);
+const canMoveUp = computed(() => !props.isReadOnly && position.value > 0);
+const canMoveDown = computed(
+    () => !props.isReadOnly && position.value !== -1 && position.value < cardsInList.value.length - 1,
+);
 const positionLabelId = useId();
 
 const positionActions = computed(() => [
@@ -58,6 +62,10 @@ const positionActions = computed(() => [
 
 /** The menu stays open so the card can be nudged again; focus leaves a button the move just disabled. */
 async function reorder(to: number) {
+    if (props.isReadOnly) {
+        return;
+    }
+
     const isMovingUp = to < position.value;
     emit('reorder', to);
     await nextTick();
@@ -80,6 +88,10 @@ const matchingLists = computed(() => {
 });
 
 function showMoveView() {
+    if (!canMove.value) {
+        return;
+    }
+
     view.value = 'move';
 }
 
@@ -93,12 +105,16 @@ async function showActionsView() {
 function moveTo(list: BoardList) {
     isOpen.value = false;
 
-    if (list.id !== props.currentListId) {
+    if (!props.isReadOnly && list.id !== props.currentListId) {
         emit('move', list.id);
     }
 }
 
 function requestDelete() {
+    if (props.isReadOnly) {
+        return;
+    }
+
     isMovingFocus = true;
     isOpen.value = false;
     emit('delete');
@@ -176,7 +192,8 @@ watch(isOpen, (open) => {
                     <ChevronRight aria-hidden="true" class="size-4 text-muted-foreground" />
                 </button>
                 <button
-                    class="flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm text-destructive outline-none select-none hover:bg-destructive/10 focus-visible:bg-destructive/10"
+                    :disabled="isReadOnly"
+                    class="flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm text-destructive outline-none select-none hover:bg-destructive/10 focus-visible:bg-destructive/10 disabled:pointer-events-none disabled:opacity-50"
                     type="button"
                     @click="requestDelete"
                 >
@@ -235,9 +252,6 @@ watch(isOpen, (open) => {
                             aria-label="Current list"
                             class="size-4 shrink-0 text-primary"
                         />
-                        <span v-else class="shrink-0 text-xs text-muted-foreground tabular-nums">
-                            {{ list.cards.length }}
-                        </span>
                     </ListboxItem>
 
                     <p

@@ -9,16 +9,7 @@ import workspaceRoutes from '@/routes/workspaces';
 import type { BreadcrumbItem, Workspace, WorkspaceMember } from '@/types';
 import { Deferred, Head, router, usePage } from '@inertiajs/vue3';
 import { index as boardsIndex } from '@/routes/boards';
-import {
-    Check,
-    Crown,
-    Link as LinkIcon,
-    LogOut,
-    RotateCcw,
-    Search,
-    UserRoundMinus,
-    UserRoundPlus,
-} from 'lucide-vue-next';
+import { Check, Link as LinkIcon, LogOut, RotateCcw, Search, UserRoundMinus, UserRoundPlus } from 'lucide-vue-next';
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
 import { toast } from 'vue-sonner';
 
@@ -81,11 +72,7 @@ const visiblePeople = computed(() => {
         return people.value;
     }
 
-    return people.value.filter(
-        (person) =>
-            person.name.toLocaleLowerCase().includes(normalizedSearch.value) ||
-            person.email?.toLocaleLowerCase().includes(normalizedSearch.value),
-    );
+    return people.value.filter((person) => person.name.toLocaleLowerCase().includes(normalizedSearch.value));
 });
 
 watch(showSearch, (isShown) => {
@@ -106,17 +93,12 @@ function canRemove(person: WorkspaceMember) {
     return props.canManageMembers && !isOwner(person);
 }
 
-function canLeave(person: WorkspaceMember) {
-    return isCurrentUser(person) && !isOwner(person);
-}
-
-function isConfirmingAbout(person: WorkspaceMember) {
-    return confirmingRemovalId.value === person.id || (isConfirmingLeave.value && canLeave(person));
-}
+/** Members can leave; the owner deletes the workspace instead. */
+const canLeaveWorkspace = computed(() => currentUserId.value !== props.owner.id);
 
 function formatJoinedAt(person: WorkspaceMember) {
     if (isOwner(person)) {
-        return 'Created this workspace';
+        return '';
     }
 
     return person.joined_at ? `Joined ${joinedFormat.format(new Date(person.joined_at))}` : '';
@@ -370,13 +352,62 @@ onBeforeUnmount(() => clearTimeout(copiedResetTimer));
         <Head :title="`${workspace.name} members`" />
 
         <div class="mx-auto w-full max-w-3xl px-4 pt-8 pb-16 sm:px-6 sm:pt-10 lg:px-10">
-            <header>
-                <h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">Members</h1>
-                <p class="mt-1.5 max-w-prose text-sm text-muted-foreground">
-                    Everyone in <span class="font-medium text-foreground">{{ workspace.name }}</span> can see the boards
-                    the owner adds them to. Open a board and choose Members to add or remove people.
-                </p>
+            <header class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div class="min-w-0">
+                    <h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">Members</h1>
+                    <p class="mt-1.5 max-w-prose text-sm text-muted-foreground">
+                        Everyone in <span class="font-medium text-foreground">{{ workspace.name }}</span> can see the
+                        boards the owner adds them to. Open a board and choose Members to add or remove people.
+                    </p>
+                </div>
+                <Button
+                    v-if="canLeaveWorkspace"
+                    id="leave-workspace"
+                    :disabled="isConfirmingLeave"
+                    class="cursor-pointer self-start hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive max-sm:w-full"
+                    variant="outline"
+                    @click="askToLeave"
+                >
+                    <LogOut aria-hidden="true" />
+                    Leave workspace
+                </Button>
             </header>
+
+            <div
+                v-if="canLeaveWorkspace && isConfirmingLeave"
+                aria-labelledby="confirm-leave"
+                class="mt-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-3 rounded-xl border border-destructive/30 bg-destructive/5 p-3 sm:p-4"
+                role="group"
+                @keydown.esc.stop.prevent="cancelLeave"
+            >
+                <p id="confirm-leave" class="text-sm">
+                    Leave {{ workspace.name }}?
+                    <span class="text-muted-foreground">
+                        You’ll be taken off all its boards, and need a new invite from {{ owner.name }} to come back.
+                    </span>
+                </p>
+                <div class="ml-auto flex gap-2">
+                    <Button
+                        id="cancel-leave"
+                        :disabled="isLeaving"
+                        class="cursor-pointer"
+                        size="sm"
+                        variant="outline"
+                        @click="cancelLeave"
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        :disabled="isLeaving"
+                        class="cursor-pointer"
+                        size="sm"
+                        variant="destructive"
+                        @click="leaveWorkspace"
+                    >
+                        {{ isLeaving ? 'Leaving…' : 'Leave workspace' }}
+                    </Button>
+                </div>
+            </div>
 
             <section
                 v-if="canInvite"
@@ -493,15 +524,7 @@ onBeforeUnmount(() => clearTimeout(copiedResetTimer));
 
             <section aria-labelledby="people-heading" class="mt-10">
                 <div class="mb-4 flex flex-wrap items-center justify-between gap-3 border-b pb-3">
-                    <h2
-                        id="people-heading"
-                        class="flex items-baseline gap-2 text-xl font-semibold tracking-tight sm:text-2xl"
-                    >
-                        People
-                        <span class="font-sans text-sm font-medium text-muted-foreground tabular-nums">
-                            {{ people.length }}
-                        </span>
-                    </h2>
+                    <h2 id="people-heading" class="text-xl font-semibold tracking-tight sm:text-2xl">People</h2>
 
                     <div v-if="showSearch" class="relative w-full sm:w-64">
                         <Search
@@ -512,7 +535,7 @@ onBeforeUnmount(() => clearTimeout(copiedResetTimer));
                             v-model="search"
                             aria-label="Search members"
                             class="pl-9"
-                            placeholder="Search by name or email"
+                            placeholder="Search by name"
                             type="search"
                         />
                     </div>
@@ -529,7 +552,7 @@ onBeforeUnmount(() => clearTimeout(copiedResetTimer));
                             v-for="person in visiblePeople"
                             :key="person.id"
                             :class="
-                                isConfirmingAbout(person)
+                                confirmingRemovalId === person.id
                                     ? 'border-destructive/40 bg-destructive/5'
                                     : isOwner(person)
                                       ? 'border-primary/20'
@@ -553,21 +576,19 @@ onBeforeUnmount(() => clearTimeout(copiedResetTimer));
                                     >
                                         You
                                     </span>
-                                    <span
-                                        v-if="isOwner(person)"
-                                        class="inline-flex shrink-0 items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary"
-                                    >
-                                        <Crown class="size-3" aria-hidden="true" />
-                                        Owner
-                                    </span>
                                 </p>
-                                <p class="truncate text-xs text-muted-foreground">{{ person.email }}</p>
                                 <p v-if="formatJoinedAt(person)" class="text-xs text-muted-foreground sm:hidden">
                                     {{ formatJoinedAt(person) }}
                                 </p>
                             </div>
 
                             <div class="flex items-center gap-3">
+                                <span
+                                    v-if="isOwner(person)"
+                                    class="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary"
+                                >
+                                    Owner
+                                </span>
                                 <span
                                     v-if="formatJoinedAt(person)"
                                     class="hidden text-xs whitespace-nowrap text-muted-foreground sm:inline"
@@ -587,55 +608,6 @@ onBeforeUnmount(() => clearTimeout(copiedResetTimer));
                                     <UserRoundMinus aria-hidden="true" />
                                     <span class="hidden sm:inline">Remove</span>
                                 </Button>
-                                <Button
-                                    v-if="canLeave(person) && !isConfirmingLeave"
-                                    id="leave-workspace"
-                                    :aria-label="`Leave ${workspace.name}`"
-                                    class="cursor-pointer text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                                    size="sm"
-                                    variant="ghost"
-                                    @click="askToLeave"
-                                >
-                                    <LogOut aria-hidden="true" />
-                                    <span class="hidden sm:inline">Leave</span>
-                                </Button>
-                            </div>
-
-                            <div
-                                v-if="canLeave(person) && isConfirmingLeave"
-                                aria-labelledby="confirm-leave"
-                                class="col-span-full flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-destructive/20 pt-3"
-                                role="group"
-                                @keydown.esc.stop.prevent="cancelLeave"
-                            >
-                                <p id="confirm-leave" class="text-sm">
-                                    Leave {{ workspace.name }}?
-                                    <span class="text-muted-foreground">
-                                        You’ll be taken off all its boards, and need a new invite from
-                                        {{ owner.name }} to come back.
-                                    </span>
-                                </p>
-                                <div class="ml-auto flex gap-2">
-                                    <Button
-                                        id="cancel-leave"
-                                        :disabled="isLeaving"
-                                        class="cursor-pointer"
-                                        size="sm"
-                                        variant="outline"
-                                        @click="cancelLeave"
-                                    >
-                                        Cancel
-                                    </Button>
-                                    <Button
-                                        :disabled="isLeaving"
-                                        class="cursor-pointer"
-                                        size="sm"
-                                        variant="destructive"
-                                        @click="leaveWorkspace"
-                                    >
-                                        {{ isLeaving ? 'Leaving…' : 'Leave workspace' }}
-                                    </Button>
-                                </div>
                             </div>
 
                             <div

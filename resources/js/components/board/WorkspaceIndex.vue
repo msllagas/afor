@@ -18,7 +18,7 @@ const emit = defineEmits<{
         <div v-for="group in groups" :key="group.id">
             <p class="px-2 pb-1 text-xs font-medium text-muted-foreground">{{ group.title }}</p>
             <ul class="list-none space-y-0.5">
-                <li v-for="{ workspace, boards } in group.matches" :key="workspace.id">
+                <li v-for="{ workspace } in group.matches" :key="workspace.id">
                     <button
                         :aria-current="workspace.id === activeWorkspaceId ? 'location' : undefined"
                         :class="
@@ -33,10 +33,6 @@ const emit = defineEmits<{
                     >
                         <WorkspaceAvatar :workspace="workspace" class="size-5 rounded" />
                         <span :title="workspace.name" class="min-w-0 flex-1 truncate">{{ workspace.name }}</span>
-                        <span class="shrink-0 text-xs text-muted-foreground tabular-nums">
-                            {{ boards.length
-                            }}<span class="sr-only"> {{ boards.length === 1 ? 'board' : 'boards' }}</span>
-                        </span>
                     </button>
                 </li>
             </ul>

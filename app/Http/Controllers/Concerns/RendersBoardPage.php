@@ -34,21 +34,25 @@ trait RendersBoardPage
             'selectedCard' => $selectedCard,
             'colors'       => Inertia::once(fn () => BoardListColor::cases()),
             'owner'        => fn () => new WorkspaceMemberResource(
-                $board->workspace->owner()->select('id', 'name', 'email')->with('avatarFile')->firstOrFail()
+                $board->workspace->owner()->select('id', 'name')->with('avatarFile')->firstOrFail()
             )->resolve(),
             'members' => fn () => WorkspaceMemberResource::collection(
                 $board->members()
-                    ->select('users.id', 'users.name', 'users.email')
+                    ->select('users.id', 'users.name')
                     ->with('avatarFile')
                     ->orderBy('users.name')
                     ->get()
             )->resolve(),
             'canManageMembers' => $canManageMembers,
+            'canArchive'       => $user->can('archive', $board),
+            'canUnarchive'     => $user->can('unarchive', $board),
+            'canDelete'        => $user->can('delete', $board),
+            'canLeave'         => $user->can('leave', $board),
             // Members never receive the rest of the workspace, not even through a partial reload that asks for it.
             ...($canManageMembers ? [
                 'addableMembers' => fn () => WorkspaceMemberResource::collection(
                     $board->workspace->users()
-                        ->select('users.id', 'users.name', 'users.email')
+                        ->select('users.id', 'users.name')
                         ->whereDoesntHave('sharedBoards', fn ($query) => $query->whereKey($board->id))
                         ->with('avatarFile')
                         ->orderBy('users.name')

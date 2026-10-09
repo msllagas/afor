@@ -18,4 +18,21 @@ trait RequiresBoardAccess
             ? Response::allow()
             : Response::denyAsNotFound();
     }
+
+    /**
+     * Allow the people on the board to change it while it is active. An archived board is read-only
+     * until it is restored; everyone else is still told the board doesn't exist.
+     */
+    protected function onEditableBoard(User $user, Board $board): Response
+    {
+        $access = $this->onBoard($user, $board);
+
+        if ($access->denied()) {
+            return $access;
+        }
+
+        return $board->isArchived()
+            ? Response::deny('This board is archived. Restore it to make changes.')
+            : Response::allow();
+    }
 }

@@ -46,3 +46,22 @@ test('only workspace owners and board members can add cards to its lists', funct
         ->and($workspaceMemberNotOnBoard->can('create', [Card::class, $this->boardList]))->toBeFalse()
         ->and(User::factory()->create()->can('create', [Card::class, $this->boardList]))->toBeFalse();
 });
+
+test('cards of an archived board can be viewed but not changed', function (string $ability, bool $isAllowed) {
+    $this->board->update(['archived_at' => now()]);
+
+    expect($this->owner->can($ability, $this->card))->toBe($isAllowed)
+        ->and($this->member->can($ability, $this->card))->toBe($isAllowed);
+})->with([
+    'view'    => ['view', true],
+    'update'  => ['update', false],
+    'delete'  => ['delete', false],
+    'restore' => ['restore', false],
+]);
+
+test('nobody can add cards to the lists of an archived board', function () {
+    $this->board->update(['archived_at' => now()]);
+
+    expect($this->owner->can('create', [Card::class, $this->boardList]))->toBeFalse()
+        ->and($this->member->can('create', [Card::class, $this->boardList]))->toBeFalse();
+});

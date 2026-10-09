@@ -165,7 +165,7 @@ const hiddenStarredCount = computed(() => Math.max(page.props.starredBoards.leng
                     <SidebarMenuItem v-if="hiddenStarredCount">
                         <SidebarMenuButton as-child class="text-muted-foreground">
                             <Link :href="boards.index()">
-                                <span>Show all starred ({{ page.props.starredBoards.length }})</span>
+                                <span>Show all starred</span>
                             </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
