@@ -54,6 +54,10 @@ class ProfileController extends Controller
 
         $request->user()->save();
 
+        if ($request->user()->wasChanged('name')) {
+            $this->userService->announceProfileChange($request->user());
+        }
+
         return to_route('profile.edit');
     }
 
@@ -91,12 +95,16 @@ class ProfileController extends Controller
             uploadedBy: $request->user(),
         ));
 
+        $this->userService->announceProfileChange($request->user());
+
         return back();
     }
 
     public function deleteAvatar(Request $request): RedirectResponse
     {
         $this->fileUploadService->delete($request->user(), FileCollection::AVATAR);
+
+        $this->userService->announceProfileChange($request->user());
 
         return back();
     }

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\BoardChanged;
 use App\Models\Board;
 use App\Models\User;
 use App\Models\Workspace;
@@ -11,10 +12,14 @@ class BoardService
 {
     public function create(array $data, Workspace $workspace): Board
     {
-        return Board::create([
+        $board = Board::create([
             ...$data,
             'workspace_id' => $workspace->id,
         ]);
+
+        BoardChanged::dispatch($board);
+
+        return $board;
     }
 
     public function archive(Board $board, User $archiver): Board
@@ -23,6 +28,8 @@ class BoardService
             'archived_by' => $archiver->id,
             'archived_at' => now(),
         ]);
+
+        BoardChanged::dispatch($board);
 
         return $board;
     }
@@ -34,12 +41,16 @@ class BoardService
             'archived_at' => null,
         ]);
 
+        BoardChanged::dispatch($board);
+
         return $board;
     }
 
     public function addMember(Board $board, User $user): void
     {
         $board->members()->attach($user->id);
+
+        BoardChanged::dispatch($board);
     }
 
     /**
@@ -52,6 +63,8 @@ class BoardService
 
             $user->favoriteBoards()->detach($board->id);
         });
+
+        BoardChanged::dispatch($board);
     }
 
     public function toggleFavorite(Board $board, User $user): Board

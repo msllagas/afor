@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\FileCollection;
 use Database\Factories\WorkspaceFactory;
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
@@ -64,6 +65,14 @@ class Workspace extends Model
     {
         return $this->owner_id === $user->id
             || $this->users()->whereKey($user->id)->exists();
+    }
+
+    #[Scope]
+    protected function accessibleBy(Builder $query, User $user): Builder
+    {
+        return $query->where(fn (Builder $query) => $query
+            ->where('owner_id', $user->id)
+            ->orWhereHas('users', fn (Builder $query) => $query->whereKey($user->id)));
     }
 
     // Members of the workspace

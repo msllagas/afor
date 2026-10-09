@@ -80,7 +80,26 @@ const {
     board: () => props.board,
     isEditingName: () => boardHeader.value?.isEditingName ?? false,
     cancelDescriptionRequest: () => descriptionRequest?.cancel(),
+    onArchiveChange: announceArchiveChange,
+    openCardId: () => props.selectedCard?.id ?? null,
+    onOpenCardMoved: followOpenCard,
 });
+
+function announceArchiveChange(isArchived: boolean) {
+    if (isArchiving.value || isRestoring.value) {
+        return;
+    }
+
+    if (isArchived) {
+        toast('This board was archived', {
+            description: "Nothing can be changed until it's restored, so anything you were still typing wasn't saved.",
+        });
+        announce('This board was archived. It is read-only now.');
+    } else {
+        toast('This board was restored', { description: 'You can edit it again.' });
+        announce('This board was restored. You can edit it again.');
+    }
+}
 
 /*
 |--------------------------------------------------------------------------
@@ -749,6 +768,21 @@ function openCard(card: Card) {
             loadActiveCardDescription();
         }
     });
+}
+
+function followOpenCard(card: Card | null) {
+    if (card) {
+        showCard(card, cardUrl(card), () => {
+            if (activeCardDescription.value === undefined) {
+                loadActiveCardDescription();
+            }
+        });
+
+        return;
+    }
+
+    closeCard(() => toast('This card is gone', { description: 'Someone else deleted it or archived its list.' }));
+    announce('The open card was deleted or its list was archived by someone else.');
 }
 
 function closeCard(onFinish?: () => void) {

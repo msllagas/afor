@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\BoardChanged;
 use App\Http\Controllers\Concerns\RendersBoardPage;
 use App\Http\Requests\ReorderCardsRequest;
 use App\Http\Requests\StoreCardRequest;
@@ -46,7 +47,13 @@ class CardController extends Controller
      */
     public function update(UpdateCardRequest $request, BoardList $boardList, Card $card): RedirectResponse
     {
+        $hadDescription = $card->description !== null;
+
         $card->update($request->validated());
+
+        if ($card->wasChanged(['name', 'board_list_id', 'order']) || $hadDescription !== ($card->description !== null)) {
+            BoardChanged::dispatch($boardList->board);
+        }
 
         return back();
     }
@@ -60,6 +67,8 @@ class CardController extends Controller
 
         $card->delete();
 
+        BoardChanged::dispatch($boardList->board);
+
         return back();
     }
 
@@ -71,6 +80,8 @@ class CardController extends Controller
         Gate::authorize('restore', $card);
 
         $card->restore();
+
+        BoardChanged::dispatch($boardList->board);
 
         return back();
     }

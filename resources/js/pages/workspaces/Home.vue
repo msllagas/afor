@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import ArchivedBoardsDialog from '@/components/workspace/ArchivedBoardsDialog.vue';
 import { useBoardStar } from '@/composables/useBoardStar';
 import { useInitials } from '@/composables/useInitials';
+import { useWorkspaceSync } from '@/composables/useWorkspaceSync';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { home, members as workspaceMembers } from '@/routes/workspaces';
 import type { Board, BreadcrumbItem, Workspace, WorkspaceMember } from '@/types';
@@ -50,6 +51,8 @@ watch(
         boards.value = value ?? [];
     },
 );
+
+useWorkspaceSync({ workspaceId: props.workspace.id, boardProps: ['boards'], workspaceProps: ['workspace', 'members'] });
 
 const starredBoards = computed(() => boards.value.filter((board) => board.is_favorited));
 

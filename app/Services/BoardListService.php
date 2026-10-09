@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\BoardChanged;
 use App\Models\Board;
 use App\Models\BoardList;
 use App\Models\User;
@@ -16,11 +17,15 @@ class BoardListService
      */
     public function create(Board $board, array $data): BoardList
     {
-        return BoardList::query()->create([
+        $boardList = BoardList::query()->create([
             ...$data,
             'board_id' => $board->id,
             'order'    => ($board->boardLists()->max('order') ?? -1) + 1,
         ]);
+
+        BoardChanged::dispatch($board);
+
+        return $boardList;
     }
 
     /**
@@ -35,6 +40,8 @@ class BoardListService
                 $board->boardLists()->whereKey($position['id'])->update(['order' => $position['order']]);
             }
         });
+
+        BoardChanged::dispatch($board);
     }
 
     public function archive(BoardList $boardList, User $archiver): BoardList
@@ -43,6 +50,8 @@ class BoardListService
             'archived_by' => $archiver->id,
             'archived_at' => now(),
         ]);
+
+        BoardChanged::dispatch($boardList->board);
 
         return $boardList;
     }
@@ -56,6 +65,8 @@ class BoardListService
             'archived_by' => null,
             'archived_at' => null,
         ]);
+
+        BoardChanged::dispatch($boardList->board);
 
         return $boardList;
     }

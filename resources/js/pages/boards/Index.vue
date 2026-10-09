@@ -6,6 +6,7 @@ import WorkspaceBoardsSection from '@/components/board/WorkspaceBoardsSection.vu
 import WorkspaceIndex from '@/components/board/WorkspaceIndex.vue';
 import { Button } from '@/components/ui/button';
 import { useBoardStar } from '@/composables/useBoardStar';
+import { useWorkspaceSync } from '@/composables/useWorkspaceSync';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { index } from '@/routes/boards';
 import type {
@@ -72,6 +73,8 @@ const isFiltering = computed(() => !!search.value || scope.value !== 'all');
 const allWorkspaces = computed(() => [...props.ownedWorkspaces, ...props.sharedWorkspaces]);
 const ownedIds = computed(() => new Set(props.ownedWorkspaces.map(({ id }) => id)));
 const currentWorkspaceId = computed(() => page.props.currentWorkspaceId);
+
+useWorkspaceSync({ workspaceId: null, boardProps: ['ownedWorkspaces', 'sharedWorkspaces'] });
 
 const showsIndex = computed(() => allWorkspaces.value.length >= INDEX_MIN_WORKSPACES);
 

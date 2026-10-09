@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\DTOs\FileUploadData;
 use App\Enums\FileCollection;
+use App\Events\WorkspaceChanged;
 use App\Http\Requests\UpdateWorkspaceRequest;
 use App\Http\Resources\WorkspaceMemberResource;
 use App\Http\Resources\WorkspaceResource;
@@ -40,6 +41,8 @@ class WorkspaceController extends Controller
         } elseif ($request->boolean('remove_logo')) {
             $this->fileUploadService->delete($workspace, FileCollection::WORKSPACE_LOGO);
         }
+
+        WorkspaceChanged::dispatch($workspace);
 
         return back();
     }

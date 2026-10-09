@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\BoardChanged;
 use App\Models\BoardList;
 use App\Models\Card;
 use Illuminate\Support\Facades\DB;
@@ -15,11 +16,15 @@ class CardService
      */
     public function create(BoardList $boardList, array $data): Card
     {
-        return Card::query()->create([
+        $card = Card::query()->create([
             ...$data,
             'board_list_id' => $boardList->id,
             'order'         => ($boardList->cards()->max('order') ?? -1) + 1,
         ]);
+
+        BoardChanged::dispatch($boardList->board);
+
+        return $card;
     }
 
     /**
@@ -34,5 +39,7 @@ class CardService
                 $boardList->cards()->whereKey($position['id'])->update(['order' => $position['order']]);
             }
         });
+
+        BoardChanged::dispatch($boardList->board);
     }
 }

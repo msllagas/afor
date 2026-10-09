@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\BoardChanged;
 use App\Http\Controllers\Concerns\RendersBoardPage;
 use App\Http\Requests\StoreBoardsRequest;
 use App\Http\Requests\UpdateBoardsRequest;
@@ -96,6 +97,8 @@ class BoardController extends Controller
     {
         $board->update($request->validated());
 
+        BoardChanged::dispatch($board);
+
         return back();
     }
 
@@ -113,6 +116,8 @@ class BoardController extends Controller
         }
 
         $board->forceDelete();
+
+        BoardChanged::dispatch($board);
 
         return response()->noContent();
     }

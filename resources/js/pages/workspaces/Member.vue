@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useInitials } from '@/composables/useInitials';
+import { useWorkspaceSync } from '@/composables/useWorkspaceSync';
 import AppLayout from '@/layouts/AppLayout.vue';
 import workspaceRoutes from '@/routes/workspaces';
 import type { BreadcrumbItem, Workspace, WorkspaceMember } from '@/types';
@@ -30,6 +31,11 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Workspace', href: workspaceRoutes.home(props.workspace.id).url },
     { title: 'Members', href: workspaceRoutes.members(props.workspace.id).url },
 ];
+
+useWorkspaceSync({
+    workspaceId: props.workspace.id,
+    workspaceProps: ['workspace', 'owner', 'members', 'canManageMembers'],
+});
 
 const page = usePage();
 const { getInitials } = useInitials();

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\UserWorkspacesChanged;
+use App\Events\WorkspaceChanged;
 use App\Models\Workspace;
 use App\Models\WorkspaceInvitation;
 use App\Services\WorkspaceService;
@@ -50,6 +52,9 @@ class WorkspaceInvitationController extends Controller
 
         if (!$workspace->isAccessibleBy($user)) {
             $workspace->users()->attach($user->id);
+
+            WorkspaceChanged::dispatch($workspace);
+            UserWorkspacesChanged::dispatch($user);
         }
 
         return redirect()->route('workspaces.home', $workspace);

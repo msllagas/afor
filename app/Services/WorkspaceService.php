@@ -3,6 +3,9 @@
 namespace App\Services;
 
 use App\Enums\FileCollection;
+use App\Events\BoardChanged;
+use App\Events\WorkspaceChanged;
+use App\Models\Board;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceInvitation;
@@ -68,10 +71,11 @@ class WorkspaceService
             throw new \InvalidArgumentException('Cannot remove the workspace owner.');
         }
 
-        DB::transaction(function () use ($workspace, $user) {
+        $boardsLeft = DB::transaction(function () use ($workspace, $user) {
             $workspace->users()->detach($user->id);
 
             $boardIds = $workspace->boards()->withTrashed()->pluck('id');
+            $boardsLeft = $user->sharedBoards()->whereIn('boards.id', $boardIds)->get(['boards.id', 'boards.workspace_id']);
 
             $user->sharedBoards()->detach($boardIds);
             $user->favoriteBoards()->detach($boardIds);
@@ -79,7 +83,12 @@ class WorkspaceService
             if ($user->last_workspace_id === $workspace->id) {
                 $user->forceFill(['last_workspace_id' => null])->saveQuietly();
             }
+
+            return $boardsLeft;
         });
+
+        $boardsLeft->each(fn (Board $board) => BoardChanged::dispatch($board));
+        WorkspaceChanged::dispatch($workspace);
     }
 
     /**
@@ -89,7 +98,12 @@ class WorkspaceService
      */
     public function deleteWorkspace(Workspace $workspace): void
     {
+        $boards = $workspace->boards()->get(['id', 'workspace_id']);
+
         $workspace->delete();
+
+        $boards->each(fn (Board $board) => BoardChanged::dispatch($board));
+        WorkspaceChanged::dispatch($workspace);
 
         $this->fileUploadService->delete($workspace, FileCollection::WORKSPACE_LOGO);
     }

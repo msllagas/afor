@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\BoardChanged;
 use App\Http\Requests\ReorderBoardListsRequest;
 use App\Http\Requests\StoreBoardListRequest;
 use App\Http\Requests\UpdateBoardListRequest;
@@ -33,6 +34,8 @@ class BoardListController extends Controller
     public function update(UpdateBoardListRequest $request, Board $board, BoardList $boardList): RedirectResponse
     {
         $boardList->update($request->validated());
+
+        BoardChanged::dispatch($board);
 
         return back();
     }

@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useInitials } from '@/composables/useInitials';
+import { useWorkspaceSync } from '@/composables/useWorkspaceSync';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { IMAGE_UPLOAD_MAX_BYTES, IMAGE_UPLOAD_TYPES } from '@/lib/imageUpload';
 import { dashboard } from '@/routes';
@@ -38,6 +39,8 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Workspace', href: workspaceRoutes.home(props.workspace.id).url },
     { title: 'Settings', href: workspaceRoutes.settings(props.workspace.id).url },
 ];
+
+useWorkspaceSync({ workspaceId: props.workspace.id, boardProps: ['boardCount'], workspaceProps: ['memberCount'] });
 
 const { getInitials } = useInitials();
 
