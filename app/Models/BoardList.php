@@ -67,27 +67,30 @@ class BoardList extends Model
      * Lists that were archived. Like boards, only archived_at decides: archived_by is cleared when the archiver deletes their account.
      */
     #[Scope]
-    public function archived(Builder $query): Builder
+    protected function archived(Builder $query): Builder
     {
         return $query->whereNotNull('archived_at');
     }
 
     #[Scope]
-    public function unarchived(Builder $query): Builder
+    protected function unarchived(Builder $query): Builder
     {
         return $query->whereNull('archived_at');
     }
 
+    /** @return BelongsTo<Board, $this> */
     public function board(): BelongsTo
     {
         return $this->belongsTo(Board::class);
     }
 
+    /** @return BelongsTo<User, $this> */
     public function archiver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'archived_by');
     }
 
+    /** @return HasMany<Card, $this> */
     public function cards(): HasMany
     {
         return $this->hasMany(Card::class)->orderBy('order');

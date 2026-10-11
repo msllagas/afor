@@ -47,11 +47,13 @@ class File extends Model
 
     protected $guarded = ['id'];
 
+    /** @return MorphTo<Model, $this> */
     public function fileable(): MorphTo
     {
         return $this->morphTo();
     }
 
+    /** @return BelongsTo<User, $this> */
     public function uploader(): BelongsTo
     {
         return $this->belongsTo(User::class, 'uploaded_by');

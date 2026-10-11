@@ -49,6 +49,7 @@ class Card extends Model
 
     protected $guarded = ['id'];
 
+    /** @return BelongsTo<BoardList, $this> */
     public function boardList(): BelongsTo
     {
         return $this->belongsTo(BoardList::class);

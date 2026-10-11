@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
+use Illuminate\Database\Eloquent\Relations\Pivot;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Notifications\DatabaseNotificationCollection;
@@ -114,12 +115,14 @@ class User extends Authenticatable implements MustVerifyEmail
         ];
     }
 
+    /** @return HasMany<Workspace, $this> */
     public function ownedWorkspaces(): HasMany
     {
         return $this->hasMany(Workspace::class, 'owner_id');
     }
 
     // Workspaces this user is a member of
+    /** @return BelongsToMany<Workspace, $this, Pivot, 'sharedWorkspaces'> */
     public function sharedWorkspaces(): BelongsToMany
     {
         return $this->belongsToMany(Workspace::class, 'workspace_user')
@@ -134,6 +137,7 @@ class User extends Authenticatable implements MustVerifyEmail
         );
     }
 
+    /** @return MorphOne<File, $this> */
     public function avatarFile(): MorphOne
     {
         return $this->morphOne(File::class, 'fileable')
@@ -151,6 +155,8 @@ class User extends Authenticatable implements MustVerifyEmail
 
     /**
      * Boards this user was added to in workspaces they're a member of.
+     *
+     * @return BelongsToMany<Board, $this>
      */
     public function sharedBoards(): BelongsToMany
     {
@@ -158,6 +164,7 @@ class User extends Authenticatable implements MustVerifyEmail
             ->withTimestamps();
     }
 
+    /** @return BelongsToMany<Board, $this> */
     public function favoriteBoards(): BelongsToMany
     {
         return $this->belongsToMany(Board::class, 'board_user_favorites');

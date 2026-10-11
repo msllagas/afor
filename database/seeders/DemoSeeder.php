@@ -86,7 +86,7 @@ class DemoSeeder extends Seeder
                     $users[$userKey]->favoriteBoards()->attach($board);
                 }
 
-                foreach (array_values($boardData['lists']) as $listOrder => $listData) {
+                foreach ($boardData['lists'] as $listOrder => $listData) {
                     $boardList = BoardList::factory()->for($board)->create([
                         'name'  => $listData['name'],
                         'order' => $listOrder,

@@ -69,13 +69,13 @@ class Board extends Model
      * Boards that were archived. Only archived_at decides: archived_by is cleared when the archiver deletes their account.
      */
     #[Scope]
-    public function archived(Builder $query): Builder
+    protected function archived(Builder $query): Builder
     {
         return $query->whereNotNull('archived_at');
     }
 
     #[Scope]
-    public function unarchived(Builder $query): Builder
+    protected function unarchived(Builder $query): Builder
     {
         return $query->whereNull('archived_at');
     }
@@ -121,16 +121,19 @@ class Board extends Model
         return $this->workspace->owner_id === $user->id;
     }
 
+    /** @return BelongsTo<Workspace, $this> */
     public function workspace(): BelongsTo
     {
         return $this->belongsTo(Workspace::class);
     }
 
+    /** @return BelongsTo<User, $this> */
     public function archiver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'archived_by');
     }
 
+    /** @return HasMany<BoardList, $this> */
     public function boardLists(): HasMany
     {
         return $this->hasMany(BoardList::class)
@@ -139,6 +142,8 @@ class Board extends Model
 
     /**
      * Workspace members who were added to the board. The workspace owner is never one of them.
+     *
+     * @return BelongsToMany<User, $this>
      */
     public function members(): BelongsToMany
     {
@@ -146,6 +151,7 @@ class Board extends Model
             ->withTimestamps();
     }
 
+    /** @return BelongsToMany<User, $this> */
     public function favoritedByUsers(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'board_user_favorites');

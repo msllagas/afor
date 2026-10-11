@@ -2,9 +2,17 @@
 
 namespace App\Http\Resources;
 
+use App\Models\User;
+use Illuminate\Database\Eloquent\Relations\Pivot;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Carbon;
 
+/**
+ * @mixin User
+ *
+ * @property-read Pivot&object{created_at: Carbon|null} $pivot the workspace membership, present when the user was loaded through a workspace's members
+ */
 class WorkspaceMemberResource extends JsonResource
 {
     /**

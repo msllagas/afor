@@ -49,18 +49,20 @@ class WorkspaceInvitation extends Model
      * A link a member created before invites became owner-only, or one issued by a previous owner, no longer works.
      */
     #[Scope]
-    public function validFor(Builder $query, Workspace $workspace, string $token): Builder
+    protected function validFor(Builder $query, Workspace $workspace, string $token): Builder
     {
         return $query->whereBelongsTo($workspace)
             ->where('token', $token)
             ->where('invited_by', $workspace->owner_id);
     }
 
+    /** @return BelongsTo<Workspace, $this> */
     public function workspace(): BelongsTo
     {
         return $this->belongsTo(Workspace::class);
     }
 
+    /** @return BelongsTo<User, $this> */
     public function inviter(): BelongsTo
     {
         return $this->belongsTo(User::class, 'invited_by');

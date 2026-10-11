@@ -33,7 +33,7 @@ readonly class FileUploadService
 
         try {
             File::query()->create([
-                'fileable_id'       => $data->model->id,
+                'fileable_id'       => $data->model->getKey(),
                 'fileable_type'     => $data->model::class,
                 'collection'        => $data->collection->value,
                 'disk'              => $this->disk,
@@ -41,7 +41,7 @@ readonly class FileUploadService
                 'original_filename' => $data->file->getClientOriginalName(),
                 'mime_type'         => $data->file->getMimeType(),
                 'size'              => $data->file->getSize(),
-                'uploaded_by'       => $data->uploadedBy?->id,
+                'uploaded_by'       => $data->uploadedBy->id,
             ]);
         } catch (Throwable $exception) {
             Storage::disk($this->disk)->delete($storedPath);
@@ -88,7 +88,7 @@ readonly class FileUploadService
     private function find(Model $model, FileCollection $collection): ?File
     {
         return File::query()
-            ->where('fileable_id', $model->id)
+            ->where('fileable_id', $model->getKey())
             ->where('fileable_type', $model::class)
             ->where('collection', $collection->value)
             ->first();

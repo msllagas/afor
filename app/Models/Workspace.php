@@ -56,6 +56,7 @@ class Workspace extends Model
         'description',
     ];
 
+    /** @return BelongsTo<User, $this> */
     public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class);
@@ -76,17 +77,20 @@ class Workspace extends Model
     }
 
     // Members of the workspace
+    /** @return BelongsToMany<User, $this> */
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'workspace_user')
             ->withTimestamps();
     }
 
+    /** @return HasMany<Board, $this> */
     public function boards(): HasMany
     {
         return $this->hasMany(Board::class);
     }
 
+    /** @return MorphOne<File, $this> */
     public function logoFile(): MorphOne
     {
         return $this->morphOne(File::class, 'fileable')
