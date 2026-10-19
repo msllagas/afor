@@ -5,6 +5,7 @@ import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { BoardList } from '@/types';
 import {
+    Archive,
     ArrowDown,
     ArrowDownToLine,
     ArrowLeft,
@@ -15,7 +16,6 @@ import {
     ChevronRight,
     Ellipsis,
     Search,
-    Trash2,
 } from 'lucide-vue-next';
 import { ListboxContent, ListboxFilter, ListboxItem, ListboxRoot } from 'reka-ui';
 import { computed, nextTick, ref, useId, useTemplateRef, watch } from 'vue';
@@ -24,14 +24,14 @@ const props = defineProps<{
     boardLists: BoardList[];
     currentListId: string;
     cardId: string;
-    /** The board is archived, so the card can't be moved or deleted. */
+    /** The board is archived, so the card can't be moved or archived. */
     isReadOnly?: boolean;
 }>();
 
 const emit = defineEmits<{
     move: [boardListId: string];
     reorder: [position: number];
-    delete: [];
+    archive: [];
 }>();
 
 const isOpen = ref(false);
@@ -41,7 +41,7 @@ const listbox = useTemplateRef<{ highlightFirstItem: () => void }>('listbox');
 const moveButton = useTemplateRef<HTMLButtonElement>('move-button');
 const positionGroup = useTemplateRef<HTMLElement>('position-group');
 
-// "Delete card" hands focus to the dialog's delete prompt, so the popover must not pull it back.
+// "Archive card" closes the dialog, so the popover must not pull focus back to its trigger.
 let isMovingFocus = false;
 
 const canMove = computed(() => !props.isReadOnly && props.boardLists.length > 1);
@@ -111,14 +111,14 @@ function moveTo(list: BoardList) {
     }
 }
 
-function requestDelete() {
+function requestArchive() {
     if (props.isReadOnly) {
         return;
     }
 
     isMovingFocus = true;
     isOpen.value = false;
-    emit('delete');
+    emit('archive');
 }
 
 function onCloseAutoFocus(event: Event) {
@@ -208,12 +208,12 @@ watch(isOpen, (open) => {
                                 </button>
                                 <button
                                     :disabled="isReadOnly"
-                                    class="flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm text-destructive outline-none select-none hover:bg-destructive/10 focus-visible:bg-destructive/10 disabled:pointer-events-none disabled:opacity-50"
+                                    class="flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm outline-none select-none hover:bg-accent hover:text-accent-foreground focus-visible:bg-accent focus-visible:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
                                     type="button"
-                                    @click="requestDelete"
+                                    @click="requestArchive"
                                 >
-                                    <Trash2 aria-hidden="true" class="size-4" />
-                                    Delete card
+                                    <Archive aria-hidden="true" class="size-4 text-muted-foreground" />
+                                    Archive card
                                 </button>
                             </div>
 

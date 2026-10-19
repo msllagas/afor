@@ -27,7 +27,7 @@ const emit = defineEmits<{
     describe: [card: Card, description: string];
     move: [card: Card, boardListId: string];
     reorder: [card: Card, position: number];
-    delete: [card: Card];
+    archive: [card: Card];
     check: [card: Card, isChecked: boolean];
 }>();
 
@@ -37,22 +37,16 @@ const { autoResize } = useTextAreaAutoResize();
 const displayedCard = ref<Card | null>(props.card);
 const displayedDescription = ref(props.description);
 const draftName = ref(props.card?.name ?? '');
-const isConfirmingDelete = ref(false);
 const nameInput = useTemplateRef<HTMLTextAreaElement>('name-input');
-const cancelDeleteButton = useTemplateRef<{ $el: HTMLElement }>('cancel-delete-button');
 
 watch(
     () => props.card,
-    async (card, previousCard) => {
+    async (card) => {
         if (!card) {
             return;
         }
 
         displayedCard.value = card;
-
-        if (card.id !== previousCard?.id) {
-            isConfirmingDelete.value = false;
-        }
 
         // Don't overwrite what the user is typing when the card refreshes from the server.
         if (document.activeElement !== nameInput.value) {
@@ -104,15 +98,10 @@ function saveDescription(card: Card, description: string) {
     }
 }
 
-async function confirmDelete() {
-    if (props.isReadOnly) {
-        return;
+function archive(card: Card) {
+    if (!props.isReadOnly) {
+        emit('archive', card);
     }
-
-    isConfirmingDelete.value = true;
-    await nextTick();
-    // Start on the safe choice.
-    cancelDeleteButton.value?.$el.focus();
 }
 
 // Focus the dialog itself rather than the title field, so phones don't pop the keyboard open.
@@ -193,7 +182,7 @@ function onOpenChange(isOpen: boolean) {
                             :card-id="displayedCard.id"
                             :current-list-id="displayedCard.board_list_id"
                             :is-read-only="isReadOnly"
-                            @delete="confirmDelete"
+                            @archive="archive(displayedCard)"
                             @move="emit('move', displayedCard, $event)"
                             @reorder="emit('reorder', displayedCard, $event)"
                         />
@@ -209,31 +198,6 @@ function onOpenChange(isOpen: boolean) {
                         </DialogClose>
                     </div>
                 </header>
-
-                <div
-                    v-if="isConfirmingDelete && !isReadOnly"
-                    class="flex flex-wrap items-center gap-2 border-b bg-destructive/10 px-5 py-3 sm:px-6"
-                    role="alert"
-                >
-                    <p class="mr-auto text-sm">Delete this card? You can restore it from Archived items.</p>
-                    <Button
-                        ref="cancel-delete-button"
-                        class="cursor-pointer"
-                        size="sm"
-                        variant="outline"
-                        @click="isConfirmingDelete = false"
-                    >
-                        Cancel
-                    </Button>
-                    <Button
-                        class="cursor-pointer"
-                        size="sm"
-                        variant="destructive"
-                        @click="emit('delete', displayedCard)"
-                    >
-                        Delete card
-                    </Button>
-                </div>
 
                 <div class="min-h-0 flex-1 space-y-2 overflow-y-auto px-5 py-5 sm:px-6">
                     <h3 class="text-sm font-medium">Description</h3>

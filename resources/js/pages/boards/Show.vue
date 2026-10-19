@@ -781,8 +781,8 @@ function followOpenCard(card: Card | null) {
         return;
     }
 
-    closeCard(() => toast('This card is gone', { description: 'Someone else deleted it or archived its list.' }));
-    announce('The open card was deleted or its list was archived by someone else.');
+    closeCard(() => toast('This card is gone', { description: 'Someone else archived it or its list.' }));
+    announce('The open card or its list was archived by someone else.');
 }
 
 function closeCard(onFinish?: () => void) {
@@ -950,7 +950,7 @@ function moveCard(card: Card, boardListId: string) {
     );
 }
 
-function deleteCard(card: Card) {
+function archiveCard(card: Card) {
     if (isReadOnly.value) {
         return;
     }
@@ -962,15 +962,15 @@ function deleteCard(card: Card) {
         list.cards = list.cards.filter(({ id }) => id !== card.id);
     }
 
-    // Leave the card's URL before deleting it, or the redirect back would land on a missing card.
+    // Leave the card's URL before archiving it, or the redirect back would land on a missing card.
     closeCard(() =>
         send(
             'delete',
             cardRoutes.destroy({ board_list: card.board_list_id, card: card.id }).url,
             {},
-            'Could not delete the card.',
+            'Could not archive the card.',
             () =>
-                toast(`Deleted “${card.name}”`, {
+                toast('Card has been archived', {
                     description: 'You can restore it from Archived items.',
                     action: { label: 'Undo', onClick: () => restoreCard(card, index) },
                 }),
@@ -978,7 +978,7 @@ function deleteCard(card: Card) {
     );
 }
 
-/** Put a deleted card back where it was. If its list was archived meanwhile, it returns with that list. */
+/** Put an archived card back where it was. If its list was archived meanwhile, it returns with that list. */
 function restoreCard(card: Card, index: number) {
     if (isReadOnly.value) {
         return;
@@ -1207,7 +1207,7 @@ function restoreCard(card: Card, index: number) {
             :is-read-only="isReadOnly"
             @close="closeCard()"
             @check="checkCard"
-            @delete="deleteCard"
+            @archive="archiveCard"
             @describe="describeCard"
             @move="moveCard"
             @rename="renameCard"

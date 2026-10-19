@@ -68,7 +68,7 @@ function describeList(list: ArchivedBoardList) {
 }
 
 function describeCard(card: DeletedCard) {
-    return `Deleted ${formatTimeAgo(card.deleted_at)} · from ${card.board_list.name}`;
+    return `Archived ${formatTimeAgo(card.deleted_at)} · from ${card.board_list.name}`;
 }
 
 function announce(message: string) {
@@ -134,7 +134,7 @@ defineExpose({ reload: load });
             <SheetHeader class="gap-1.5 border-b px-5 pt-5 pr-12 pb-4 sm:px-6">
                 <SheetTitle class="text-xl tracking-tight">Archived items</SheetTitle>
                 <SheetDescription
-                    >Restore archived lists and deleted cards to put them back on {{ boardName }}.</SheetDescription
+                    >Restore archived lists and cards to put them back on {{ boardName }}.</SheetDescription
                 >
                 <div v-if="showSearch" class="relative mt-2">
                     <Search
@@ -192,7 +192,7 @@ defineExpose({ reload: load });
                         </EmptyMedia>
                         <EmptyTitle>Nothing archived</EmptyTitle>
                         <EmptyDescription>
-                            Lists you archive and cards you delete wait here until you restore them.
+                            Lists and cards you archive wait here until you restore them.
                         </EmptyDescription>
                     </EmptyHeader>
                 </Empty>

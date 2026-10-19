@@ -18,15 +18,14 @@ beforeEach(function () {
     $this->actingAs($this->user);
 });
 
-it('puts a deleted card back in its place when the delete is undone', function () {
+it('puts an archived card back in its place when archiving is undone', function () {
     $second = Card::firstWhere('name', 'Second');
 
     $page = visit(route('board-lists.cards.show', [$this->backlog, $second]));
 
     $page->click('[aria-label="Card actions"]')
-        ->click('Delete card')
-        ->click('[role="alert"] button:has-text("Delete card")')
-        ->assertSee('Deleted “Second”')
+        ->click('Archive card')
+        ->assertSee('Card has been archived')
         ->assertScript(cardNamesShownIn($this->backlog), ['First', 'Third'])
         ->click('Undo')
         ->assertScript(cardNamesShownIn($this->backlog), ['First', 'Second', 'Third'])
@@ -37,7 +36,7 @@ it('puts a deleted card back in its place when the delete is undone', function (
     expect($second->fresh()->trashed())->toBeFalse();
 });
 
-it('restores an archived list and a deleted card from archived items', function () {
+it('restores an archived list and an archived card from archived items', function () {
     $ideas = BoardList::factory()->for($this->board)->archived($this->user)->create(['name' => 'Ideas', 'order' => 1]);
     $oldCard = Card::factory()->for($this->backlog)->trashed()->create(['name' => 'Fourth', 'order' => 3]);
 
