@@ -262,10 +262,7 @@ function onRequestFailed(response?: { status: number }) {
                                         </svg>
                                     </Checkbox>
                                 </TooltipTrigger>
-                                <TooltipContent
-                                    class="bg-foreground text-background [&_svg]:bg-foreground [&_svg]:fill-foreground"
-                                    >{{ element.is_checked ? 'Uncheck' : 'Check off' }}</TooltipContent
-                                >
+                                <TooltipContent>{{ element.is_checked ? 'Uncheck' : 'Check off' }}</TooltipContent>
                             </Tooltip>
                         </TooltipProvider>
                         <button

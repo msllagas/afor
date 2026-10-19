@@ -157,10 +157,7 @@ function onOpenChange(isOpen: boolean) {
                                     </svg>
                                 </Checkbox>
                             </TooltipTrigger>
-                            <TooltipContent
-                                class="bg-foreground text-background [&_svg]:bg-foreground [&_svg]:fill-foreground"
-                                >{{ displayedCard.is_checked ? 'Uncheck' : 'Check off' }}</TooltipContent
-                            >
+                            <TooltipContent>{{ displayedCard.is_checked ? 'Uncheck' : 'Check off' }}</TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
                     <div class="min-w-0 flex-1">
