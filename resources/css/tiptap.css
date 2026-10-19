@@ -85,7 +85,7 @@
 }
 
 .tiptap li::marker {
-    @apply text-primary;
+    @apply text-foreground;
 }
 
 .tiptap ol li::marker {

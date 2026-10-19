@@ -715,7 +715,7 @@ const popoverActionClass =
             @mousedown.self.prevent="!readonly && editor.commands.focus('end')"
         >
             <p
-                v-if="editor.isEmpty"
+                v-if="editor.isEmpty && editor.state.doc.firstChild?.type.name === 'paragraph'"
                 aria-hidden="true"
                 class="pointer-events-none absolute top-3.5 left-4 text-base text-muted-foreground sm:text-sm"
             >
