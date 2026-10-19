@@ -190,3 +190,33 @@ test('cards cannot be moved to a negative position', function () {
     $response->assertInvalid(['order']);
     expect($card->refresh()->order)->toBe(0);
 });
+
+test('a card can be checked and unchecked', function (bool $wasChecked) {
+    $user = User::factory()->create();
+    $boardList = BoardList::factory()->for(Board::factory()->for(Workspace::factory()->forUser($user)))->create();
+    $card = Card::factory()->for($boardList)->create(['is_checked' => $wasChecked]);
+
+    $response = $this->actingAs($user)->patch(route('board-lists.cards.update', [$boardList, $card]), [
+        'is_checked' => !$wasChecked,
+    ]);
+
+    $response->assertSessionHasNoErrors();
+    expect($card->refresh()->is_checked)->toBe(!$wasChecked);
+})->with([
+    'checking'   => false,
+    'unchecking' => true,
+]);
+
+test('a card is only checked or unchecked', function () {
+    $user = User::factory()->create();
+    $boardList = BoardList::factory()->for(Board::factory()->for(Workspace::factory()->forUser($user)))->create();
+    $card = Card::factory()->for($boardList)->create();
+
+    $response = $this->actingAs($user)->patchJson(route('board-lists.cards.update', [$boardList, $card]), [
+        'is_checked' => 'maybe',
+    ]);
+
+    $response->assertUnprocessable()
+        ->assertJsonValidationErrors(['is_checked' => 'The is checked field must be true or false.']);
+    expect($card->refresh()->is_checked)->toBeFalse();
+});

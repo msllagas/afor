@@ -26,7 +26,7 @@ trait RendersBoardPage
             'board' => fn () => $board->load([
                 'boardLists' => fn ($query) => $query->unarchived()->with([
                     'cards' => fn ($query) => $query
-                        ->select('id', 'name', 'order', 'board_list_id')
+                        ->select('id', 'name', 'is_checked', 'order', 'board_list_id')
                         ->selectRaw('description is not null as has_description')
                         ->withCasts(['has_description' => 'boolean']),
                 ]),

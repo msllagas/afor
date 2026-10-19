@@ -26,4 +26,12 @@ class CardFactory extends Factory
             'board_list_id' => BoardListFactory::new(),
         ];
     }
+
+    /**
+     * A card its people ticked, which greys its title out.
+     */
+    public function checked(): static
+    {
+        return $this->state(['is_checked' => true]);
+    }
 }

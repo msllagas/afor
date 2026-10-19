@@ -16,6 +16,7 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->string('name');
             $table->longText('description')->nullable();
+            $table->boolean('is_checked')->default(false);
             $table->integer('order')->default(0);
             $table->foreignIdFor(BoardList::class)->constrained()->cascadeOnDelete();
 

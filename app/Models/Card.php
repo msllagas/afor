@@ -17,6 +17,7 @@ use Illuminate\Support\Carbon;
  * @property string $id
  * @property string $name
  * @property string|null $description
+ * @property bool $is_checked
  * @property int $order
  * @property string $board_list_id
  * @property Carbon|null $created_at
@@ -48,6 +49,10 @@ class Card extends Model
     use HasFactory, HasUuids, SoftDeletes;
 
     protected $guarded = ['id'];
+
+    protected $casts = [
+        'is_checked' => 'boolean',
+    ];
 
     /** @return BelongsTo<BoardList, $this> */
     public function boardList(): BelongsTo

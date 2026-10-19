@@ -2,6 +2,8 @@
 import CardActionsMenu from '@/components/board/board-list/card/CardActionsMenu.vue';
 import Tiptap from '@/components/Tiptap.vue';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { X } from 'lucide-vue-next';
@@ -26,6 +28,7 @@ const emit = defineEmits<{
     move: [card: Card, boardListId: string];
     reorder: [card: Card, position: number];
     delete: [card: Card];
+    check: [card: Card, isChecked: boolean];
 }>();
 
 const { autoResize } = useTextAreaAutoResize();
@@ -133,16 +136,44 @@ function onOpenChange(isOpen: boolean) {
         >
             <template v-if="displayedCard">
                 <header class="flex items-start gap-3 border-b py-4 pr-3 pl-5 sm:pr-4 sm:pl-6">
+                    <TooltipProvider :delay-duration="400">
+                        <Tooltip :disabled="isReadOnly">
+                            <TooltipTrigger as-child>
+                                <Checkbox
+                                    :aria-label="`${displayedCard.is_checked ? 'Uncheck' : 'Check'} ${displayedCard.name}`"
+                                    :disabled="isReadOnly"
+                                    :model-value="displayedCard.is_checked"
+                                    class="mt-2.5 flex size-5 cursor-pointer items-center justify-center rounded-full border-foreground/80 data-[state=checked]:border-emerald-600 data-[state=checked]:bg-emerald-600 data-[state=checked]:text-white sm:mt-3 dark:data-[state=checked]:border-emerald-500 dark:data-[state=checked]:bg-emerald-500"
+                                    @update:model-value="emit('check', displayedCard, $event === true)"
+                                >
+                                    <svg aria-hidden="true" class="size-4.5" fill="none" viewBox="0 0 14 14">
+                                        <path
+                                            d="M3.75 7.25 5.9 9.4l4.35-4.65"
+                                            stroke="currentColor"
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="1.75"
+                                        />
+                                    </svg>
+                                </Checkbox>
+                            </TooltipTrigger>
+                            <TooltipContent
+                                class="bg-foreground text-background [&_svg]:bg-foreground [&_svg]:fill-foreground"
+                                >{{ displayedCard.is_checked ? 'Uncheck' : 'Check off' }}</TooltipContent
+                            >
+                        </Tooltip>
+                    </TooltipProvider>
                     <div class="min-w-0 flex-1">
                         <DialogTitle class="sr-only">{{ displayedCard.name }}</DialogTitle>
                         <textarea
                             ref="name-input"
                             v-model="draftName"
-                            :class="
+                            :class="[
                                 isReadOnly
                                     ? 'cursor-default focus-visible:ring-[3px] focus-visible:ring-ring/50'
-                                    : 'hover:bg-muted focus-visible:border-ring focus-visible:bg-background focus-visible:ring-[3px] focus-visible:ring-ring/50'
-                            "
+                                    : 'hover:bg-muted focus-visible:border-ring focus-visible:bg-background focus-visible:ring-[3px] focus-visible:ring-ring/50',
+                                displayedCard.is_checked && 'text-muted-foreground',
+                            ]"
                             :readonly="isReadOnly"
                             aria-label="Card title"
                             class="-ml-2 block w-full resize-none overflow-hidden rounded-lg border border-transparent bg-transparent px-2 py-1 text-xl leading-snug font-semibold outline-none sm:text-2xl"

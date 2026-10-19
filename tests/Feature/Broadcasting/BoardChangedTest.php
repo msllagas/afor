@@ -36,6 +36,8 @@ function changeBoard(string $change): TestResponse
             ->post(route('board-lists.cards.store', $test->backlog), ['name' => 'Pack the tent']),
         'renaming a card' => $test->actingAs($test->member)
             ->patch(route('board-lists.cards.update', [$test->backlog, $test->card]), ['name' => 'Pack the stove']),
+        'checking a card' => $test->actingAs($test->member)
+            ->patch(route('board-lists.cards.update', [$test->backlog, $test->card]), ['is_checked' => true]),
         'describing a card' => tap($test->actingAs($test->member), fn () => $test->card->update(['description' => null]))
             ->patch(route('board-lists.cards.update', [$test->backlog, $test->card]), ['description' => '<p>Two poles</p>']),
         'clearing a description' => $test->actingAs($test->member)
@@ -84,6 +86,8 @@ function changeBoardWithoutPermission(string $change): TestResponse
     return match ($change) {
         'adding a card to an archived board' => tap($test->actingAs($test->member), fn () => $test->board->update(['archived_at' => now()]))
             ->postJson(route('board-lists.cards.store', $test->backlog), ['name' => 'Pack the tent']),
+        'checking a card on an archived board' => tap($test->actingAs($test->member), fn () => $test->board->update(['archived_at' => now()]))
+            ->patchJson(route('board-lists.cards.update', [$test->backlog, $test->card]), ['is_checked' => true]),
         'renaming an archived board' => tap($test->actingAs($test->member), fn () => $test->board->update(['archived_at' => now()]))
             ->patchJson(route('boards.update', $test->board), ['name' => 'Camping trip']),
         'adding a board member to an archived board' => tap($test->actingAs($test->owner), fn () => $test->board->update(['archived_at' => now()]))
@@ -122,6 +126,7 @@ test('every change to a board tells the people on it and its workspace', functio
 })->with([
     'adding a card',
     'renaming a card',
+    'checking a card',
     'describing a card',
     'clearing a description',
     'moving a card to another list',
@@ -157,6 +162,7 @@ test('a change the board refuses tells nobody', function (string $change, int $s
     Event::assertNotDispatched(BoardChanged::class);
 })->with([
     'a card on an archived board'         => ['adding a card to an archived board', 403],
+    'a card checked on an archived board' => ['checking a card on an archived board', 403],
     'a rename of an archived board'       => ['renaming an archived board', 403],
     'a member added to an archived board' => ['adding a board member to an archived board', 403],
     'a card added from outside'           => ['adding a card from outside the board', 404],

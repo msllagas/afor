@@ -3,6 +3,8 @@ import CardController from '@/actions/App/Http/Controllers/CardController';
 import BoardListDropdownMenu from '@/components/board/board-list/BoardListDropdownMenu.vue';
 import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useTextAreaAutoResize } from '@/composables/useTextAreaAutoResize';
 import type { BoardList, Card, SortableChangeEvent } from '@/types';
 import { Form } from '@inertiajs/vue3';
@@ -24,6 +26,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     openCard: [card: Card];
+    check: [card: Card, isChecked: boolean];
     cardsChange: [boardList: BoardList, event: SortableChangeEvent<Card>];
     dragStart: [];
     dragEnd: [];
@@ -227,14 +230,56 @@ function onRequestFailed(response?: { status: number }) {
                 <template #item="{ element }">
                     <li
                         :data-card-id="element.id"
-                        class="board-card list-none select-none [-webkit-touch-callout:none]"
+                        class="board-card group/card relative list-none select-none [-webkit-touch-callout:none]"
                     >
+                        <!-- A sibling of the card button, since a checkbox can't sit inside a button. -->
+                        <TooltipProvider v-if="!isReadOnly || element.is_checked" :delay-duration="400">
+                            <Tooltip :disabled="isReadOnly">
+                                <TooltipTrigger as-child>
+                                    <Checkbox
+                                        :aria-label="`${element.is_checked ? 'Uncheck' : 'Check'} ${element.name}`"
+                                        :class="
+                                            element.is_checked
+                                                ? ''
+                                                : 'opacity-0 group-focus-within/card:opacity-100 group-hover/card:opacity-100 group-hover/card:delay-150 pointer-coarse:opacity-100'
+                                        "
+                                        :disabled="isReadOnly"
+                                        :model-value="element.is_checked"
+                                        class="absolute top-3 left-3 z-10 flex cursor-pointer items-center justify-center rounded-full border-foreground/80 bg-card transition-opacity data-[state=checked]:border-emerald-600 data-[state=checked]:bg-emerald-600 data-[state=checked]:text-white dark:data-[state=checked]:border-emerald-500 dark:data-[state=checked]:bg-emerald-500"
+                                        @update:model-value="emit('check', element, $event === true)"
+                                    >
+                                        <svg aria-hidden="true" class="size-3.5" fill="none" viewBox="0 0 14 14">
+                                            <path
+                                                d="M3.75 7.25 5.9 9.4l4.35-4.65"
+                                                stroke="currentColor"
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="1.75"
+                                            />
+                                        </svg>
+                                    </Checkbox>
+                                </TooltipTrigger>
+                                <TooltipContent
+                                    class="bg-foreground text-background [&_svg]:bg-foreground [&_svg]:fill-foreground"
+                                    >{{ element.is_checked ? 'Uncheck' : 'Check off' }}</TooltipContent
+                                >
+                            </Tooltip>
+                        </TooltipProvider>
                         <button
                             class="w-full cursor-pointer rounded-xl border border-border/60 bg-card px-3 py-2.5 text-left text-sm text-card-foreground shadow-xs transition-[border-color,box-shadow] outline-none hover:border-primary/40 hover:shadow-sm focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
                             type="button"
                             @click="emit('openCard', element)"
                         >
-                            <span class="block break-words">{{ element.name }}</span>
+                            <span
+                                :class="
+                                    element.is_checked
+                                        ? 'pl-6 text-muted-foreground'
+                                        : !isReadOnly &&
+                                          'transition-[padding] group-focus-within/card:pl-6 group-hover/card:pl-6 group-hover/card:delay-150 pointer-coarse:pl-6'
+                                "
+                                class="block break-words"
+                                >{{ element.name }}</span
+                            >
                             <span
                                 v-if="element.has_description"
                                 class="mt-1.5 flex items-center gap-1 text-xs text-muted-foreground"

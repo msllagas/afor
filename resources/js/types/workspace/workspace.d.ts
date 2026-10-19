@@ -4,6 +4,7 @@ export interface Card {
     /** Only the open card carries its description; the board's cards just flag that they have one. */
     description?: string | null;
     has_description?: boolean;
+    is_checked: boolean;
     order: number;
     board_list_id: string;
 }

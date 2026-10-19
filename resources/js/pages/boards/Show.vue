@@ -870,6 +870,21 @@ function renameCard(card: Card, name: string) {
     );
 }
 
+function checkCard(card: Card, isChecked: boolean) {
+    if (isReadOnly.value) {
+        return;
+    }
+
+    card.is_checked = isChecked;
+    announce(`${card.name} ${isChecked ? 'checked' : 'unchecked'}.`);
+    send(
+        'patch',
+        cardRoutes.update({ board_list: card.board_list_id, card: card.id }).url,
+        { is_checked: isChecked },
+        'Could not update the card.',
+    );
+}
+
 function describeCard(card: Card, description: string) {
     if (isReadOnly.value) {
         return;
@@ -1154,6 +1169,7 @@ function restoreCard(card: Card, index: number) {
                                 :is-dragging-card="draggedItem === 'card'"
                                 :is-read-only="isReadOnly"
                                 @archive="archiveList(element)"
+                                @check="checkCard"
                                 @cards-change="onCardsChange"
                                 @drag-end="onDragEnd"
                                 @drag-start="onDragStart('card')"
@@ -1189,6 +1205,7 @@ function restoreCard(card: Card, index: number) {
             :description="activeCardDescription"
             :is-read-only="isReadOnly"
             @close="closeCard()"
+            @check="checkCard"
             @delete="deleteCard"
             @describe="describeCard"
             @move="moveCard"

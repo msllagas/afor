@@ -51,7 +51,7 @@ class CardController extends Controller
 
         $card->update($request->validated());
 
-        if ($card->wasChanged(['name', 'board_list_id', 'order']) || $hadDescription !== ($card->description !== null)) {
+        if ($card->wasChanged(['name', 'is_checked', 'board_list_id', 'order']) || $hadDescription !== ($card->description !== null)) {
             BoardChanged::dispatch($boardList->board);
         }
 

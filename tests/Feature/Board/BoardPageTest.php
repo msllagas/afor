@@ -26,6 +26,7 @@ test('the board flags which cards have a description without sending it', functi
             ->has('board.board_lists.0.cards.0', fn (Assert $card) => $card
                 ->where('id', $describedCard->id)
                 ->where('name', $describedCard->name)
+                ->where('is_checked', false)
                 ->where('order', 0)
                 ->where('board_list_id', $this->boardList->id)
                 ->where('has_description', true)
@@ -47,5 +48,18 @@ test('an open card brings its description, also when it is reloaded on its own',
                 ->where('selectedCard.description', '<p>Pack the tent</p>')
                 ->missing('board')
             )
+        );
+});
+
+test('the board shows which cards are checked', function () {
+    Card::factory()->for($this->boardList)->checked()->create(['order' => 0]);
+    Card::factory()->for($this->boardList)->create(['order' => 1]);
+
+    $response = $this->actingAs($this->user)->get(route('boards.show', $this->board));
+
+    $response->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('board.board_lists.0.cards.0.is_checked', true)
+            ->where('board.board_lists.0.cards.1.is_checked', false)
         );
 });

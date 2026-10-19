@@ -28,6 +28,7 @@ class UpdateCardRequest extends FormRequest
         return [
             'name'          => 'sometimes|string|max:255',
             'description'   => 'sometimes|string|max:65535',
+            'is_checked'    => 'sometimes|boolean',
             // Cards only move between lists of their own board, never into another workspace.
             'board_list_id' => [
                 'sometimes',
