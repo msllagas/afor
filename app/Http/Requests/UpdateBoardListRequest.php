@@ -27,7 +27,7 @@ class UpdateBoardListRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'color' => ['sometimes', 'nullable', new Enum(BoardListColor::class)],
+            'color' => ['sometimes', new Enum(BoardListColor::class)],
             'name'  => 'sometimes|string|max:255',
         ];
     }

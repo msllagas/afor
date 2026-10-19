@@ -32,7 +32,7 @@ const props = defineProps<{
 const emit = defineEmits<{
     addCard: [];
     move: [direction: -1 | 1];
-    colorSelected: [color: string | null];
+    colorSelected: [color: string];
     archiveList: [];
 }>();
 
@@ -55,12 +55,9 @@ function onCloseAutoFocus(event: Event) {
     }
 }
 
-// An empty string stands for "no colour", since radio values can't be null.
 function onColorChange(value: unknown) {
-    const color = typeof value === 'string' && value !== '' ? value : null;
-
-    if (!props.isReadOnly && color !== props.color) {
-        emit('colorSelected', color);
+    if (!props.isReadOnly && typeof value === 'string' && value !== props.color) {
+        emit('colorSelected', value);
     }
 }
 
@@ -120,20 +117,9 @@ function colorLabel(color: string) {
                                         class="max-h-(--reka-dropdown-menu-content-available-height) w-48 overflow-y-auto"
                                     >
                                         <DropdownMenuRadioGroup
-                                            :model-value="color ?? ''"
+                                            :model-value="color ?? 'neutral'"
                                             @update:model-value="onColorChange"
                                         >
-                                            <DropdownMenuRadioItem
-                                                :disabled="isReadOnly"
-                                                class="cursor-pointer"
-                                                value=""
-                                            >
-                                                <span
-                                                    aria-hidden="true"
-                                                    class="list-default size-4 rounded-full ring-1 ring-border [background:var(--list-bg)]"
-                                                />
-                                                Default
-                                            </DropdownMenuRadioItem>
                                             <DropdownMenuRadioItem
                                                 v-for="option in colors"
                                                 :key="option"

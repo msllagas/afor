@@ -33,7 +33,7 @@ const emit = defineEmits<{
     dragStart: [];
     dragEnd: [];
     rename: [name: string];
-    recolor: [color: string | null];
+    recolor: [color: string];
     move: [direction: -1 | 1];
     archive: [];
     requestFailed: [message: string, status?: number];

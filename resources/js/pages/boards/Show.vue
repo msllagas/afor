@@ -550,7 +550,7 @@ function renameList(list: BoardListType, name: string) {
     send('patch', updateListUrl(list), { name }, 'Could not rename the list.');
 }
 
-function recolorList(list: BoardListType, color: string | null) {
+function recolorList(list: BoardListType, color: string) {
     if (isReadOnly.value) {
         return;
     }

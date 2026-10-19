@@ -52,6 +52,25 @@ test('users can change board list color', function () {
     ]);
 });
 
+test('a board list cannot be left without a color', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $board = Board::factory()->for(Workspace::factory()->forUser($user))->create();
+    $boardList = BoardList::factory()->for($board)->create(['color' => BoardListColor::ANGEL->value]);
+
+    $response = patch(route('boards.board-lists.update', [
+        'board'      => $board,
+        'board_list' => $boardList,
+    ]), [
+        'color' => null,
+    ]);
+
+    $response->assertInvalid(['color']);
+
+    expect($boardList->fresh()->color)->toBe(BoardListColor::ANGEL->value);
+});
+
 test('users can change board list name', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
