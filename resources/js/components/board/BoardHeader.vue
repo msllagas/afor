@@ -210,7 +210,7 @@ const peopleLabel = computed(() => {
                                     cn(
                                         'transition-colors',
                                         isStarred
-                                            ? 'fill-current text-primary'
+                                            ? 'fill-current text-yellow-600 dark:text-yellow-500'
                                             : 'fill-transparent text-muted-foreground',
                                     )
                                 "

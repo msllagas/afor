@@ -82,9 +82,9 @@ const previewLists = computed(() =>
                         :aria-pressed="isStarred"
                         :class="
                             cn(
-                                'group/star absolute top-2 right-2 z-10 flex size-8 cursor-pointer items-center justify-center rounded-full bg-card/90 text-muted-foreground shadow-xs backdrop-blur transition-[opacity,color] duration-200 outline-none hover:text-primary focus-visible:opacity-100 focus-visible:ring-[3px] focus-visible:ring-ring/50',
+                                'group/star absolute top-2 right-2 z-10 flex size-8 cursor-pointer items-center justify-center rounded-full bg-card/90 text-muted-foreground shadow-xs backdrop-blur transition-[opacity,color] duration-200 outline-none hover:text-yellow-600 focus-visible:opacity-100 focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:hover:text-yellow-500',
                                 isStarred
-                                    ? 'text-primary opacity-100'
+                                    ? 'text-yellow-600 opacity-100 dark:text-yellow-500'
                                     : 'opacity-0 group-hover:opacity-100 pointer-coarse:opacity-100',
                             )
                         "

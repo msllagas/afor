@@ -412,7 +412,10 @@ function handleStarBoard(board: Board, isStarred: boolean) {
                     <div ref="sections" class="mt-4">
                         <section v-if="showsStarredSection" aria-labelledby="starred-heading" class="mb-10">
                             <h2 id="starred-heading" class="mb-4 flex items-center gap-2 text-base font-semibold">
-                                <Star aria-hidden="true" class="size-4 fill-primary text-primary" />
+                                <Star
+                                    aria-hidden="true"
+                                    class="size-4 fill-current text-yellow-600 dark:text-yellow-500"
+                                />
                                 Starred
                             </h2>
                             <ul

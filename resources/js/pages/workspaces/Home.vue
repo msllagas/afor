@@ -172,7 +172,7 @@ onBeforeUnmount(() => clearTimeout(copiedResetTimer));
 
             <section v-if="starredBoards.length" aria-labelledby="starred-heading" class="mt-10">
                 <h2 id="starred-heading" class="mb-4 flex items-center gap-2 text-base font-semibold">
-                    <Star class="size-4 fill-primary text-primary" aria-hidden="true" />
+                    <Star class="size-4 fill-current text-yellow-600 dark:text-yellow-500" aria-hidden="true" />
                     Starred
                 </h2>
                 <div class="grid grid-cols-1 gap-4 min-[480px]:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">

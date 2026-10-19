@@ -43,9 +43,9 @@ const lists = computed(() => props.board.board_lists ?? []);
             :aria-pressed="!!board.is_favorited"
             :class="
                 cn(
-                    'absolute top-1/2 right-1.5 flex size-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-[opacity,color] duration-200 outline-none hover:text-primary focus-visible:opacity-100 focus-visible:ring-[3px] focus-visible:ring-ring/50',
+                    'absolute top-1/2 right-1.5 flex size-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-[opacity,color] duration-200 outline-none hover:text-yellow-600 focus-visible:opacity-100 focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:hover:text-yellow-500',
                     board.is_favorited
-                        ? 'text-primary opacity-100'
+                        ? 'text-yellow-600 opacity-100 dark:text-yellow-500'
                         : 'opacity-0 group-hover:opacity-100 pointer-coarse:opacity-100',
                 )
             "
