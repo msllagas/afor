@@ -162,32 +162,39 @@ const peopleLabel = computed(() => {
         </div>
 
         <div class="flex shrink-0 items-center gap-1">
-            <button
-                :aria-label="`Board members: ${peopleLabel}`"
-                class="mr-1 hidden min-h-9 cursor-pointer items-center rounded-full p-0.5 transition-colors outline-none hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/50 sm:flex"
-                type="button"
-                @click="emit('showMembers')"
-            >
-                <span aria-hidden="true" class="flex -space-x-2">
-                    <Avatar
-                        v-for="person in boardPeople.slice(0, MEMBER_AVATAR_CAP)"
-                        :key="person.id"
-                        class="size-7 ring-2 ring-background sm:size-8"
-                    >
-                        <AvatarImage :src="person.avatar ?? ''" alt="" class="object-cover" />
-                        <AvatarFallback class="bg-blush text-xs font-semibold text-blush-foreground">
-                            {{ getInitials(person.name) }}
-                        </AvatarFallback>
-                    </Avatar>
-                    <span
-                        v-if="hiddenPeopleCount"
-                        class="relative flex size-7 items-center justify-center rounded-full bg-muted text-[10px] font-semibold text-muted-foreground tabular-nums ring-2 ring-background sm:size-8 sm:text-xs"
-                    >
-                        {{ hiddenPeopleLabel }}
-                    </span>
-                </span>
-            </button>
-            <TooltipProvider v-if="!isReadOnly">
+            <TooltipProvider :delay-duration="250">
+                <Tooltip>
+                    <TooltipTrigger as-child>
+                        <button
+                            :aria-label="`Board members: ${peopleLabel}`"
+                            class="mr-1 hidden min-h-9 cursor-pointer items-center rounded-full p-0.5 transition-colors outline-none hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/50 sm:flex"
+                            type="button"
+                            @click="emit('showMembers')"
+                        >
+                            <span aria-hidden="true" class="flex -space-x-2">
+                                <Avatar
+                                    v-for="person in boardPeople.slice(0, MEMBER_AVATAR_CAP)"
+                                    :key="person.id"
+                                    class="size-7 ring-2 ring-background sm:size-8"
+                                >
+                                    <AvatarImage :src="person.avatar ?? ''" alt="" class="object-cover" />
+                                    <AvatarFallback class="bg-blush text-xs font-semibold text-blush-foreground">
+                                        {{ getInitials(person.name) }}
+                                    </AvatarFallback>
+                                </Avatar>
+                                <span
+                                    v-if="hiddenPeopleCount"
+                                    class="relative flex size-7 items-center justify-center rounded-full bg-muted text-[10px] font-semibold text-muted-foreground tabular-nums ring-2 ring-background sm:size-8 sm:text-xs"
+                                >
+                                    {{ hiddenPeopleLabel }}
+                                </span>
+                            </span>
+                        </button>
+                    </TooltipTrigger>
+                    <TooltipContent>{{ peopleLabel }}</TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
+            <TooltipProvider v-if="!isReadOnly" :delay-duration="250">
                 <Tooltip>
                     <TooltipTrigger as-child>
                         <Button

@@ -8,6 +8,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Archive, ArchiveRestore, Ellipsis, LogOut, Plus, Users } from 'lucide-vue-next';
 
 const props = defineProps<{
@@ -49,53 +50,67 @@ function onCloseAutoFocus(event: Event) {
 </script>
 
 <template>
-    <DropdownMenu>
-        <DropdownMenuTrigger as-child>
-            <Button aria-label="Board actions" class="cursor-pointer" size="icon" variant="ghost">
-                <Ellipsis />
-            </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" class="w-56" @close-auto-focus="onCloseAutoFocus">
-            <DropdownMenuLabel>Board actions</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem :disabled="isReadOnly" class="cursor-pointer" @select="onAddList">
-                <Plus />
-                <span>Add list</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-                :disabled="isReadOnly"
-                class="cursor-pointer"
-                @select="!isReadOnly && emit('showMembers')"
-            >
-                <Users />
-                <span>Members</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-                :disabled="isReadOnly"
-                class="cursor-pointer"
-                @select="!isReadOnly && emit('showArchivedItems')"
-            >
-                <ArchiveRestore />
-                <span>Archived items</span>
-            </DropdownMenuItem>
-            <template v-if="canArchive">
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                    :disabled="isReadOnly || isArchiving"
-                    class="cursor-pointer"
-                    @select="!isReadOnly && emit('archiveBoard')"
-                >
-                    <Archive />
-                    <span>{{ isArchiving ? 'Archiving…' : 'Archive board' }}</span>
-                </DropdownMenuItem>
-            </template>
-            <template v-if="canLeave">
-                <DropdownMenuSeparator />
-                <DropdownMenuItem class="cursor-pointer" variant="destructive" @select="emit('leaveBoard')">
-                    <LogOut />
-                    <span>Leave board</span>
-                </DropdownMenuItem>
-            </template>
-        </DropdownMenuContent>
-    </DropdownMenu>
+    <!-- The tooltip wraps the whole menu: nesting both triggers makes them share one anchor and the menu won't open. -->
+    <TooltipProvider :delay-duration="250">
+        <Tooltip>
+            <TooltipTrigger as-child>
+                <div class="shrink-0">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger as-child>
+                            <Button aria-label="Board actions" class="cursor-pointer" size="icon" variant="ghost">
+                                <Ellipsis />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" class="w-56" @close-auto-focus="onCloseAutoFocus">
+                            <DropdownMenuLabel>Board actions</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem :disabled="isReadOnly" class="cursor-pointer" @select="onAddList">
+                                <Plus />
+                                <span>Add list</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                :disabled="isReadOnly"
+                                class="cursor-pointer"
+                                @select="!isReadOnly && emit('showMembers')"
+                            >
+                                <Users />
+                                <span>Members</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                :disabled="isReadOnly"
+                                class="cursor-pointer"
+                                @select="!isReadOnly && emit('showArchivedItems')"
+                            >
+                                <ArchiveRestore />
+                                <span>Archived items</span>
+                            </DropdownMenuItem>
+                            <template v-if="canArchive">
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                    :disabled="isReadOnly || isArchiving"
+                                    class="cursor-pointer"
+                                    @select="!isReadOnly && emit('archiveBoard')"
+                                >
+                                    <Archive />
+                                    <span>{{ isArchiving ? 'Archiving…' : 'Archive board' }}</span>
+                                </DropdownMenuItem>
+                            </template>
+                            <template v-if="canLeave">
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                    class="cursor-pointer"
+                                    variant="destructive"
+                                    @select="emit('leaveBoard')"
+                                >
+                                    <LogOut />
+                                    <span>Leave board</span>
+                                </DropdownMenuItem>
+                            </template>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
+            </TooltipTrigger>
+            <TooltipContent>Board Actions</TooltipContent>
+        </Tooltip>
+    </TooltipProvider>
 </template>

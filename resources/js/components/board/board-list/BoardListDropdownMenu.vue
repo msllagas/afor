@@ -14,6 +14,7 @@ import {
     DropdownMenuSubTrigger,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Archive, ArrowLeft, ArrowRight, Ellipsis, Palette, Plus } from 'lucide-vue-next';
 
 defineOptions({ inheritAttrs: false });
@@ -69,85 +70,102 @@ function colorLabel(color: string) {
 </script>
 
 <template>
-    <DropdownMenu>
-        <DropdownMenuTrigger as-child>
-            <Button
-                :aria-label="`Actions for list ${listName}`"
-                class="size-8 shrink-0 cursor-pointer"
-                size="icon"
-                variant="ghost"
-                v-bind="$attrs"
-            >
-                <Ellipsis />
-            </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" class="w-56" @close-auto-focus="onCloseAutoFocus">
-            <DropdownMenuLabel>List Actions</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem :disabled="isReadOnly" class="cursor-pointer" @select="onAddCard">
-                <Plus />
-                <span>Add card</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-                :disabled="isReadOnly || !canMoveLeft"
-                class="cursor-pointer"
-                @select="!isReadOnly && emit('move', -1)"
-            >
-                <ArrowLeft />
-                <span>Move list left</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-                :disabled="isReadOnly || !canMoveRight"
-                class="cursor-pointer"
-                @select="!isReadOnly && emit('move', 1)"
-            >
-                <ArrowRight />
-                <span>Move list right</span>
-            </DropdownMenuItem>
-            <DropdownMenuSub>
-                <DropdownMenuSubTrigger :disabled="isReadOnly" class="cursor-pointer gap-2">
-                    <Palette class="size-4 text-muted-foreground" />
-                    <span>List colour</span>
-                </DropdownMenuSubTrigger>
-                <DropdownMenuPortal>
-                    <DropdownMenuSubContent
-                        class="max-h-(--reka-dropdown-menu-content-available-height) w-48 overflow-y-auto"
-                    >
-                        <DropdownMenuRadioGroup :model-value="color ?? ''" @update:model-value="onColorChange">
-                            <DropdownMenuRadioItem :disabled="isReadOnly" class="cursor-pointer" value="">
-                                <span
-                                    aria-hidden="true"
-                                    class="list-default size-4 rounded-full ring-1 ring-border [background:var(--list-bg)]"
-                                />
-                                Default
-                            </DropdownMenuRadioItem>
-                            <DropdownMenuRadioItem
-                                v-for="option in colors"
-                                :key="option"
-                                :disabled="isReadOnly"
-                                :value="option"
-                                class="cursor-pointer"
+    <!-- The tooltip wraps the whole menu: nesting both triggers makes them share one anchor and the menu won't open. -->
+    <TooltipProvider :delay-duration="250">
+        <Tooltip>
+            <TooltipTrigger as-child>
+                <div class="shrink-0">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger as-child>
+                            <Button
+                                :aria-label="`Actions for list ${listName}`"
+                                class="size-8 shrink-0 cursor-pointer"
+                                size="icon"
+                                variant="ghost"
+                                v-bind="$attrs"
                             >
-                                <span
-                                    :class="`list-${option}`"
-                                    aria-hidden="true"
-                                    class="size-4 rounded-full ring-1 ring-black/10 [background:var(--list-bg)] dark:ring-white/15"
-                                />
-                                {{ colorLabel(option) }}
-                            </DropdownMenuRadioItem>
-                        </DropdownMenuRadioGroup>
-                    </DropdownMenuSubContent>
-                </DropdownMenuPortal>
-            </DropdownMenuSub>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-                :disabled="isReadOnly"
-                class="cursor-pointer"
-                @select="!isReadOnly && emit('archiveList')"
-            >
-                <Archive />
-                <span>Archive list</span>
-            </DropdownMenuItem>
-        </DropdownMenuContent>
-    </DropdownMenu>
+                                <Ellipsis />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" class="w-56" @close-auto-focus="onCloseAutoFocus">
+                            <DropdownMenuLabel>List Actions</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem :disabled="isReadOnly" class="cursor-pointer" @select="onAddCard">
+                                <Plus />
+                                <span>Add card</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                :disabled="isReadOnly || !canMoveLeft"
+                                class="cursor-pointer"
+                                @select="!isReadOnly && emit('move', -1)"
+                            >
+                                <ArrowLeft />
+                                <span>Move list left</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                :disabled="isReadOnly || !canMoveRight"
+                                class="cursor-pointer"
+                                @select="!isReadOnly && emit('move', 1)"
+                            >
+                                <ArrowRight />
+                                <span>Move list right</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuSub>
+                                <DropdownMenuSubTrigger :disabled="isReadOnly" class="cursor-pointer gap-2">
+                                    <Palette class="size-4 text-muted-foreground" />
+                                    <span>List colour</span>
+                                </DropdownMenuSubTrigger>
+                                <DropdownMenuPortal>
+                                    <DropdownMenuSubContent
+                                        class="max-h-(--reka-dropdown-menu-content-available-height) w-48 overflow-y-auto"
+                                    >
+                                        <DropdownMenuRadioGroup
+                                            :model-value="color ?? ''"
+                                            @update:model-value="onColorChange"
+                                        >
+                                            <DropdownMenuRadioItem
+                                                :disabled="isReadOnly"
+                                                class="cursor-pointer"
+                                                value=""
+                                            >
+                                                <span
+                                                    aria-hidden="true"
+                                                    class="list-default size-4 rounded-full ring-1 ring-border [background:var(--list-bg)]"
+                                                />
+                                                Default
+                                            </DropdownMenuRadioItem>
+                                            <DropdownMenuRadioItem
+                                                v-for="option in colors"
+                                                :key="option"
+                                                :disabled="isReadOnly"
+                                                :value="option"
+                                                class="cursor-pointer"
+                                            >
+                                                <span
+                                                    :class="`list-${option}`"
+                                                    aria-hidden="true"
+                                                    class="size-4 rounded-full ring-1 ring-black/10 [background:var(--list-bg)] dark:ring-white/15"
+                                                />
+                                                {{ colorLabel(option) }}
+                                            </DropdownMenuRadioItem>
+                                        </DropdownMenuRadioGroup>
+                                    </DropdownMenuSubContent>
+                                </DropdownMenuPortal>
+                            </DropdownMenuSub>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                                :disabled="isReadOnly"
+                                class="cursor-pointer"
+                                @select="!isReadOnly && emit('archiveList')"
+                            >
+                                <Archive />
+                                <span>Archive list</span>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
+            </TooltipTrigger>
+            <TooltipContent>List Actions</TooltipContent>
+        </Tooltip>
+    </TooltipProvider>
 </template>
