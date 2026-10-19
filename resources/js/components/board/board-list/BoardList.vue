@@ -20,6 +20,8 @@ const props = defineProps<{
     canMoveRight: boolean;
     /** A card (not a list) is being dragged somewhere on the board. */
     isDraggingCard: boolean;
+    /** Something on the board is being dragged, or was dropped a moment ago. */
+    isDraggingOrJustDropped: () => boolean;
     /** The board is archived: the list and its cards can be read but not changed. */
     isReadOnly?: boolean;
 }>();
@@ -58,7 +60,8 @@ watch(
 );
 
 async function startEditingName() {
-    if (props.isReadOnly) {
+    // A drop fires a click on the name the list was dragged by.
+    if (props.isReadOnly || props.isDraggingOrJustDropped()) {
         return;
     }
 

@@ -1167,6 +1167,7 @@ function restoreCard(card: Card, index: number) {
                                 :card-drag-options="cardDragOptions"
                                 :colors="colors"
                                 :is-dragging-card="draggedItem === 'card'"
+                                :is-dragging-or-just-dropped="isDraggingOrJustDropped"
                                 :is-read-only="isReadOnly"
                                 @archive="archiveList(element)"
                                 @check="checkCard"
