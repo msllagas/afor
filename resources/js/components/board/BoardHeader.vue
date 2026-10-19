@@ -8,7 +8,7 @@ import { useInitials } from '@/composables/useInitials';
 import { cn } from '@/lib/utils';
 import type { Workspace, WorkspaceMember } from '@/types';
 import { Link } from '@inertiajs/vue3';
-import { Plus, Star } from 'lucide-vue-next';
+import { Star } from 'lucide-vue-next';
 import { computed, nextTick, ref, useTemplateRef } from 'vue';
 
 const MEMBER_AVATAR_CAP = 3;
@@ -109,31 +109,28 @@ const peopleLabel = computed(() => {
 </script>
 
 <template>
-    <header class="flex items-center gap-3 border-b px-4 py-3 sm:px-6">
+    <header class="flex items-center gap-3 border-b px-4 py-2 sm:px-6">
         <Link
             :aria-label="`${workspaceName} home`"
             :href="workspaceHomeUrl"
             class="shrink-0 rounded-lg outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
         >
-            <WorkspaceAvatar
-                :workspace="workspace ?? { name: workspaceName }"
-                class="size-9 rounded-lg sm:size-11 sm:rounded-xl"
-            />
+            <WorkspaceAvatar :workspace="workspace ?? { name: workspaceName }" class="size-9 rounded-lg" />
         </Link>
 
         <div class="min-w-0 flex-1">
             <Link
                 :href="workspaceHomeUrl"
-                class="block max-w-full truncate text-xs font-medium text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:underline sm:text-sm"
+                class="block max-w-full truncate text-xs font-medium text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:underline"
             >
                 {{ workspaceName }}
             </Link>
-            <h1 v-if="isReadOnly" class="truncate text-lg leading-tight font-semibold tracking-tight sm:text-2xl">
+            <h1 v-if="isReadOnly" class="truncate text-lg leading-tight font-semibold tracking-tight sm:text-xl">
                 {{ boardName }}
             </h1>
             <h1 v-else-if="!isEditingName" class="flex min-w-0">
                 <button
-                    class="-mx-1.5 max-w-full cursor-pointer truncate rounded-md px-1.5 text-left text-lg leading-tight font-semibold tracking-tight transition-colors outline-none hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/50 sm:text-2xl"
+                    class="-mx-1.5 max-w-full cursor-pointer truncate rounded-md px-1.5 text-left text-lg leading-tight font-semibold tracking-tight transition-colors outline-none hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/50 sm:text-xl"
                     title="Rename board"
                     type="button"
                     ref="board-name-button"
@@ -145,14 +142,14 @@ const peopleLabel = computed(() => {
             <div v-else class="-mx-1.5 inline-grid max-w-full grid-cols-1">
                 <span
                     aria-hidden="true"
-                    class="invisible col-start-1 row-start-1 overflow-hidden px-1.5 text-lg leading-tight font-semibold tracking-tight whitespace-pre sm:text-2xl"
+                    class="invisible col-start-1 row-start-1 overflow-hidden px-1.5 text-lg leading-tight font-semibold tracking-tight whitespace-pre sm:text-xl"
                     >{{ draftName || ' ' }}</span
                 >
                 <input
                     ref="board-name-input"
                     v-model="draftName"
                     aria-label="Board name"
-                    class="col-start-1 row-start-1 w-full min-w-24 rounded-md border border-ring bg-background px-1.5 text-lg leading-tight font-semibold tracking-tight ring-[3px] ring-ring/50 outline-none sm:text-2xl"
+                    class="col-start-1 row-start-1 w-full min-w-24 rounded-md border border-ring bg-background px-1.5 text-lg leading-tight font-semibold tracking-tight ring-[3px] ring-ring/50 outline-none sm:text-xl"
                     maxlength="255"
                     @blur="saveName()"
                     @keydown.enter.prevent="saveName(true)"
@@ -220,15 +217,6 @@ const peopleLabel = computed(() => {
                     <TooltipContent>{{ isStarred ? 'Unstar' : 'Star' }} this board</TooltipContent>
                 </Tooltip>
             </TooltipProvider>
-            <Button
-                v-if="!isReadOnly"
-                class="hidden cursor-pointer sm:inline-flex"
-                variant="outline"
-                @click="emit('addList')"
-            >
-                <Plus />
-                Add list
-            </Button>
             <BoardDropdownMenu
                 v-if="!isReadOnly"
                 :can-archive="canArchive"
