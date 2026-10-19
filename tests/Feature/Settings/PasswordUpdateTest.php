@@ -48,3 +48,29 @@ test('correct password must be provided to update password', function () {
         ->assertSessionHasErrors('current_password')
         ->assertRedirect(route('password.edit'));
 });
+
+test('changing the password signs out sessions started before it', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->get(route('profile.edit'))->assertOk();
+
+    $user->forceFill(['password' => 'changed-on-another-device'])->save();
+
+    $this->get(route('profile.edit'))->assertRedirect(route('login'));
+    $this->assertGuest();
+});
+
+test('the session that changes the password stays signed in', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->get(route('profile.edit'))->assertOk();
+
+    $this->put(route('password.update'), [
+        'current_password'      => 'password',
+        'password'              => 'new-password',
+        'password_confirmation' => 'new-password',
+    ])->assertSessionHasNoErrors();
+
+    $this->get(route('profile.edit'))->assertOk();
+    $this->assertAuthenticatedAs($user);
+});
