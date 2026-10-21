@@ -24,6 +24,9 @@ return [
     // Stored HTML, so the visible text is shorter than this.
     'card_description_length' => (int) env('LIMIT_CARD_DESCRIPTION_LENGTH', 32768),
 
+    // Accounts that never verify their email are removed after this many days.
+    'unverified_user_retention_days' => (int) env('LIMIT_UNVERIFIED_USER_RETENTION_DAYS', 7),
+
     // Changes a user can make per minute.
     'writes_per_minute' => (int) env('LIMIT_WRITES_PER_MINUTE', 120),
 

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\FileCollection;
+use App\Services\UserService;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Builder;
@@ -10,6 +11,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Prunable;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
@@ -70,7 +72,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, HasUuids, Notifiable, TwoFactorAuthenticatable;
+    use HasFactory, HasUuids, Notifiable, Prunable, TwoFactorAuthenticatable;
 
     /**
      * The attributes that are mass assignable.
@@ -113,6 +115,28 @@ class User extends Authenticatable implements MustVerifyEmail
             'email_verified_at' => 'datetime',
             'password'          => 'hashed',
         ];
+    }
+
+    /**
+     * Accounts that never verified their email, past the grace period.
+     *
+     * @return Builder<static>
+     */
+    public function prunable(): Builder
+    {
+        return static::query()
+            ->whereNull('email_verified_at')
+            ->where('created_at', '<=', now()->subDays(config('limits.unverified_user_retention_days')));
+    }
+
+    /**
+     * Remove a pruned account the way a user deletes their own, so its workspace and files go with it.
+     */
+    public function prune(): bool
+    {
+        app(UserService::class)->deleteAccount($this);
+
+        return true;
     }
 
     /** @return HasMany<Workspace, $this> */
