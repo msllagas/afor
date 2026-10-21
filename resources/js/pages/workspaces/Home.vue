@@ -10,7 +10,7 @@ import { useInitials } from '@/composables/useInitials';
 import { useWorkspaceSync } from '@/composables/useWorkspaceSync';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { home, members as workspaceMembers } from '@/routes/workspaces';
-import type { Board, BreadcrumbItem, Workspace, WorkspaceMember } from '@/types';
+import type { Board, BreadcrumbItem, Usage, Workspace, WorkspaceMember } from '@/types';
 import { Deferred, Head, Link } from '@inertiajs/vue3';
 import { Archive, Check, Link as LinkIcon, Star } from 'lucide-vue-next';
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
@@ -26,6 +26,8 @@ const props = defineProps<{
     canInvite: boolean;
     /** Only the workspace owner can create boards; members see the boards they were added to. */
     canCreateBoards: boolean;
+    /** Only sent to those who can create boards. */
+    boardUsage: Usage | null;
     /** Only the workspace owner sees archived boards; members can still open the ones they're on by URL. */
     canViewArchivedBoards: boolean;
     /** Only sent to the owner. */
@@ -52,7 +54,11 @@ watch(
     },
 );
 
-useWorkspaceSync({ workspaceId: props.workspace.id, boardProps: ['boards'], workspaceProps: ['workspace', 'members'] });
+useWorkspaceSync({
+    workspaceId: props.workspace.id,
+    boardProps: ['boards', 'boardUsage'],
+    workspaceProps: ['workspace', 'members'],
+});
 
 const starredBoards = computed(() => boards.value.filter((board) => board.is_favorited));
 
@@ -233,7 +239,7 @@ onBeforeUnmount(() => clearTimeout(copiedResetTimer));
                             :board="board"
                             @star-board="handleStarBoard"
                         />
-                        <BoardCardPopover v-if="canCreateBoards" :workspace-id="workspace.id" />
+                        <BoardCardPopover v-if="canCreateBoards" :usage="boardUsage" :workspace-id="workspace.id" />
                     </div>
                 </Deferred>
             </section>

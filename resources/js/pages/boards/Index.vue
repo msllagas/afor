@@ -14,6 +14,7 @@ import type {
     BoardsScope,
     BoardsView,
     BreadcrumbItem,
+    Usage,
     Workspace,
     WorkspaceBoardsGroup,
     WorkspaceBoardsMatch,
@@ -43,6 +44,8 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 const props = defineProps<{
     ownedWorkspaces: Workspace[];
+    /** Keyed by workspace id, for the workspaces the user owns. */
+    boardUsage: Record<string, Usage>;
     sharedWorkspaces: Workspace[];
 }>();
 
@@ -74,7 +77,7 @@ const allWorkspaces = computed(() => [...props.ownedWorkspaces, ...props.sharedW
 const ownedIds = computed(() => new Set(props.ownedWorkspaces.map(({ id }) => id)));
 const currentWorkspaceId = computed(() => page.props.currentWorkspaceId);
 
-useWorkspaceSync({ workspaceId: null, boardProps: ['ownedWorkspaces', 'sharedWorkspaces'] });
+useWorkspaceSync({ workspaceId: null, boardProps: ['ownedWorkspaces', 'sharedWorkspaces', 'boardUsage'] });
 
 const showsIndex = computed(() => allWorkspaces.value.length >= INDEX_MIN_WORKSPACES);
 
@@ -451,6 +454,7 @@ function handleStarBoard(board: Board, isStarred: boolean) {
                                     v-for="{ workspace, boards } in group.matches"
                                     :key="workspace.id"
                                     :boards="boards"
+                                    :board-usage="boardUsage[workspace.id]"
                                     :can-add-board="!search && scope !== 'starred' && ownedIds.has(workspace.id)"
                                     :is-owned="ownedIds.has(workspace.id)"
                                     :columns="columns"

@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
 import { useInitials } from '@/composables/useInitials';
 import { login, register } from '@/routes';
@@ -11,6 +12,8 @@ import { ref } from 'vue';
 const props = defineProps<{
     invitation: Invitation;
     savedToken?: boolean;
+    /** The workspace has no free member seats, so nobody new can join until the owner makes room. */
+    isFull: boolean;
 }>();
 
 const { getInitials } = useInitials();
@@ -79,7 +82,17 @@ function acceptInvitation() {
                     </div>
                 </div>
 
-                <div v-if="$page.props.auth.user" class="space-y-3">
+                <p
+                    v-if="isFull"
+                    class="rounded-xl border bg-muted/40 px-4 py-3 text-sm text-muted-foreground"
+                    role="status"
+                >
+                    This workspace is full right now. Ask
+                    <span class="font-medium text-foreground">{{ invitation.inviter.name }}</span>
+                    to make room, then open this link again.
+                </p>
+
+                <div v-else-if="$page.props.auth.user" class="space-y-3">
                     <Button
                         :disabled="isAccepting"
                         class="h-11 w-full cursor-pointer gap-2 font-semibold"
@@ -89,6 +102,7 @@ function acceptInvitation() {
                         {{ isAccepting ? 'Joining…' : 'Accept invitation' }}
                         <ArrowRight v-if="!isAccepting" aria-hidden="true" class="size-4" />
                     </Button>
+                    <InputError :message="$page.props.errors.invitation" role="alert" />
                     <p class="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
                         <LayoutDashboard aria-hidden="true" class="size-3.5" />
                         Joining as

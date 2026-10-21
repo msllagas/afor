@@ -52,3 +52,18 @@ test('invite links a member created show not found', function () {
 
     $response->assertNotFound();
 });
+
+test('the invitation says when the workspace has no free member seats', function (int $memberLimit, bool $isFull) {
+    config(['limits.members_per_workspace' => $memberLimit]);
+    $owner = User::factory()->create();
+    $workspace = Workspace::factory()->forUser($owner)->create();
+    $workspace->users()->attach(User::factory()->create());
+    $token = Str::of(app(WorkspaceService::class)->generateInvitationLink($workspace, $owner))->afterLast('/')->value();
+
+    $response = $this->get(route('workspace-invitations.show', ['workspace' => $workspace, 'token' => $token]));
+
+    $response->assertInertia(fn (Assert $page) => $page->where('isFull', $isFull));
+})->with([
+    'a seat left'   => [2, false],
+    'no seats left' => [1, true],
+]);

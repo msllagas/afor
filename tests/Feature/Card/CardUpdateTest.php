@@ -220,3 +220,21 @@ test('a card is only checked or unchecked', function () {
         ->assertJsonValidationErrors(['is_checked' => 'The is checked field must be true or false.']);
     expect($card->refresh()->is_checked)->toBeFalse();
 });
+
+test('a description longer than the limit is rejected', function () {
+    config(['limits.card_description_length' => 20]);
+    $user = User::factory()->create();
+    $workspace = Workspace::factory()->forUser($user)->create();
+    $boardList = BoardList::factory()->for(Board::factory()->for($workspace))->create();
+    $card = Card::factory()->for($boardList)->create(['description' => '<p>Pack the tent</p>']);
+
+    $response = $this->actingAs($user)->patchJson(route('board-lists.cards.update', [
+        'board_list' => $boardList,
+        'card'       => $card,
+    ]), ['description' => '<p>'.str_repeat('a', 20).'</p>']);
+
+    $response->assertJsonValidationErrors([
+        'description' => 'This description is too long to save. Shorten it and try again.',
+    ]);
+    expect($card->refresh()->description)->toBe('<p>Pack the tent</p>');
+});

@@ -2,9 +2,12 @@
 
 namespace App\Providers;
 
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\File;
 use Inertia\ExceptionResponse;
@@ -42,6 +45,11 @@ class AppServiceProvider extends ServiceProvider
 
         // Every upload is an avatar or a logo, so both accept the same images.
         File::defaults(fn () => File::image()->types(['jpeg', 'jpg', 'png', 'gif', 'webp'])->max(2 * 1024));
+
+        // Reads are never throttled; changes are, per user, so scripts can't flood the database.
+        RateLimiter::for('writes', fn (Request $request) => $request->isMethodSafe()
+            ? Limit::none()
+            : Limit::perMinute(config('limits.writes_per_minute'))->by($request->user()?->id ?: $request->ip()));
 
         Inertia::handleExceptionsUsing(fn (ExceptionResponse $response) => $this->renderErrorPage($response));
     }

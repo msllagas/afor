@@ -3,11 +3,12 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import UsageHint from '@/components/UsageHint.vue';
 import { useInitials } from '@/composables/useInitials';
 import { useWorkspaceSync } from '@/composables/useWorkspaceSync';
 import AppLayout from '@/layouts/AppLayout.vue';
 import workspaceRoutes from '@/routes/workspaces';
-import type { BreadcrumbItem, Workspace, WorkspaceMember } from '@/types';
+import type { BreadcrumbItem, Usage, Workspace, WorkspaceMember } from '@/types';
 import { Deferred, Head, router, usePage } from '@inertiajs/vue3';
 import { index as boardsIndex } from '@/routes/boards';
 import { Check, Link as LinkIcon, LogOut, RotateCcw, Search, UserRoundMinus, UserRoundPlus } from 'lucide-vue-next';
@@ -23,6 +24,8 @@ const props = defineProps<{
     members: WorkspaceMember[];
     canManageMembers: boolean;
     canInvite: boolean;
+    /** Members against the workspace's limit, the owner not counted. Only sent to the owner. */
+    memberUsage: Usage | null;
     /** Only sent to the owner. */
     inviteLink?: string;
 }>();
@@ -34,7 +37,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 useWorkspaceSync({
     workspaceId: props.workspace.id,
-    workspaceProps: ['workspace', 'owner', 'members', 'canManageMembers'],
+    workspaceProps: ['workspace', 'owner', 'members', 'canManageMembers', 'memberUsage'],
 });
 
 const page = usePage();
@@ -433,6 +436,13 @@ onBeforeUnmount(() => clearTimeout(copiedResetTimer));
                             Anyone with this link can join {{ workspace.name }}. Reset it if it reaches the wrong
                             people.
                         </p>
+                        <UsageHint
+                            v-if="memberUsage"
+                            :usage="memberUsage"
+                            class="mt-1"
+                            full-message="This workspace is full. Remove a member to make room for someone new."
+                            noun="member seats"
+                        />
                     </div>
                 </div>
 

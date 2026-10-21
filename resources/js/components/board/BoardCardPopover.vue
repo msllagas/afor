@@ -1,11 +1,13 @@
 <script lang="ts" setup>
 import BoardController from '@/actions/App/Http/Controllers/BoardController';
 import InputError from '@/components/InputError.vue';
+import UsageHint from '@/components/UsageHint.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import type { Usage } from '@/types';
 import { Form } from '@inertiajs/vue3';
 import { Plus } from 'lucide-vue-next';
 import { computed } from 'vue';
@@ -15,11 +17,14 @@ const props = withDefaults(
         workspaceId: string;
         /** A grid tile, or a slim row for the compact list. */
         variant?: 'tile' | 'row';
+        /** The workspace's boards against its limit; archived boards count too. */
+        usage?: Usage | null;
     }>(),
     { variant: 'tile' },
 );
 
 const inputId = computed(() => `board-name-${props.workspaceId}`);
+const isFull = computed(() => !!props.usage && props.usage.used >= props.usage.limit);
 </script>
 
 <template>
@@ -62,7 +67,13 @@ const inputId = computed(() => `board-name-${props.workspaceId}`);
                     <Input :id="inputId" class="block w-full" name="name" placeholder="Launch week" required />
                     <InputError :message="errors.name" />
                 </div>
-                <Button :disabled="processing" class="w-full cursor-pointer" data-test="add-board-button"
+                <UsageHint
+                    v-if="usage"
+                    :usage="usage"
+                    full-message="This workspace has reached its board limit. Delete archived boards to make room."
+                    noun="boards"
+                />
+                <Button :disabled="processing || isFull" class="w-full cursor-pointer" data-test="add-board-button"
                     >Create board</Button
                 >
             </Form>

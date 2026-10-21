@@ -6,7 +6,7 @@ import HighlightMatch from '@/components/HighlightMatch.vue';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import WorkspaceAvatar from '@/components/workspace/WorkspaceAvatar.vue';
 import { home } from '@/routes/workspaces';
-import type { Board, Workspace } from '@/types';
+import type { Board, Usage, Workspace } from '@/types';
 import { Link } from '@inertiajs/vue3';
 import { ChevronRight } from 'lucide-vue-next';
 import { computed } from 'vue';
@@ -23,6 +23,8 @@ const props = defineProps<{
     isCurrent: boolean;
     /** Only the workspace owner can add boards; members see the ones they were added to. */
     canAddBoard: boolean;
+    /** The workspace's boards against its limit, for the workspaces the user can add boards to. */
+    boardUsage?: Usage | null;
     isOwned: boolean;
     isShowingAll: boolean;
 }>();
@@ -113,7 +115,7 @@ const hiddenCount = computed(() => props.boards.length - Math.min(props.boards.l
                         />
                     </li>
                     <li v-if="canAddBoard">
-                        <BoardCardPopover :workspace-id="workspace.id" />
+                        <BoardCardPopover :usage="boardUsage" :workspace-id="workspace.id" />
                     </li>
                 </ul>
 
@@ -122,7 +124,7 @@ const hiddenCount = computed(() => props.boards.length - Math.min(props.boards.l
                         <BoardRow :board="board" :query="query" @star-board="(...args) => emit('starBoard', ...args)" />
                     </li>
                     <li v-if="canAddBoard">
-                        <BoardCardPopover :workspace-id="workspace.id" variant="row" />
+                        <BoardCardPopover :usage="boardUsage" :workspace-id="workspace.id" variant="row" />
                     </li>
                 </ul>
 

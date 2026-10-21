@@ -182,3 +182,19 @@ test('workspace home lists every board to the owner and lets them create boards'
         ->loadDeferredProps(fn (Assert $reload) => $reload->has('boards', 2))
     );
 });
+
+test('only the workspace owner gets its board usage', function () {
+    config(['limits.boards_per_workspace' => 10]);
+    $owner = User::factory()->create();
+    $member = User::factory()->create();
+    $workspace = Workspace::factory()->forUser($owner)->create();
+    $workspace->users()->attach($member);
+    Board::factory()->for($workspace)->create();
+    Board::factory()->for($workspace)->archived()->create();
+
+    $this->actingAs($owner)->get(route('workspaces.home', $workspace))
+        ->assertInertia(fn (Assert $page) => $page->where('boardUsage', ['used' => 2, 'limit' => 10]));
+
+    $this->actingAs($member)->get(route('workspaces.home', $workspace))
+        ->assertInertia(fn (Assert $page) => $page->where('boardUsage', null));
+});

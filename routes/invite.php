@@ -7,4 +7,4 @@ Route::get('/invite/{workspace}/{token}', [WorkspaceInvitationController::class,
 
 Route::post('/invite/{workspace}/{token}/accept', [WorkspaceInvitationController::class, 'accept'])
     ->name('workspace-invitations.accept')
-    ->middleware(['auth', 'verified']);
+    ->middleware(['auth', 'verified', 'throttle:10,1']);

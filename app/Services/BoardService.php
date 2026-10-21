@@ -7,15 +7,31 @@ use App\Models\Board;
 use App\Models\User;
 use App\Models\Workspace;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class BoardService
 {
+    public function __construct(
+        private readonly UsageLimits $usageLimits
+    ) {}
+
+    /**
+     * The workspace row is locked while its boards are counted, so two requests can't both take the last free slot.
+     *
+     * @throws ValidationException when the workspace has reached its board limit
+     */
     public function create(array $data, Workspace $workspace): Board
     {
-        $board = Board::create([
-            ...$data,
-            'workspace_id' => $workspace->id,
-        ]);
+        $board = DB::transaction(function () use ($data, $workspace) {
+            Workspace::query()->whereKey($workspace->id)->lockForUpdate()->first();
+
+            $this->usageLimits->ensureRoomForBoard($workspace);
+
+            return Board::create([
+                ...$data,
+                'workspace_id' => $workspace->id,
+            ]);
+        });
 
         BoardChanged::dispatch($board);
 

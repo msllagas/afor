@@ -12,6 +12,7 @@ use App\Models\Board;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Services\FileUploadService;
+use App\Services\UsageLimits;
 use App\Services\WorkspaceService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
@@ -24,6 +25,7 @@ class WorkspaceController extends Controller
     public function __construct(
         private readonly WorkspaceService $workspaceService,
         private readonly FileUploadService $fileUploadService,
+        private readonly UsageLimits $usageLimits,
     ) {}
 
     public function update(UpdateWorkspaceRequest $request, Workspace $workspace): RedirectResponse
@@ -62,6 +64,7 @@ class WorkspaceController extends Controller
 
         $user = auth()->user();
         $canInvite = $user->can('invite', $workspace);
+        $canCreateBoards = $user->can('create', [Board::class, $workspace]);
 
         return Inertia::render('workspaces/Home', [
             'workspace' => fn () => new WorkspaceResource($workspace->load('logoFile')),
@@ -87,7 +90,8 @@ class WorkspaceController extends Controller
                 ->oldest()
                 ->get()),
             'canInvite'       => $canInvite,
-            'canCreateBoards' => $user->can('create', [Board::class, $workspace]),
+            'canCreateBoards' => $canCreateBoards,
+            'boardUsage'      => fn () => $canCreateBoards ? $this->usageLimits->boardUsage($workspace) : null,
             // Archived boards are listed for the owner only; members can still open the ones they're on by URL.
             'canViewArchivedBoards' => $user->can('viewArchived', [Board::class, $workspace]),
             ...($canInvite ? [
@@ -117,6 +121,7 @@ class WorkspaceController extends Controller
             )->resolve(),
             'canManageMembers' => fn () => $user->can('manageMembers', $workspace),
             'canInvite'        => $canInvite,
+            'memberUsage'      => fn () => $canInvite ? $this->usageLimits->memberUsage($workspace) : null,
             // Members never receive the link, not even through a partial reload that asks for it.
             ...($canInvite ? [
                 'inviteLink' => Inertia::defer(fn () => $this->workspaceService->generateInvitationLink($workspace, $user)),

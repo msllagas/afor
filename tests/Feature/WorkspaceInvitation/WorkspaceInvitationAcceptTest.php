@@ -133,3 +133,37 @@ test('guests are sent to log in before accepting an invitation', function () {
 
     $response->assertRedirect(route('login'));
 });
+
+test('users cannot join a workspace that has no free member seats', function () {
+    config(['limits.members_per_workspace' => 1]);
+    $owner = User::factory()->create();
+    $workspace = Workspace::factory()->forUser($owner)->create();
+    $workspace->users()->attach(User::factory()->create());
+    $token = Str::of(app(WorkspaceService::class)->generateInvitationLink($workspace, $owner))->afterLast('/')->value();
+    $latecomer = User::factory()->create();
+
+    $response = $this->actingAs($latecomer)
+        ->post(route('workspace-invitations.accept', ['workspace' => $workspace, 'token' => $token]));
+
+    $response->assertSessionHasErrors([
+        'invitation' => 'This workspace is full. Ask the owner to make room for you.',
+    ]);
+    assertDatabaseMissing('workspace_user', ['workspace_id' => $workspace->id, 'user_id' => $latecomer->id]);
+});
+
+test('users cannot join more workspaces than the limit allows', function () {
+    config(['limits.joined_workspaces_per_user' => 1]);
+    $user = User::factory()->create();
+    Workspace::factory()->forUser()->create()->users()->attach($user);
+    $owner = User::factory()->create();
+    $workspace = Workspace::factory()->forUser($owner)->create();
+    $token = Str::of(app(WorkspaceService::class)->generateInvitationLink($workspace, $owner))->afterLast('/')->value();
+
+    $response = $this->actingAs($user)
+        ->post(route('workspace-invitations.accept', ['workspace' => $workspace, 'token' => $token]));
+
+    $response->assertSessionHasErrors([
+        'invitation' => 'You can be a member of up to 1 workspaces. Leave one to join this one.',
+    ]);
+    assertDatabaseMissing('workspace_user', ['workspace_id' => $workspace->id, 'user_id' => $user->id]);
+});

@@ -27,7 +27,7 @@ class UpdateCardRequest extends FormRequest
     {
         return [
             'name'          => 'sometimes|string|max:255',
-            'description'   => 'sometimes|string|max:65535',
+            'description'   => ['sometimes', 'string', 'max:'.config('limits.card_description_length')],
             'is_checked'    => 'sometimes|boolean',
             // Cards only move between lists of their own board, never into another workspace.
             'board_list_id' => [
@@ -35,6 +35,16 @@ class UpdateCardRequest extends FormRequest
                 Rule::exists('board_lists', 'id')->where('board_id', $this->route('board_list')->board_id),
             ],
             'order'         => 'sometimes|integer|min:0',
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'description.max' => 'This description is too long to save. Shorten it and try again.',
         ];
     }
 }

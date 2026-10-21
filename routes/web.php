@@ -15,7 +15,7 @@ Route::inertia('/privacy-policy', 'PrivacyPolicy')->name('privacy-policy');
 Route::inertia('/terms-of-use', 'TermsOfUse')->name('terms-of-use');
 Route::inertia('/contact', 'Contact')->name('contact');
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'throttle:writes'])->group(function () {
 
     /*
     |--------------------------------------------------------------------------

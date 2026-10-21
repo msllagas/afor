@@ -14,6 +14,7 @@ use App\Models\Board;
 use App\Models\Card;
 use App\Models\Workspace;
 use App\Services\BoardService;
+use App\Services\UsageLimits;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -29,6 +30,7 @@ class BoardController extends Controller
 
     public function __construct(
         private readonly BoardService $boardService,
+        private readonly UsageLimits $usageLimits,
     ) {}
 
     /**
@@ -65,6 +67,10 @@ class BoardController extends Controller
         return Inertia::render('boards/Index', [
             'ownedWorkspaces'  => WorkspaceResource::collection($ownedWorkspaces->values())->resolve(),
             'sharedWorkspaces' => WorkspaceResource::collection($sharedWorkspaces->values())->resolve(),
+            // Keyed by workspace; only the owner adds boards, so only owned workspaces are counted.
+            'boardUsage' => $ownedWorkspaces
+                ->mapWithKeys(fn (Workspace $workspace) => [$workspace->id => $this->usageLimits->boardUsage($workspace)])
+                ->all(),
         ]);
     }
 

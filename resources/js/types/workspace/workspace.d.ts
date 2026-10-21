@@ -89,3 +89,9 @@ export interface WorkspaceBoardsGroup {
 export type BoardsScope = 'all' | 'owned' | 'shared' | 'starred';
 
 export type BoardsView = 'grid' | 'list';
+
+/** How much of a capped allowance is taken, such as a workspace's boards. */
+export interface Usage {
+    used: number;
+    limit: number;
+}
