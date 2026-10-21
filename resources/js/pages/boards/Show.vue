@@ -54,7 +54,7 @@ const props = defineProps<{
     addableMembers?: WorkspaceMember[];
 }>();
 
-// The card description editor reads the list colours for its highlighter.
+// The card description editor reads the list colors for its highlighter.
 provide('colors', props.colors);
 
 const page = usePage();
@@ -556,7 +556,7 @@ function recolorList(list: BoardListType, color: string) {
     }
 
     list.color = color;
-    send('patch', updateListUrl(list), { color }, 'Could not change the list colour.');
+    send('patch', updateListUrl(list), { color }, 'Could not change the list color.');
 }
 
 function archiveList(list: BoardListType) {

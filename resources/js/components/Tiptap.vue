@@ -56,7 +56,7 @@ const isApple = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navig
 const modKey = isApple ? '⌘' : 'Ctrl+';
 const shiftKey = isApple ? '⇧' : 'Shift+';
 
-/** Highlights keep a list colour class (e.g. `list-blue`) so they follow light and dark mode. */
+/** Highlights keep a list color class (e.g. `list-blue`) so they follow light and dark mode. */
 const MultiHighlight = Highlight.extend({
     // Typing at the edge of a highlight starts plain text again.
     inclusive: false,
@@ -666,7 +666,7 @@ const popoverActionClass =
                         aria-label="Highlight"
                     >
                         <Highlighter aria-hidden="true" />
-                        <!-- Shows the colour under the cursor, like the ink in a highlighter pen. -->
+                        <!-- Shows the color under the cursor, like the ink in a highlighter pen. -->
                         <span
                             :class="activeHighlightClass(editor) ?? 'list-angel'"
                             aria-hidden="true"

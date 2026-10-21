@@ -54,7 +54,7 @@ function changeBoard(string $change): TestResponse
             ->post(route('boards.board-lists.store', $test->board), ['name' => 'Done']),
         'renaming a list' => $test->actingAs($test->member)
             ->patch(route('boards.board-lists.update', [$test->board, $test->backlog]), ['name' => 'Ideas']),
-        'recolouring a list' => $test->actingAs($test->member)
+        'recoloring a list' => $test->actingAs($test->member)
             ->patch(route('boards.board-lists.update', [$test->board, $test->backlog]), ['color' => 'blue']),
         'reordering lists' => $test->actingAs($test->member)
             ->patch(route('boards.board-lists.reorder', $test->board), ['boardLists' => [['id' => $test->backlog->id, 'order' => 5]]]),
@@ -135,7 +135,7 @@ test('every change to a board tells the people on it and its workspace', functio
     'restoring a card',
     'adding a list',
     'renaming a list',
-    'recolouring a list',
+    'recoloring a list',
     'reordering lists',
     'archiving a list',
     'restoring a list',

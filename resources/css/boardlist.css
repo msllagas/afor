@@ -1,5 +1,5 @@
 /*
-  List colours: soft pastels with a deeper shade of the same hue for text, so
+  List colors: soft pastels with a deeper shade of the same hue for text, so
   they stay friendly but readable. Light mode is a pale wash; dark mode is a
   muted dusk tone rather than a saturated block.
 */
@@ -134,7 +134,7 @@
     --list-fg-muted: oklch(0.74 0 0);
 }
 
-/* Lists without a colour follow the app theme. */
+/* Lists without a color follow the app theme. */
 .list-default {
     --list-bg: var(--draggable-list-card);
     --list-bg-hovered: color-mix(in oklch, var(--foreground) 8%, var(--draggable-list-card));

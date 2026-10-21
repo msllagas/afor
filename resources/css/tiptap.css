@@ -151,8 +151,8 @@
 }
 
 /*
-  Highlights, styled like a highlighter pen: the list colour as the ink and
-  its matching text colour on top, so every colour stays readable in both
+  Highlights, styled like a highlighter pen: the list color as the ink and
+  its matching text color on top, so every color stays readable in both
   themes. Sunset and aurora are gradients, hence `background` rather than
   `background-color`.
 */

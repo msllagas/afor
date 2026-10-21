@@ -27,7 +27,7 @@ test('markup the editor produces is kept', function (string $html) {
     'text with a style but no markup' => '<p><span>Plain</span></p>',
 ]);
 
-test('every list colour keeps its highlight', function (BoardListColor $color) {
+test('every list color keeps its highlight', function (BoardListColor $color) {
     $html = "<p><mark class=\"list-{$color->value}\">marked</mark></p>";
 
     expect(app(CardDescriptionSanitizer::class)->sanitize($html))->toBe($html);
@@ -50,7 +50,7 @@ test('unsafe markup is removed', function (string $html, string $expected) {
         '<p><a href="https://example.com" target="_blank" rel="noopener noreferrer nofollow">Hi</a></p>',
     ],
     'a highlight with any other class'    => ['<p><mark class="fixed inset-0">Hi</mark></p>', '<p><mark>Hi</mark></p>'],
-    'a highlight pasted with a colour'    => [
+    'a highlight pasted with a color'     => [
         '<p><mark data-color="red" style="background-color: red; color: inherit;">Hi</mark></p>',
         '<p><mark>Hi</mark></p>',
     ],

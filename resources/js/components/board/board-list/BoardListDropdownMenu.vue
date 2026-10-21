@@ -110,7 +110,7 @@ function colorLabel(color: string) {
                             <DropdownMenuSub>
                                 <DropdownMenuSubTrigger :disabled="isReadOnly" class="cursor-pointer gap-2">
                                     <Palette class="size-4 text-muted-foreground" />
-                                    <span>List colour</span>
+                                    <span>List color</span>
                                 </DropdownMenuSubTrigger>
                                 <DropdownMenuPortal>
                                     <DropdownMenuSubContent
