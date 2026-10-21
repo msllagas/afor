@@ -136,7 +136,7 @@ Route::middleware(['auth', 'verified', 'throttle:writes'])->group(function () {
     Route::scopeBindings()->group(function () {
 
         Route::resource('boards.board-lists', BoardListController::class)
-            ->only(['store', 'update']);
+            ->only(['store', 'update', 'destroy']);
 
         Route::patch('boards/{board}/board-lists/{board_list}/archive', [BoardListController::class, 'archive'])
             ->name('boards.board-lists.archive');
@@ -149,6 +149,10 @@ Route::middleware(['auth', 'verified', 'throttle:writes'])->group(function () {
 
         Route::patch('board-lists/{board_list}/cards/{card}/restore', [CardController::class, 'restore'])
             ->name('board-lists.cards.restore')
+            ->withTrashed();
+
+        Route::delete('board-lists/{board_list}/cards/{card}/force', [CardController::class, 'forceDelete'])
+            ->name('board-lists.cards.force-delete')
             ->withTrashed();
     });
 

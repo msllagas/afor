@@ -16,10 +16,15 @@ beforeEach(function () {
     $this->card = Card::factory()->for($this->boardList)->create();
 });
 
-test('workspace owners and board members can view, update and delete its cards', function (string $ability) {
+test('workspace owners and board members can view, update, archive and restore its cards', function (string $ability) {
     expect($this->owner->can($ability, $this->card))->toBeTrue()
         ->and($this->member->can($ability, $this->card))->toBeTrue();
-})->with(['view', 'update', 'delete']);
+})->with(['view', 'update', 'delete', 'restore']);
+
+test('only the workspace owner can permanently delete cards', function () {
+    expect($this->owner->can('forceDelete', $this->card))->toBeTrue()
+        ->and($this->member->can('forceDelete', $this->card))->toBeFalse();
+});
 
 test('workspace members who are not on the board cannot view, update or delete its cards', function (string $ability) {
     $this->board->members()->detach($this->member);
@@ -53,10 +58,11 @@ test('cards of an archived board can be viewed but not changed', function (strin
     expect($this->owner->can($ability, $this->card))->toBe($isAllowed)
         ->and($this->member->can($ability, $this->card))->toBe($isAllowed);
 })->with([
-    'view'    => ['view', true],
-    'update'  => ['update', false],
-    'delete'  => ['delete', false],
-    'restore' => ['restore', false],
+    'view'        => ['view', true],
+    'update'      => ['update', false],
+    'delete'      => ['delete', false],
+    'restore'     => ['restore', false],
+    'forceDelete' => ['forceDelete', false],
 ]);
 
 test('nobody can add cards to the lists of an archived board', function () {

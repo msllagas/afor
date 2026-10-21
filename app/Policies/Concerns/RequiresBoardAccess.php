@@ -35,4 +35,32 @@ trait RequiresBoardAccess
             ? Response::deny('This board is archived. Restore it to make changes.')
             : Response::allow();
     }
+
+    /**
+     * Allow the workspace owner while the board is active. Board members get a 403 and everyone else a 404.
+     */
+    protected function ownerOnEditableBoard(User $user, Board $board, string $deniedMessage): Response
+    {
+        $access = $this->ownerOnly($user, $board, $deniedMessage);
+
+        if ($access->denied()) {
+            return $access;
+        }
+
+        return $this->onEditableBoard($user, $board);
+    }
+
+    /**
+     * Allow the workspace owner, deny board members with a 403 and hide the board from everyone else.
+     */
+    protected function ownerOnly(User $user, Board $board, string $deniedMessage): Response
+    {
+        if ($board->isOwnedBy($user)) {
+            return Response::allow();
+        }
+
+        return $board->isAccessibleBy($user)
+            ? Response::deny($deniedMessage)
+            : Response::denyAsNotFound();
+    }
 }

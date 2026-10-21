@@ -11,7 +11,9 @@ use App\Models\BoardList;
 use App\Models\Card;
 use App\Services\CardService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\ValidationException;
 use Inertia\Response;
 
 class CardController extends Controller
@@ -70,6 +72,26 @@ class CardController extends Controller
         BoardChanged::dispatch($boardList->board);
 
         return back();
+    }
+
+    /**
+     * Permanently delete an archived card. Cards are archived first, so nothing is deleted in one step.
+     *
+     * @throws ValidationException when the card is not archived
+     */
+    public function forceDelete(BoardList $boardList, Card $card): HttpResponse
+    {
+        Gate::authorize('forceDelete', $card);
+
+        if (!$card->trashed()) {
+            throw ValidationException::withMessages(['card' => 'Only archived cards can be deleted.']);
+        }
+
+        $card->forceDelete();
+
+        BoardChanged::dispatch($boardList->board);
+
+        return response()->noContent();
     }
 
     /**

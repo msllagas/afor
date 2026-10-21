@@ -1279,6 +1279,7 @@ function restoreCard(card: Card, index: number) {
             v-model:open="showArchivedItems"
             :board-id="board.id"
             :board-name="boardName"
+            :can-delete="canDelete && !isReadOnly"
             @restore-card="restoreDeletedCard"
             @restore-list="restoreArchivedList"
         />

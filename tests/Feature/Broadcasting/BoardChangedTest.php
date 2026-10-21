@@ -50,6 +50,8 @@ function changeBoard(string $change): TestResponse
             ->delete(route('board-lists.cards.destroy', [$test->backlog, $test->card])),
         'restoring a card' => tap($test->actingAs($test->member), fn () => $test->card->delete())
             ->patch(route('board-lists.cards.restore', [$test->backlog, $test->card])),
+        'permanently deleting a card' => tap($test->actingAs($test->owner), fn () => $test->card->delete())
+            ->delete(route('board-lists.cards.force-delete', [$test->backlog, $test->card])),
         'adding a list' => $test->actingAs($test->member)
             ->post(route('boards.board-lists.store', $test->board), ['name' => 'Done']),
         'renaming a list' => $test->actingAs($test->member)
@@ -62,6 +64,8 @@ function changeBoard(string $change): TestResponse
             ->patch(route('boards.board-lists.archive', [$test->board, $test->backlog])),
         'restoring a list' => tap($test->actingAs($test->member), fn () => $test->backlog->update(['archived_at' => now()]))
             ->patch(route('boards.board-lists.unarchive', [$test->board, $test->backlog])),
+        'deleting a list' => tap($test->actingAs($test->owner), fn () => $test->backlog->update(['archived_at' => now()]))
+            ->delete(route('boards.board-lists.destroy', [$test->board, $test->backlog])),
         'renaming the board' => $test->actingAs($test->member)
             ->patch(route('boards.update', $test->board), ['name' => 'Camping trip']),
         'archiving the board' => $test->actingAs($test->owner)
@@ -133,12 +137,14 @@ test('every change to a board tells the people on it and its workspace', functio
     'reordering cards',
     'deleting a card',
     'restoring a card',
+    'permanently deleting a card',
     'adding a list',
     'renaming a list',
     'recoloring a list',
     'reordering lists',
     'archiving a list',
     'restoring a list',
+    'deleting a list',
     'renaming the board',
     'archiving the board',
     'restoring the board',

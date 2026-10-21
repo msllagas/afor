@@ -74,13 +74,16 @@ class BoardPolicy
      */
     public function archive(User $user, Board $board): Response
     {
-        $access = $this->ownerOnly($user, $board, 'Only the workspace owner can archive boards.');
+        return $this->ownerOnEditableBoard($user, $board, 'Only the workspace owner can archive boards.');
+    }
 
-        if ($access->denied()) {
-            return $access;
-        }
-
-        return $this->onEditableBoard($user, $board);
+    /**
+     * Determine whether the user can see the board's archived lists and cards. Everyone on the board can restore
+     * them, and still look through them while the board itself is archived; only the owner deletes them.
+     */
+    public function viewArchivedItems(User $user, Board $board): Response
+    {
+        return $this->onBoard($user, $board);
     }
 
     /**
@@ -126,19 +129,5 @@ class BoardPolicy
         }
 
         return $this->onBoard($user, $board);
-    }
-
-    /**
-     * Allow the workspace owner, deny board members with a 403 and hide the board from everyone else.
-     */
-    private function ownerOnly(User $user, Board $board, string $deniedMessage): Response
-    {
-        if ($board->isOwnedBy($user)) {
-            return Response::allow();
-        }
-
-        return $board->isAccessibleBy($user)
-            ? Response::deny($deniedMessage)
-            : Response::denyAsNotFound();
     }
 }

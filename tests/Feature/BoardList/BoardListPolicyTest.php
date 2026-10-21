@@ -50,3 +50,21 @@ test('nobody can add lists to an archived board or update them', function () {
         ->and($this->member->can('create', [BoardList::class, $this->board]))->toBeFalse()
         ->and($this->member->can('update', $this->boardList))->toBeFalse();
 });
+
+test('workspace owners and board members can archive and restore lists', function () {
+    expect($this->owner->can('archive', $this->boardList))->toBeTrue()
+        ->and($this->member->can('archive', $this->boardList))->toBeTrue()
+        ->and(User::factory()->create()->can('archive', $this->boardList))->toBeFalse();
+});
+
+test('only the workspace owner can permanently delete lists', function () {
+    expect($this->owner->can('delete', $this->boardList))->toBeTrue()
+        ->and($this->member->can('delete', $this->boardList))->toBeFalse()
+        ->and(User::factory()->create()->can('delete', $this->boardList))->toBeFalse();
+});
+
+test('nobody can archive, restore or delete lists on an archived board', function (string $ability) {
+    $this->board->update(['archived_at' => now()]);
+
+    expect($this->owner->can($ability, $this->boardList))->toBeFalse();
+})->with(['archive', 'delete']);

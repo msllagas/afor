@@ -10,7 +10,9 @@ use App\Models\Board;
 use App\Models\BoardList;
 use App\Services\BoardListService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\ValidationException;
 
 class BoardListController extends Controller
 {
@@ -41,6 +43,27 @@ class BoardListController extends Controller
     }
 
     /**
+     * Permanently delete an archived list along with its cards. Lists are archived first, so nothing is deleted in
+     * one step.
+     *
+     * @throws ValidationException when the list is not archived
+     */
+    public function destroy(Board $board, BoardList $boardList): HttpResponse
+    {
+        Gate::authorize('delete', $boardList);
+
+        if (!$boardList->isArchived()) {
+            throw ValidationException::withMessages(['board_list' => 'Only archived lists can be deleted.']);
+        }
+
+        $boardList->forceDelete();
+
+        BoardChanged::dispatch($board);
+
+        return response()->noContent();
+    }
+
+    /**
      * Save the order of the board's lists. Lists of other boards in the payload are left alone.
      */
     public function reorder(ReorderBoardListsRequest $request, Board $board): RedirectResponse
@@ -52,7 +75,7 @@ class BoardListController extends Controller
 
     public function archive(Board $board, BoardList $boardList): RedirectResponse
     {
-        Gate::authorize('update', $boardList);
+        Gate::authorize('archive', $boardList);
 
         $this->boardListService->archive($boardList, auth()->user());
 
@@ -61,7 +84,7 @@ class BoardListController extends Controller
 
     public function unarchive(Board $board, BoardList $boardList): RedirectResponse
     {
-        Gate::authorize('update', $boardList);
+        Gate::authorize('archive', $boardList);
 
         $this->boardListService->unarchive($boardList);
 

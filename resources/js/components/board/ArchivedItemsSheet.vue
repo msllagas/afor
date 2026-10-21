@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ArchivedItemActions from '@/components/board/ArchivedItemActions.vue';
 import { Button } from '@/components/ui/button';
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { Input } from '@/components/ui/input';
@@ -6,16 +7,21 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatTimeAgo } from '@/lib/relativeTime';
 import boardRoutes from '@/routes/boards';
+import cardRoutes from '@/routes/board-lists/cards';
+import boardListRoutes from '@/routes/boards/board-lists';
 import type { ArchivedBoardList, ArchivedItems, DeletedCard } from '@/types';
 import { useHttp, usePage } from '@inertiajs/vue3';
-import { Archive, ArchiveRestore, CircleAlert, Search } from 'lucide-vue-next';
+import { Archive, CircleAlert, Search } from 'lucide-vue-next';
 import { computed, nextTick, ref, useTemplateRef, watch } from 'vue';
+import { toast } from 'vue-sonner';
 
 const SEARCH_THRESHOLD = 5;
 
 const props = defineProps<{
     boardId: string;
     boardName: string;
+    /** Only the workspace owner can delete archived items; everyone on the board can restore them. */
+    canDelete: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -27,11 +33,13 @@ const open = defineModel<boolean>('open', { default: false });
 
 const page = usePage();
 const archivedItemsRequest = useHttp();
+const deleteRequest = useHttp();
 
 const archivedItems = ref<ArchivedItems | null>(null);
 const hasLoadFailed = ref(false);
 const search = ref('');
 const announcement = ref('');
+const confirmingDeleteId = ref<string | null>(null);
 const content = useTemplateRef<HTMLElement>('content');
 
 const itemCount = computed(
@@ -105,6 +113,98 @@ function restoreList(list: ArchivedBoardList) {
     announce(`Restored list ${list.name}.`);
 }
 
+function describeListContents(list: ArchivedBoardList) {
+    if (!list.cards_count) {
+        return 'It has no cards.';
+    }
+
+    return `Its ${list.cards_count} ${list.cards_count === 1 ? 'card goes' : 'cards go'} with it.`;
+}
+
+function focusById(id: string) {
+    nextTick(() => document.getElementById(id)?.focus());
+}
+
+function askToDelete(item: ArchivedBoardList | DeletedCard) {
+    confirmingDeleteId.value = item.id;
+    focusById(`cancel-delete-${item.id}`);
+}
+
+function cancelDelete() {
+    const itemId = confirmingDeleteId.value;
+    confirmingDeleteId.value = null;
+
+    if (itemId) {
+        focusById(`delete-${itemId}`);
+    }
+}
+
+/** Escape backs out of a delete confirmation before it closes the sheet. */
+function handleEscape(event: KeyboardEvent) {
+    if (confirmingDeleteId.value) {
+        event.preventDefault();
+        cancelDelete();
+    }
+}
+
+/** An item someone else already deleted is simply gone; any other failure brings the row back. */
+function handleDeleteFailure(item: ArchivedBoardList | DeletedCard, status?: number, message?: string) {
+    if (status === 404) {
+        return;
+    }
+
+    load();
+
+    const fallbackMessages: Record<number, string> = {
+        403: 'Only the workspace owner can delete archived items.',
+        419: 'Your session expired. Refresh the page, then try again.',
+    };
+
+    toast.error(`Couldn’t delete "${item.name}"`, {
+        description:
+            message ??
+            (status === undefined
+                ? 'Check your connection, then try again.'
+                : (fallbackMessages[status] ?? 'Something went wrong on our end. Try again in a moment.')),
+    });
+}
+
+function deleteList(list: ArchivedBoardList) {
+    if (!archivedItems.value) {
+        return;
+    }
+
+    confirmingDeleteId.value = null;
+    removeRow(archivedItems.value.board_lists, list);
+
+    deleteRequest
+        .delete(boardListRoutes.destroy({ board: list.board_id, board_list: list.id }).url, {
+            onSuccess: () => announce(`Deleted list ${list.name}.`),
+            onError: (errors) => handleDeleteFailure(list, 422, errors.board_list),
+            onHttpException: (response) => handleDeleteFailure(list, response.status),
+            onNetworkError: () => handleDeleteFailure(list),
+        })
+        .catch(() => {});
+}
+
+function deleteCard(card: DeletedCard) {
+    if (!archivedItems.value) {
+        return;
+    }
+
+    confirmingDeleteId.value = null;
+    removeRow(archivedItems.value.cards, card);
+
+    deleteRequest
+        .delete(cardRoutes.forceDelete({ board_list: card.board_list_id, card: card.id }).url, {
+            onSuccess: () => announce(`Deleted card ${card.name}.`),
+            onError: (errors) => handleDeleteFailure(card, 422, errors.card),
+            onHttpException: (response) => handleDeleteFailure(card, response.status),
+            onNetworkError: () => handleDeleteFailure(card),
+        })
+        .catch(() => {});
+}
+
 function restoreCard(card: DeletedCard) {
     if (!archivedItems.value) {
         return;
@@ -118,6 +218,7 @@ function restoreCard(card: DeletedCard) {
 watch(open, (isOpen) => {
     if (isOpen) {
         search.value = '';
+        confirmingDeleteId.value = null;
         load();
     } else {
         archivedItemsRequest.cancel();
@@ -130,12 +231,13 @@ defineExpose({ reload: load });
 
 <template>
     <Sheet v-model:open="open">
-        <SheetContent class="w-full gap-0 p-0 sm:max-w-md">
+        <SheetContent class="w-full gap-0 p-0 sm:max-w-md" @escape-key-down="handleEscape">
             <SheetHeader class="gap-1.5 border-b px-5 pt-5 pr-12 pb-4 sm:px-6">
                 <SheetTitle class="text-xl tracking-tight">Archived items</SheetTitle>
-                <SheetDescription
-                    >Restore archived lists and cards to put them back on {{ boardName }}.</SheetDescription
-                >
+                <SheetDescription>
+                    Restore archived lists and cards to put them back on {{ boardName
+                    }}<template v-if="canDelete">, or delete them for good</template>.
+                </SheetDescription>
                 <div v-if="showSearch" class="relative mt-2">
                     <Search
                         aria-hidden="true"
@@ -213,7 +315,12 @@ defineExpose({ reload: load });
                             <li
                                 v-for="list in filteredLists"
                                 :key="list.id"
-                                class="archived-item flex items-center gap-3 rounded-xl border bg-card p-3"
+                                :class="
+                                    confirmingDeleteId === list.id
+                                        ? 'border-destructive/40 bg-destructive/5'
+                                        : 'bg-card'
+                                "
+                                class="archived-item flex flex-wrap items-center gap-3 rounded-xl border p-3"
                             >
                                 <span
                                     :class="list.color ? `list-${list.color}` : 'list-default'"
@@ -224,16 +331,18 @@ defineExpose({ reload: load });
                                     <p class="truncate text-sm font-medium">{{ list.name }}</p>
                                     <p class="text-xs text-muted-foreground">{{ describeList(list) }}</p>
                                 </div>
-                                <Button
-                                    :data-restore="list.id"
-                                    class="shrink-0 cursor-pointer"
-                                    size="sm"
-                                    variant="outline"
-                                    @click="restoreList(list)"
-                                >
-                                    <ArchiveRestore aria-hidden="true" />
-                                    Restore<span class="sr-only"> list {{ list.name }}</span>
-                                </Button>
+                                <ArchivedItemActions
+                                    :contents="describeListContents(list)"
+                                    :can-delete="canDelete"
+                                    :is-confirming-delete="confirmingDeleteId === list.id"
+                                    :item-id="list.id"
+                                    :item-label="`list ${list.name}`"
+                                    delete-label="Delete list"
+                                    @ask-to-delete="askToDelete(list)"
+                                    @cancel-delete="cancelDelete"
+                                    @delete="deleteList(list)"
+                                    @restore="restoreList(list)"
+                                />
                             </li>
                         </TransitionGroup>
                     </section>
@@ -244,22 +353,28 @@ defineExpose({ reload: load });
                             <li
                                 v-for="card in filteredCards"
                                 :key="card.id"
-                                class="archived-item flex items-center gap-3 rounded-xl border bg-card p-3"
+                                :class="
+                                    confirmingDeleteId === card.id
+                                        ? 'border-destructive/40 bg-destructive/5'
+                                        : 'bg-card'
+                                "
+                                class="archived-item flex flex-wrap items-center gap-3 rounded-xl border p-3"
                             >
                                 <div class="min-w-0 flex-1">
                                     <p class="truncate text-sm font-medium">{{ card.name }}</p>
                                     <p class="text-xs text-muted-foreground">{{ describeCard(card) }}</p>
                                 </div>
-                                <Button
-                                    :data-restore="card.id"
-                                    class="shrink-0 cursor-pointer"
-                                    size="sm"
-                                    variant="outline"
-                                    @click="restoreCard(card)"
-                                >
-                                    <ArchiveRestore aria-hidden="true" />
-                                    Restore<span class="sr-only"> card {{ card.name }}</span>
-                                </Button>
+                                <ArchivedItemActions
+                                    :can-delete="canDelete"
+                                    :is-confirming-delete="confirmingDeleteId === card.id"
+                                    :item-id="card.id"
+                                    :item-label="`card ${card.name}`"
+                                    delete-label="Delete card"
+                                    @ask-to-delete="askToDelete(card)"
+                                    @cancel-delete="cancelDelete"
+                                    @delete="deleteCard(card)"
+                                    @restore="restoreCard(card)"
+                                />
                             </li>
                         </TransitionGroup>
                     </section>

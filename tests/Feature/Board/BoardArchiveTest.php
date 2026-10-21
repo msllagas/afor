@@ -131,6 +131,21 @@ test('the owner can delete an archived board whose archiver deleted their accoun
     $this->assertModelMissing($board);
 });
 
+test('deleting an archived board deletes its lists and cards at once, archived ones included', function () {
+    $board = Board::factory()->for($this->workspace)->archived($this->user)->create();
+    $boardList = BoardList::factory()->for($board)->create();
+    $archivedList = BoardList::factory()->for($board)->archived()->create();
+    $card = Card::factory()->for($boardList)->create();
+    $archivedCard = Card::factory()->for($boardList)->create(['deleted_at' => now()]);
+
+    $this->actingAs($this->user)
+        ->deleteJson(route('boards.destroy', $board))
+        ->assertNoContent();
+
+    expect(BoardList::withTrashed()->whereKey([$boardList->id, $archivedList->id])->exists())->toBeFalse()
+        ->and(Card::withTrashed()->whereKey([$card->id, $archivedCard->id])->exists())->toBeFalse();
+});
+
 test('archived boards are previewed with their active lists and the user star', function () {
     $board = Board::factory()->for($this->workspace)->archived($this->user)->create();
     $activeList = BoardList::factory()->for($board)->create(['color' => 'angel']);

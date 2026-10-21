@@ -96,6 +96,8 @@ test('archived boards refuse every change to the board, its lists, cards and mem
     'recolor a list'         => fn () => ['patch', route('boards.board-lists.update', [$this->board, $this->boardList]), ['color' => 'angel']],
     'archive a list'         => fn () => ['patch', route('boards.board-lists.archive', [$this->board, $this->boardList]), []],
     'restore a list'         => fn () => ['patch', route('boards.board-lists.unarchive', [$this->board, $this->archivedList]), []],
+    'delete a list'          => fn () => ['delete', route('boards.board-lists.destroy', [$this->board, $this->archivedList]), []],
+    'delete a card for good' => fn () => ['delete', route('board-lists.cards.force-delete', [$this->boardList, $this->deletedCard]), []],
     'add a card'             => fn () => ['post', route('board-lists.cards.store', $this->boardList), ['name' => 'Pack the tent']],
     'rename a card'          => fn () => ['patch', route('board-lists.cards.update', [$this->boardList, $this->card]), ['name' => 'Renamed']],
     'describe a card'        => fn () => ['patch', route('board-lists.cards.update', [$this->boardList, $this->card]), ['description' => '<p>Notes</p>']],

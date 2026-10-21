@@ -78,6 +78,11 @@ class BoardList extends Model
         return $query->whereNull('archived_at');
     }
 
+    public function isArchived(): bool
+    {
+        return $this->archived_at !== null;
+    }
+
     /** @return BelongsTo<Board, $this> */
     public function board(): BelongsTo
     {

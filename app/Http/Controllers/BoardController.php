@@ -171,7 +171,7 @@ class BoardController extends Controller
      */
     public function archivedItems(Board $board): JsonResponse
     {
-        Gate::authorize('view', $board);
+        Gate::authorize('viewArchivedItems', $board);
 
         $unarchivedListIds = $board->boardLists()->reorder()->unarchived()->select('id');
 

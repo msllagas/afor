@@ -37,7 +37,8 @@ class CardPolicy
     }
 
     /**
-     * Determine whether the user can delete the card.
+     * Determine whether the user can archive the card. Archiving can be undone, so anyone on the board can; the
+     * archived card records who did it.
      */
     public function delete(User $user, Card $card): Response
     {
@@ -45,10 +46,18 @@ class CardPolicy
     }
 
     /**
-     * Determine whether the user can bring back a deleted card.
+     * Determine whether the user can bring back an archived card.
      */
     public function restore(User $user, Card $card): Response
     {
         return $this->onEditableBoard($user, $card->boardList->board);
+    }
+
+    /**
+     * Determine whether the user can permanently delete an archived card. Only the workspace owner can.
+     */
+    public function forceDelete(User $user, Card $card): Response
+    {
+        return $this->ownerOnEditableBoard($user, $card->boardList->board, 'Only the workspace owner can delete cards.');
     }
 }
