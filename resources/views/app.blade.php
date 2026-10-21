@@ -35,6 +35,46 @@
         <link rel="icon" href="/favicon.svg" type="image/svg+xml">
         <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
+        {{--
+            Reload when the app's scripts fail to load, which otherwise leaves a blank page: a network change aborts
+            the requests still in flight (Chromium reports ERR_NETWORK_CHANGED), and a deploy replaces the files a
+            tab left open still asks for. Two reloads a minute at most, so a file that is really missing can't loop.
+        --}}
+        <script nonce="{{ Vite::cspNonce() }}">
+            (function() {
+                const reloadsKey = 'afor:reloads-after-script-failure';
+                const maxReloads = 2;
+                const windowMs = 60000;
+
+                function reload() {
+                    try {
+                        const recentReloads = JSON.parse(sessionStorage.getItem(reloadsKey) || '[]')
+                            .filter((reloadedAt) => Date.now() - reloadedAt < windowMs);
+
+                        if (recentReloads.length >= maxReloads) {
+                            return;
+                        }
+
+                        sessionStorage.setItem(reloadsKey, JSON.stringify([...recentReloads, Date.now()]));
+                    } catch {
+                        return;
+                    }
+
+                    window.location.reload();
+                }
+
+                // Script load errors don't bubble, so they're caught on the way down.
+                window.addEventListener('error', (event) => {
+                    if (event.target instanceof HTMLScriptElement) {
+                        reload();
+                    }
+                }, true);
+
+                // Pages opened later load their code on demand; Vite reports when that fails.
+                window.addEventListener('vite:preloadError', reload);
+            })();
+        </script>
+
         <link rel="preconnect" href="https://fonts.bunny.net" crossorigin>
         <link href="https://fonts.bunny.net/css?family=instrument-sans:400,400i,500,600,700&display=swap" rel="stylesheet" />
 

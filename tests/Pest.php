@@ -2,6 +2,9 @@
 
 use App\Models\BoardList;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Process;
+use Illuminate\Support\Facades\Vite;
 use Pest\Browser\Api\AwaitableWebpage;
 use Pest\Browser\Api\PendingAwaitablePage;
 use Tests\TestCase;
@@ -20,6 +23,17 @@ use Tests\TestCase;
 pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
     ->in('Browser', 'Feature', 'Unit');
+
+/*
+| Browser tests load the built assets, as CI does, even while the Vite dev server runs. Pages from the dev server
+| fetch every module on its own, around a hundred per page, and Chromium aborts whatever is still loading when the
+| machine's network changes (Docker starting or stopping a container is enough), which leaves a blank page.
+*/
+pest()->in('Browser')->beforeEach(function () {
+    buildAssetsIfStale();
+
+    Vite::useHotFile(storage_path('framework/testing/vite.hot'));
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -46,6 +60,34 @@ expect()->extend('toBeOne', function () {
 | global functions to help you to reduce the number of lines of code in your test files.
 |
 */
+
+/**
+ * Build the assets once per run when the frontend changed since the last build, so browser tests never run old code.
+ */
+function buildAssetsIfStale(): void
+{
+    static $isChecked = false;
+
+    if ($isChecked) {
+        return;
+    }
+
+    $isChecked = true;
+    $manifest = public_path('build/manifest.json');
+    $sources = [
+        ...File::allFiles(resource_path('js')),
+        ...File::allFiles(resource_path('css')),
+        new SplFileInfo(base_path('vite.config.ts')),
+        new SplFileInfo(base_path('package-lock.json')),
+    ];
+    $newestSource = max(array_map(fn (SplFileInfo $file) => $file->getMTime(), $sources));
+
+    if (File::exists($manifest) && File::lastModified($manifest) >= $newestSource) {
+        return;
+    }
+
+    Process::path(base_path())->timeout(300)->run('npm run build')->throw();
+}
 
 /**
  * Drag one element onto another with the mouse, moving in small steps the way a person does.
