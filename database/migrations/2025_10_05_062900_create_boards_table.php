@@ -22,6 +22,11 @@ return new class extends Migration
                 ->constrained()
                 ->cascadeOnDelete();
 
+            $table->foreignIdFor(User::class, 'created_by')
+                ->nullable()
+                ->constrained()
+                ->nullOnDelete();
+
             $table->foreignIdFor(User::class, 'archived_by')
                 ->nullable()
                 ->constrained()
@@ -33,6 +38,7 @@ return new class extends Migration
             $table->softDeletes();
 
             $table->index(['workspace_id', 'archived_at']);
+            $table->index('created_by');
             $table->index('archived_by');
         });
     }

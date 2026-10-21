@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\BoardList;
+use App\Models\User;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -20,10 +21,23 @@ return new class extends Migration
             $table->integer('order')->default(0);
             $table->foreignIdFor(BoardList::class)->constrained()->cascadeOnDelete();
 
+            $table->foreignIdFor(User::class, 'created_by')
+                ->nullable()
+                ->constrained()
+                ->nullOnDelete();
+
+            // Cards are archived through soft deletes; this says who archived them.
+            $table->foreignIdFor(User::class, 'archived_by')
+                ->nullable()
+                ->constrained()
+                ->nullOnDelete();
+
             $table->timestamps();
             $table->softDeletes();
 
             $table->index(['board_list_id', 'order']);
+            $table->index('created_by');
+            $table->index('archived_by');
         });
     }
 

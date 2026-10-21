@@ -15,12 +15,13 @@ class BoardListService
      *
      * @param  array<string, mixed>  $data
      */
-    public function create(Board $board, array $data): BoardList
+    public function create(Board $board, array $data, User $creator): BoardList
     {
         $boardList = BoardList::query()->create([
             ...$data,
-            'board_id' => $board->id,
-            'order'    => ($board->boardLists()->max('order') ?? -1) + 1,
+            'board_id'   => $board->id,
+            'order'      => ($board->boardLists()->max('order') ?? -1) + 1,
+            'created_by' => $creator->id,
         ]);
 
         BoardChanged::dispatch($board);

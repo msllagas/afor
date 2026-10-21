@@ -23,38 +23,44 @@ class CreateDefaultWorkspace
             ]);
 
             $board = $workspace->boards()->create([
-                'name' => 'Getting Started',
+                'name'       => 'Getting Started',
+                'created_by' => $user->id,
             ]);
 
             $todo = $board->boardLists()->create([
-                'name'  => 'To Do',
-                'order' => 0,
-                'color' => BoardListColor::BLUE->value,
+                'name'       => 'To Do',
+                'order'      => 0,
+                'color'      => BoardListColor::BLUE->value,
+                'created_by' => $user->id,
             ]);
 
             $inProgress = $board->boardLists()->create([
-                'name'  => 'In Progress',
-                'order' => 1,
-                'color' => BoardListColor::YELLOW->value,
+                'name'       => 'In Progress',
+                'order'      => 1,
+                'color'      => BoardListColor::YELLOW->value,
+                'created_by' => $user->id,
             ]);
 
             $done = $board->boardLists()->create([
-                'name'  => 'Done',
-                'order' => 2,
-                'color' => BoardListColor::GREEN->value,
+                'name'       => 'Done',
+                'order'      => 2,
+                'color'      => BoardListColor::GREEN->value,
+                'created_by' => $user->id,
             ]);
 
             $todo->cards()->createMany([
-                ['name' => 'Welcome to your board 🎉'],
-                ['name' => 'Create your first task'],
+                ['name' => 'Welcome to your board 🎉', 'created_by' => $user->id],
+                ['name' => 'Create your first task', 'created_by' => $user->id],
             ]);
 
             $inProgress->cards()->create([
-                'name' => 'Drag cards between lists',
+                'name'       => 'Drag cards between lists',
+                'created_by' => $user->id,
             ]);
 
             $done->cards()->create([
-                'name' => 'You completed onboarding!',
+                'name'       => 'You completed onboarding!',
+                'created_by' => $user->id,
             ]);
         });
     }

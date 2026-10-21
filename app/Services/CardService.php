@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Events\BoardChanged;
 use App\Models\BoardList;
 use App\Models\Card;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
 class CardService
@@ -14,12 +15,13 @@ class CardService
      *
      * @param  array<string, mixed>  $data
      */
-    public function create(BoardList $boardList, array $data): Card
+    public function create(BoardList $boardList, array $data, User $creator): Card
     {
         $card = Card::query()->create([
             ...$data,
             'board_list_id' => $boardList->id,
             'order'         => ($boardList->cards()->max('order') ?? -1) + 1,
+            'created_by'    => $creator->id,
         ]);
 
         BoardChanged::dispatch($boardList->board);

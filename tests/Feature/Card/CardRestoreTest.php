@@ -12,6 +12,7 @@ beforeEach(function () {
     $this->board = Board::factory()->for($this->workspace)->create();
     $this->boardList = BoardList::factory()->for($this->board)->create();
     $this->card = Card::factory()->for($this->boardList)->create();
+    $this->card->update(['archived_by' => $this->user->id]);
     $this->card->delete();
 });
 
@@ -21,6 +22,7 @@ test('workspace owners can restore a deleted card', function () {
         ->assertRedirect();
 
     $this->assertNotSoftDeleted($this->card);
+    expect($this->card->fresh()->archived_by)->toBeNull();
 });
 
 test('board members can restore a deleted card', function () {

@@ -70,13 +70,21 @@ function load() {
         .catch(() => {});
 }
 
+/** "by you", "by Ada", or nothing once the archiver has deleted their account. */
+function byArchiver(archiver: { id: string; name: string } | null) {
+    if (!archiver) {
+        return '';
+    }
+
+    return ` by ${archiver.id === page.props.auth.user.id ? 'you' : archiver.name}`;
+}
+
 function describeList(list: ArchivedBoardList) {
-    const archiver = list.archiver?.id === page.props.auth.user.id ? 'you' : list.archiver?.name;
-    return `Archived ${formatTimeAgo(list.archived_at)}${archiver ? ` by ${archiver}` : ''} · ${formatTimeLeft(list.archived_at, page.props.archiveRetentionDays)}`;
+    return `Archived ${formatTimeAgo(list.archived_at)}${byArchiver(list.archiver)} · ${formatTimeLeft(list.archived_at, page.props.archiveRetentionDays)}`;
 }
 
 function describeCard(card: DeletedCard) {
-    return `Archived ${formatTimeAgo(card.deleted_at)} · from ${card.board_list.name} · ${formatTimeLeft(card.deleted_at, page.props.archiveRetentionDays)}`;
+    return `Archived ${formatTimeAgo(card.deleted_at)}${byArchiver(card.archiver)} · from ${card.board_list.name} · ${formatTimeLeft(card.deleted_at, page.props.archiveRetentionDays)}`;
 }
 
 function announce(message: string) {

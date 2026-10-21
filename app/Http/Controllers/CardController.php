@@ -12,6 +12,7 @@ use App\Models\Card;
 use App\Services\CardService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response as HttpResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
 use Inertia\Response;
@@ -29,7 +30,7 @@ class CardController extends Controller
      */
     public function store(StoreCardRequest $request, BoardList $boardList): RedirectResponse
     {
-        $this->cardService->create($boardList, $request->validated());
+        $this->cardService->create($boardList, $request->validated(), $request->user());
 
         return back();
     }
@@ -67,7 +68,10 @@ class CardController extends Controller
     {
         Gate::authorize('delete', $card);
 
-        $card->delete();
+        DB::transaction(function () use ($card) {
+            $card->update(['archived_by' => auth()->id()]);
+            $card->delete();
+        });
 
         BoardChanged::dispatch($boardList->board);
 
@@ -101,6 +105,7 @@ class CardController extends Controller
     {
         Gate::authorize('restore', $card);
 
+        $card->archived_by = null;
         $card->restore();
 
         BoardChanged::dispatch($boardList->board);

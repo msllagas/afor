@@ -79,7 +79,7 @@ class BoardController extends Controller
      */
     public function store(StoreBoardsRequest $request, Workspace $workspace): RedirectResponse
     {
-        $board = $this->boardService->create($request->validated(), $workspace);
+        $board = $this->boardService->create($request->validated(), $workspace, $request->user());
 
         return to_route('boards.show', [
             'board' => $board,
@@ -185,9 +185,9 @@ class BoardController extends Controller
                 ->latest('archived_at')
                 ->get()),
             'cards' => CardResource::collection(Card::onlyTrashed()
-                ->select('id', 'name', 'board_list_id', 'deleted_at')
+                ->select('id', 'name', 'board_list_id', 'deleted_at', 'archived_by')
                 ->whereIn('board_list_id', $unarchivedListIds)
-                ->with('boardList:id,name,color')
+                ->with(['boardList:id,name,color', 'archiver:id,name'])
                 ->latest('deleted_at')
                 ->get()),
         ]);

@@ -25,7 +25,7 @@ class BoardListController extends Controller
      */
     public function store(StoreBoardListRequest $request, Board $board): RedirectResponse
     {
-        $this->boardListService->create($board, $request->validated());
+        $this->boardListService->create($board, $request->validated(), $request->user());
 
         return back();
     }

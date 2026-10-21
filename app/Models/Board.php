@@ -21,6 +21,7 @@ use Illuminate\Support\Carbon;
  * @property string $name
  * @property string $color
  * @property string $workspace_id
+ * @property string|null $created_by
  * @property string|null $archived_by
  * @property Carbon|null $archived_at
  * @property Carbon|null $created_at
@@ -34,6 +35,7 @@ use Illuminate\Support\Carbon;
  * @property-read int|null $members_count
  * @property-read Workspace $workspace
  * @property-read User|null $archiver
+ * @property-read User|null $creator
  *
  * @method static Builder<static>|Board archived()
  * @method static BoardFactory factory($count = null, $state = [])
@@ -63,6 +65,13 @@ class Board extends Model
     use HasFactory, HasUuids, MassPrunable, SoftDeletes;
 
     protected $guarded = ['id'];
+
+    /**
+     * Who created it is kept for auditing and never sent to the browser.
+     *
+     * @var list<string>
+     */
+    protected $hidden = ['created_by'];
 
     protected $casts = [
         'archived_at' => 'datetime',
@@ -140,6 +149,12 @@ class Board extends Model
     public function workspace(): BelongsTo
     {
         return $this->belongsTo(Workspace::class);
+    }
+
+    /** @return BelongsTo<User, $this> */
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     /** @return BelongsTo<User, $this> */

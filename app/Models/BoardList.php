@@ -21,12 +21,14 @@ use Illuminate\Support\Carbon;
  * @property int $order
  * @property string|null $color
  * @property string $board_id
+ * @property string|null $created_by
  * @property string|null $archived_by
  * @property Carbon|null $archived_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property Carbon|null $deleted_at
  * @property-read User|null $archiver
+ * @property-read User|null $creator
  * @property-read Board|null $board
  * @property-read Collection<int, Card> $cards
  * @property-read int|null $cards_count
@@ -59,6 +61,13 @@ class BoardList extends Model
     use HasFactory, HasUuids, MassPrunable, SoftDeletes;
 
     protected $guarded = ['id'];
+
+    /**
+     * Who created it is kept for auditing and never sent to the browser.
+     *
+     * @var list<string>
+     */
+    protected $hidden = ['created_by'];
 
     protected $casts = [
         'archived_at' => 'datetime',
@@ -100,6 +109,12 @@ class BoardList extends Model
     public function board(): BelongsTo
     {
         return $this->belongsTo(Board::class);
+    }
+
+    /** @return BelongsTo<User, $this> */
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     /** @return BelongsTo<User, $this> */

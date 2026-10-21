@@ -41,6 +41,7 @@ export interface ArchivedBoardList extends Pick<BoardList, 'id' | 'name' | 'colo
 /** A card deleted from one of the board's lists, as the board's archived items show it. */
 export interface DeletedCard extends Pick<Card, 'id' | 'name' | 'board_list_id'> {
     deleted_at: string;
+    archiver: { id: string; name: string } | null;
     board_list: Pick<BoardList, 'id' | 'name' | 'color'>;
 }
 

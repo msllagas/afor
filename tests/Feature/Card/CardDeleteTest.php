@@ -26,6 +26,7 @@ test('workspace owners can delete their board list cards', function () {
     $this->assertSoftDeleted('cards', [
         'id'            => $card->id,
         'board_list_id' => $boardList->id,
+        'archived_by'   => $this->user->id,
     ]);
     $response->assertRedirect();
 

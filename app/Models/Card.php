@@ -21,10 +21,14 @@ use Illuminate\Support\Carbon;
  * @property bool $is_checked
  * @property int $order
  * @property string $board_list_id
+ * @property string|null $created_by
+ * @property string|null $archived_by
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property Carbon|null $deleted_at
  * @property-read BoardList|null $boardList
+ * @property-read User|null $creator
+ * @property-read User|null $archiver
  *
  * @method static CardFactory factory($count = null, $state = [])
  * @method static Builder<static>|Card newModelQuery()
@@ -51,6 +55,13 @@ class Card extends Model
 
     protected $guarded = ['id'];
 
+    /**
+     * Who created it is kept for auditing and never sent to the browser.
+     *
+     * @var list<string>
+     */
+    protected $hidden = ['created_by'];
+
     protected $casts = [
         'is_checked' => 'boolean',
     ];
@@ -70,6 +81,18 @@ class Card extends Model
     public function boardList(): BelongsTo
     {
         return $this->belongsTo(BoardList::class);
+    }
+
+    /** @return BelongsTo<User, $this> */
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /** @return BelongsTo<User, $this> */
+    public function archiver(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'archived_by');
     }
 
     /**

@@ -55,3 +55,33 @@ it('restores an archived list and an archived card from archived items', functio
         ->assertScript(cardNamesShownIn($this->backlog), ['First', 'Second', 'Third', 'Fourth'])
         ->assertNoJavaScriptErrors();
 });
+
+it('lets board members restore archived items but leaves deleting them to the owner', function () {
+    $member = User::factory()->create();
+    $this->board->workspace->users()->attach($member);
+    $this->board->members()->attach($member);
+    $ideas = BoardList::factory()->for($this->board)->archived($this->user)->create(['name' => 'Ideas', 'order' => 1]);
+    $oldCard = Card::factory()->for($this->backlog)->trashed()->create(['name' => 'Fourth', 'order' => 3, 'archived_by' => $this->user->id]);
+
+    $this->actingAs($member);
+
+    visit(route('boards.show', $this->board))
+        ->click('[aria-label="Board actions"]')
+        ->click('Archived items')
+        ->assertSee("by {$this->user->name}")
+        ->assertSee('only the workspace owner can delete them sooner')
+        ->assertPresent("[data-restore=\"{$ideas->id}\"]")
+        ->assertPresent("[data-restore=\"{$oldCard->id}\"]")
+        ->assertNotPresent("#delete-{$ideas->id}")
+        ->assertNotPresent("#delete-{$oldCard->id}")
+        ->assertNoJavaScriptErrors();
+
+    $this->actingAs($this->user);
+
+    visit(route('boards.show', $this->board))
+        ->click('[aria-label="Board actions"]')
+        ->click('Archived items')
+        ->assertPresent("#delete-{$ideas->id}")
+        ->assertPresent("#delete-{$oldCard->id}")
+        ->assertNoJavaScriptErrors();
+});

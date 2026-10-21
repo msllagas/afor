@@ -22,6 +22,7 @@ class CardResource extends JsonResource
             'board_list_id' => $this->board_list_id,
             'deleted_at'    => $this->whenHas('deleted_at'),
             'board_list'    => new BoardListResource($this->whenLoaded('boardList')),
+            'archiver'      => $this->whenLoaded('archiver', fn () => $this->archiver?->only('id', 'name')),
         ];
     }
 }

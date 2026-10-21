@@ -20,9 +20,9 @@ class BoardService
      *
      * @throws ValidationException when the workspace has reached its board limit
      */
-    public function create(array $data, Workspace $workspace): Board
+    public function create(array $data, Workspace $workspace, User $creator): Board
     {
-        $board = DB::transaction(function () use ($data, $workspace) {
+        $board = DB::transaction(function () use ($data, $workspace, $creator) {
             Workspace::query()->whereKey($workspace->id)->lockForUpdate()->first();
 
             $this->usageLimits->ensureRoomForBoard($workspace);
@@ -30,6 +30,7 @@ class BoardService
             return Board::create([
                 ...$data,
                 'workspace_id' => $workspace->id,
+                'created_by'   => $creator->id,
             ]);
         });
 

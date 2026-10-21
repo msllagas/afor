@@ -45,7 +45,7 @@ test('archived items lists archived lists and deleted cards of the board, most r
     $activeList = BoardList::factory()->for($this->board)->create(['name' => 'Doing']);
     Card::factory()->for($activeList)->create();
     $olderCard = Card::factory()->for($activeList)->create(['deleted_at' => now()->subHour()]);
-    $newerCard = Card::factory()->for($activeList)->create(['deleted_at' => now()]);
+    $newerCard = Card::factory()->for($activeList)->create(['deleted_at' => now(), 'archived_by' => $archiver->id]);
 
     $this->actingAs($this->member)
         ->getJson(route('boards.archived-items', $this->board))
@@ -59,6 +59,7 @@ test('archived items lists archived lists and deleted cards of the board, most r
         ->assertJsonCount(2, 'cards')
         ->assertJsonPath('cards.0.id', $newerCard->id)
         ->assertJsonPath('cards.0.board_list.name', 'Doing')
+        ->assertJsonPath('cards.0.archiver.name', 'Ada Lovelace')
         ->assertJsonPath('cards.1.id', $olderCard->id);
 });
 
