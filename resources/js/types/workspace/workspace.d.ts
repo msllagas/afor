@@ -22,6 +22,7 @@ export interface BoardList {
 export interface Board {
     id: string;
     name: string;
+    color: string;
     workspace_id: string;
     board_lists: BoardList[];
     is_favorited?: boolean;

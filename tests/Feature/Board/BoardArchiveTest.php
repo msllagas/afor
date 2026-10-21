@@ -94,6 +94,16 @@ test('archived boards are listed most recently archived first with their archive
         ->assertJsonPath('1.id', $olderBoard->id);
 });
 
+test('archived boards keep their cover color', function () {
+    $board = Board::factory()->for($this->workspace)->archived($this->user)->create(['color' => 'blue']);
+
+    $this->actingAs($this->user)
+        ->getJson(route('workspaces.boards.archived', $this->workspace))
+        ->assertOk()
+        ->assertJsonPath('0.id', $board->id)
+        ->assertJsonPath('0.color', 'blue');
+});
+
 test('boards stay archived after the member who archived them deletes their account', function () {
     $archiver = User::factory()->create();
     $board = Board::factory()->for($this->workspace)->archived($archiver)->create();

@@ -19,6 +19,7 @@ class BoardResource extends JsonResource
         return [
             'id'           => $this->id,
             'name'         => $this->name,
+            'color'        => $this->whenHas('color'),
             'workspace_id' => $this->workspace_id,
             'created_at'   => $this->created_at,
             'archived_at'  => $this->whenHas('archived_at'),

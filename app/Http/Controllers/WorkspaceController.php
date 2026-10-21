@@ -72,7 +72,7 @@ class WorkspaceController extends Controller
                     ->get()
             )->resolve(),
             'boards' => Inertia::defer(fn () => $workspace->boards()
-                ->select('id', 'name', 'workspace_id', 'created_at')
+                ->select('id', 'name', 'color', 'workspace_id', 'created_at')
                 ->unarchived()
                 ->visibleTo($user)
                 ->withExists([

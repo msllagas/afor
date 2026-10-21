@@ -2,10 +2,12 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\BoardListColor;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rules\Enum;
 
 class UpdateBoardsRequest extends FormRequest
 {
@@ -25,7 +27,8 @@ class UpdateBoardsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'sometimes|string|max:255',
+            'color' => ['sometimes', new Enum(BoardListColor::class)],
+            'name'  => 'sometimes|string|max:255',
         ];
     }
 }

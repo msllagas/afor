@@ -45,7 +45,7 @@ class BoardController extends Controller
             ->with([
                 'logoFile',
                 'boards' => fn ($query) => $query
-                    ->select('id', 'name', 'workspace_id', 'created_at')
+                    ->select('id', 'name', 'color', 'workspace_id', 'created_at')
                     ->unarchived()
                     ->visibleTo($user)
                     ->withExists([
@@ -143,7 +143,7 @@ class BoardController extends Controller
         Gate::authorize('viewArchived', [Board::class, $workspace]);
 
         return BoardResource::collection($workspace->boards()
-            ->select('id', 'name', 'workspace_id', 'created_at', 'archived_at', 'archived_by')
+            ->select('id', 'name', 'color', 'workspace_id', 'created_at', 'archived_at', 'archived_by')
             ->archived()
             ->withExists([
                 'favoritedByUsers as is_favorited' => fn ($query) => $query->whereKey(auth()->id()),

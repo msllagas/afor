@@ -176,3 +176,78 @@
         rotate: none;
     }
 }
+
+/*
+  Board cover colors: the preview area of a board card. A deeper shade of
+  each list color, so the pale list previews on top of it stay readable.
+*/
+
+.cover-angel {
+    --cover-bg: oklch(0.86 0.08 350);
+}
+.dark .cover-angel {
+    --cover-bg: oklch(0.38 0.08 350);
+}
+
+.cover-blue {
+    --cover-bg: oklch(0.86 0.08 245);
+}
+.dark .cover-blue {
+    --cover-bg: oklch(0.38 0.08 245);
+}
+
+.cover-red {
+    --cover-bg: oklch(0.86 0.08 20);
+}
+.dark .cover-red {
+    --cover-bg: oklch(0.38 0.08 20);
+}
+
+.cover-orange {
+    --cover-bg: oklch(0.87 0.09 55);
+}
+.dark .cover-orange {
+    --cover-bg: oklch(0.4 0.08 55);
+}
+
+.cover-yellow {
+    --cover-bg: oklch(0.9 0.1 92);
+}
+.dark .cover-yellow {
+    --cover-bg: oklch(0.42 0.07 92);
+}
+
+.cover-green {
+    --cover-bg: oklch(0.86 0.08 160);
+}
+.dark .cover-green {
+    --cover-bg: oklch(0.38 0.07 160);
+}
+
+.cover-purple {
+    --cover-bg: oklch(0.86 0.08 300);
+}
+.dark .cover-purple {
+    --cover-bg: oklch(0.38 0.08 300);
+}
+
+.cover-sunset {
+    --cover-bg: linear-gradient(135deg, oklch(0.88 0.1 70), oklch(0.85 0.09 355));
+}
+.dark .cover-sunset {
+    --cover-bg: linear-gradient(135deg, oklch(0.42 0.08 70), oklch(0.38 0.08 355));
+}
+
+.cover-aurora {
+    --cover-bg: linear-gradient(135deg, oklch(0.87 0.08 195), oklch(0.85 0.08 300));
+}
+.dark .cover-aurora {
+    --cover-bg: linear-gradient(135deg, oklch(0.4 0.07 195), oklch(0.38 0.08 300));
+}
+
+.cover-neutral {
+    --cover-bg: color-mix(in oklch, var(--foreground) 10%, var(--card));
+}
+.dark .cover-neutral {
+    --cover-bg: var(--muted);
+}

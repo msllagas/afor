@@ -16,7 +16,8 @@ test('users can create board', function () {
         ]);
 
     $this->assertDatabaseHas('boards', [
-        'name' => 'Test Board',
+        'name'  => 'Test Board',
+        'color' => 'neutral',
     ]);
 });
 

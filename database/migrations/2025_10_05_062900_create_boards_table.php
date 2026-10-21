@@ -16,6 +16,7 @@ return new class extends Migration
         Schema::create('boards', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('name');
+            $table->string('color')->default('neutral');
 
             $table->foreignIdFor(Workspace::class)
                 ->constrained()

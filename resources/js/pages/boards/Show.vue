@@ -154,6 +154,42 @@ function renameBoard(name: string) {
 
 /*
 |--------------------------------------------------------------------------
+| Board cover color
+|--------------------------------------------------------------------------
+*/
+
+// The cover shows on the workspace's board cards; the page only keeps the picked color for the menu.
+const boardColor = ref(props.board.color);
+
+watch(
+    () => props.board.color,
+    (color) => {
+        boardColor.value = color;
+    },
+);
+
+function recolorBoard(color: string) {
+    if (isReadOnly.value) {
+        return;
+    }
+
+    const previousColor = boardColor.value;
+
+    boardColor.value = color;
+    send(
+        'patch',
+        boardRoutes.update(props.board.id).url,
+        { color },
+        'Could not change the cover color.',
+        undefined,
+        () => {
+            boardColor.value = previousColor;
+        },
+    );
+}
+
+/*
+|--------------------------------------------------------------------------
 | Star and archive
 |--------------------------------------------------------------------------
 */
@@ -1008,8 +1044,10 @@ function restoreCard(card: Card, index: number) {
         <div class="flex min-h-0 flex-1 flex-col">
             <BoardHeader
                 ref="board-header"
+                :board-color="boardColor"
                 :board-name="boardName"
                 :can-archive="canArchive"
+                :colors="colors"
                 :can-leave="canLeave"
                 :is-archiving="isArchiving"
                 :is-read-only="isReadOnly"
@@ -1022,6 +1060,7 @@ function restoreCard(card: Card, index: number) {
                 @add-list="openListComposer"
                 @archive-board="archiveBoard"
                 @leave-board="showLeaveDialog = true"
+                @recolor="recolorBoard"
                 @rename="renameBoard"
                 @show-archived-items="showArchivedItems = true"
                 @show-members="showMembersDialog = true"

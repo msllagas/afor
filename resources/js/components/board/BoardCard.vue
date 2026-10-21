@@ -49,8 +49,9 @@ const previewLists = computed(() =>
             class="flex h-full flex-col overflow-hidden rounded-2xl border border-foreground/25 bg-card text-card-foreground shadow-sm transition-[border-color,box-shadow] duration-200 outline-none group-hover:border-primary/70 group-hover:shadow-md group-hover:shadow-primary/5 focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-ring/50"
         >
             <div
+                :class="`cover-${board.color ?? 'neutral'}`"
                 aria-hidden="true"
-                class="flex h-24 items-start gap-1.5 overflow-hidden border-b border-foreground/10 bg-foreground/10 px-3 pt-3 dark:bg-muted"
+                class="flex h-24 items-start gap-1.5 overflow-hidden border-b border-foreground/10 px-3 pt-3 [background:var(--cover-bg)]"
             >
                 <div
                     v-for="list in previewLists"

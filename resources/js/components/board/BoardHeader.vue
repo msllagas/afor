@@ -18,6 +18,9 @@ const props = defineProps<{
     workspaceName: string;
     workspaceHomeUrl: string;
     boardName: string;
+    /** The board card's cover color, picked from the board menu. */
+    boardColor: string;
+    colors: Array<string>;
     owner: WorkspaceMember;
     members: WorkspaceMember[];
     isStarred: boolean;
@@ -32,6 +35,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     rename: [name: string];
+    recolor: [color: string];
     toggleStar: [];
     addList: [];
     archiveBoard: [];
@@ -109,7 +113,14 @@ const peopleLabel = computed(() => {
 </script>
 
 <template>
-    <header class="flex items-center gap-3 border-b px-4 py-2 sm:px-6">
+    <header class="relative isolate flex items-center gap-3 border-b px-4 py-2 sm:px-6">
+        <!-- A soft wash of the cover color, so picking one shows straight away. Neutral boards keep the plain header. -->
+        <div
+            v-if="boardColor !== 'neutral'"
+            :class="`cover-${boardColor}`"
+            aria-hidden="true"
+            class="pointer-events-none absolute inset-0 -z-10 opacity-45 [background:var(--cover-bg)] dark:opacity-60"
+        />
         <Link
             :aria-label="`${workspaceName} home`"
             :href="workspaceHomeUrl"
@@ -221,10 +232,13 @@ const peopleLabel = computed(() => {
                 v-if="!isReadOnly"
                 :can-archive="canArchive"
                 :can-leave="canLeave"
+                :color="boardColor"
+                :colors="colors"
                 :is-archiving="isArchiving"
                 :is-read-only="isReadOnly"
                 @add-list="emit('addList')"
                 @archive-board="emit('archiveBoard')"
+                @color-selected="emit('recolor', $event)"
                 @leave-board="emit('leaveBoard')"
                 @show-archived-items="emit('showArchivedItems')"
                 @show-members="emit('showMembers')"

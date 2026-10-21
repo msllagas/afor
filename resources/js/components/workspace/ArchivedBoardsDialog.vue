@@ -306,7 +306,8 @@ watch(open, (isOpen) => {
                         >
                             <div
                                 aria-hidden="true"
-                                class="flex h-10 w-14 items-start gap-0.5 overflow-hidden rounded-md bg-foreground/10 p-1 dark:bg-muted"
+                                :class="`cover-${board.color ?? 'neutral'}`"
+                                class="flex h-10 w-14 items-start gap-0.5 overflow-hidden rounded-md p-1 [background:var(--cover-bg)]"
                             >
                                 <div
                                     v-for="list in (board.board_lists ?? []).slice(0, PREVIEW_LIST_CAP)"
