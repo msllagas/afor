@@ -5,7 +5,7 @@ import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTi
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
-import { formatTimeAgo } from '@/lib/relativeTime';
+import { formatTimeAgo, formatTimeLeft } from '@/lib/relativeTime';
 import boardRoutes from '@/routes/boards';
 import cardRoutes from '@/routes/board-lists/cards';
 import boardListRoutes from '@/routes/boards/board-lists';
@@ -72,11 +72,11 @@ function load() {
 
 function describeList(list: ArchivedBoardList) {
     const archiver = list.archiver?.id === page.props.auth.user.id ? 'you' : list.archiver?.name;
-    return `Archived ${formatTimeAgo(list.archived_at)}${archiver ? ` by ${archiver}` : ''}`;
+    return `Archived ${formatTimeAgo(list.archived_at)}${archiver ? ` by ${archiver}` : ''} · ${formatTimeLeft(list.archived_at, page.props.archiveRetentionDays)}`;
 }
 
 function describeCard(card: DeletedCard) {
-    return `Archived ${formatTimeAgo(card.deleted_at)} · from ${card.board_list.name}`;
+    return `Archived ${formatTimeAgo(card.deleted_at)} · from ${card.board_list.name} · ${formatTimeLeft(card.deleted_at, page.props.archiveRetentionDays)}`;
 }
 
 function announce(message: string) {
@@ -236,7 +236,10 @@ defineExpose({ reload: load });
                 <SheetTitle class="text-xl tracking-tight">Archived items</SheetTitle>
                 <SheetDescription>
                     Restore archived lists and cards to put them back on {{ boardName
-                    }}<template v-if="canDelete">, or delete them for good</template>.
+                    }}<template v-if="canDelete">, or delete them for good</template>. Anything left here is removed
+                    after {{ $page.props.archiveRetentionDays }} days<template v-if="!canDelete"
+                        >; only the workspace owner can delete them sooner</template
+                    >.
                 </SheetDescription>
                 <div v-if="showSearch" class="relative mt-2">
                     <Search
@@ -294,7 +297,7 @@ defineExpose({ reload: load });
                         </EmptyMedia>
                         <EmptyTitle>Nothing archived</EmptyTitle>
                         <EmptyDescription>
-                            Lists and cards you archive wait here until you restore them.
+                            Lists and cards you archive wait here for {{ $page.props.archiveRetentionDays }} days.
                         </EmptyDescription>
                     </EmptyHeader>
                 </Empty>

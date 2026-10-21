@@ -26,6 +26,8 @@ export type AppPageProps<T extends Record<string, unknown> = Record<string, unkn
     appUrl: string;
     auth: Auth;
     sidebarOpen: boolean;
+    /** Days an archived board, list or card can be restored before it is removed for good. */
+    archiveRetentionDays: number;
     ownedWorkspaces: Workspace[];
     sharedWorkspaces: Workspace[];
     currentWorkspaceId: string | null;

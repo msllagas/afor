@@ -5,7 +5,7 @@ import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTi
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { formatTimeAgo } from '@/lib/relativeTime';
+import { formatTimeAgo, formatTimeLeft } from '@/lib/relativeTime';
 import boardRoutes from '@/routes/boards';
 import workspaceRoutes from '@/routes/workspaces';
 import type { Board, Workspace } from '@/types';
@@ -73,7 +73,7 @@ function formatArchivedAt(board: Board) {
         return `Archived${byline}`;
     }
 
-    return `Archived ${formatTimeAgo(board.archived_at)}${byline}`;
+    return `Archived ${formatTimeAgo(board.archived_at)}${byline} · ${formatTimeLeft(board.archived_at, page.props.archiveRetentionDays)}`;
 }
 
 function describeContents(board: Board) {
@@ -234,7 +234,7 @@ watch(open, (isOpen) => {
                 <DialogTitle class="text-xl font-semibold tracking-tight">Archived boards</DialogTitle>
                 <DialogDescription>
                     Open a board to look through it, restore it to put it back in {{ workspace.name }}, or delete it for
-                    good.
+                    good. Anything left here is removed after {{ $page.props.archiveRetentionDays }} days.
                 </DialogDescription>
                 <div v-if="showSearch" class="relative mt-2">
                     <Search
@@ -416,8 +416,8 @@ watch(open, (isOpen) => {
                                 </EmptyMedia>
                                 <EmptyTitle>Nothing archived</EmptyTitle>
                                 <EmptyDescription>
-                                    Boards you archive in {{ workspace.name }} wait here until you restore or delete
-                                    them.
+                                    Boards you archive in {{ workspace.name }} wait here for
+                                    {{ $page.props.archiveRetentionDays }} days.
                                 </EmptyDescription>
                             </EmptyHeader>
                         </Empty>

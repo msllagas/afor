@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\MassPrunable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -55,7 +56,7 @@ use Illuminate\Support\Carbon;
 class BoardList extends Model
 {
     /** @use HasFactory<BoardListFactory> */
-    use HasFactory, HasUuids, SoftDeletes;
+    use HasFactory, HasUuids, MassPrunable, SoftDeletes;
 
     protected $guarded = ['id'];
 
@@ -66,6 +67,18 @@ class BoardList extends Model
     /**
      * Lists that were archived. Like boards, only archived_at decides: archived_by is cleared when the archiver deletes their account.
      */
+    /**
+     * Archived lists can be restored for a while, then they are removed for good with their cards.
+     *
+     * @return Builder<static>
+     */
+    public function prunable(): Builder
+    {
+        return static::query()
+            ->whereNotNull('archived_at')
+            ->where('archived_at', '<=', now()->subDays(config('limits.archive_retention_days')));
+    }
+
     #[Scope]
     protected function archived(Builder $query): Builder
     {

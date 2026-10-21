@@ -24,6 +24,9 @@ return [
     // Stored HTML, so the visible text is shorter than this.
     'card_description_length' => (int) env('LIMIT_CARD_DESCRIPTION_LENGTH', 32768),
 
+    // Archived boards, lists and cards can be restored for this many days before they are purged.
+    'archive_retention_days' => (int) env('LIMIT_ARCHIVE_RETENTION_DAYS', 30),
+
     // Accounts that never verify their email are removed after this many days.
     'unverified_user_retention_days' => (int) env('LIMIT_UNVERIFIED_USER_RETENTION_DAYS', 7),
 

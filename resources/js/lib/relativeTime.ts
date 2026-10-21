@@ -16,3 +16,15 @@ export function formatTimeAgo(timestamp: string): string {
 
     return unit && size ? relativeTime.format(Math.round(seconds / size), unit) : 'just now';
 }
+
+const DAY_SECONDS = 86_400;
+
+/**
+ * How long an archived item has before the daily purge removes it, such as "27 days left". An item in its last
+ * day reads "removed within a day".
+ */
+export function formatTimeLeft(archivedAt: string, retentionDays: number): string {
+    const daysLeft = Math.ceil(retentionDays - (Date.now() - Date.parse(archivedAt)) / 1000 / DAY_SECONDS);
+
+    return daysLeft <= 1 ? 'removed within a day' : `${daysLeft} days left`;
+}

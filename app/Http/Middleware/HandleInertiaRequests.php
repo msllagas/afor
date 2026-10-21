@@ -48,7 +48,9 @@ class HandleInertiaRequests extends Middleware
                 'user' => $user ? new UserResource($user->loadMissing('avatarFile')) : null,
             ],
             'sidebarOpen'      => !$request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
-            'sharedWorkspaces' => fn () => $user
+            // Archived boards, lists and cards say how long they have left before they are purged.
+            'archiveRetentionDays' => config('limits.archive_retention_days'),
+            'sharedWorkspaces'     => fn () => $user
                 ? WorkspaceResource::collection(
                     $user->sharedWorkspaces()->with('logoFile')->get()
                 )->resolve()

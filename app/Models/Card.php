@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\MassPrunable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -46,13 +47,24 @@ use Illuminate\Support\Carbon;
 class Card extends Model
 {
     /** @use HasFactory<CardFactory> */
-    use HasFactory, HasUuids, SoftDeletes;
+    use HasFactory, HasUuids, MassPrunable, SoftDeletes;
 
     protected $guarded = ['id'];
 
     protected $casts = [
         'is_checked' => 'boolean',
     ];
+
+    /**
+     * Archived cards can be restored for a while, then they are removed for good.
+     *
+     * @return Builder<static>
+     */
+    public function prunable(): Builder
+    {
+        return static::onlyTrashed()
+            ->where('deleted_at', '<=', now()->subDays(config('limits.archive_retention_days')));
+    }
 
     /** @return BelongsTo<BoardList, $this> */
     public function boardList(): BelongsTo
