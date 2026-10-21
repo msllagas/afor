@@ -112,13 +112,13 @@ defineExpose({ open });
         </div>
         <button
             v-else
-            class="group flex h-12 w-full cursor-pointer items-center gap-3 rounded-2xl border-2 border-dashed border-primary/40 bg-card/80 px-3 text-sm font-medium text-foreground/80 shadow-xs backdrop-blur-sm transition-colors outline-none hover:border-primary/70 hover:bg-blush hover:text-blush-foreground focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:border-primary/50 dark:bg-card/60 dark:text-foreground/85 dark:hover:border-primary/80"
+            class="group flex h-12 w-full cursor-pointer items-center gap-3 rounded-2xl border-2 border-dashed border-foreground/25 bg-card/80 px-3 text-sm font-medium text-foreground/80 shadow-xs backdrop-blur-sm transition-colors outline-none hover:border-foreground/50 hover:bg-accent hover:text-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:border-foreground/30 dark:bg-card/60 dark:text-foreground/85 dark:hover:border-foreground/55 dark:hover:bg-accent dark:hover:text-foreground"
             type="button"
             @click="open"
         >
             <span
                 aria-hidden="true"
-                class="flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground"
+                class="flex size-7 shrink-0 items-center justify-center rounded-lg bg-foreground/10 text-foreground/75 transition-colors group-hover:bg-foreground/15 group-hover:text-foreground"
             >
                 <Plus class="size-4" />
             </span>

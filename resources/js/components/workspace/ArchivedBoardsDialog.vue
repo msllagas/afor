@@ -299,14 +299,14 @@ watch(open, (isOpen) => {
                             :class="
                                 confirmingDeleteId === board.id
                                     ? 'border-destructive/40 bg-destructive/5'
-                                    : 'bg-card hover:border-primary/30'
+                                    : 'border-foreground/25 bg-card shadow-sm hover:border-primary/70'
                             "
                             :data-exit="exitActions[board.id]"
                             class="archived-row relative grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-3 rounded-xl border p-3 has-[[data-board-link]:focus-visible]:ring-[3px] has-[[data-board-link]:focus-visible]:ring-ring/50 sm:grid-cols-[auto_minmax(0,1fr)_auto]"
                         >
                             <div
                                 aria-hidden="true"
-                                class="flex h-10 w-14 items-start gap-0.5 overflow-hidden rounded-md bg-blush/60 p-1"
+                                class="flex h-10 w-14 items-start gap-0.5 overflow-hidden rounded-md bg-foreground/10 p-1 dark:bg-muted"
                             >
                                 <div
                                     v-for="list in (board.board_lists ?? []).slice(0, PREVIEW_LIST_CAP)"

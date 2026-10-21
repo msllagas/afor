@@ -46,9 +46,12 @@ const previewLists = computed(() =>
     <div class="group relative">
         <Link
             :href="show(board.id)"
-            class="flex h-full flex-col overflow-hidden rounded-2xl border bg-card text-card-foreground shadow-xs transition-[border-color,box-shadow] duration-200 outline-none group-hover:border-primary/40 group-hover:shadow-md group-hover:shadow-primary/5 focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            class="flex h-full flex-col overflow-hidden rounded-2xl border border-foreground/25 bg-card text-card-foreground shadow-sm transition-[border-color,box-shadow] duration-200 outline-none group-hover:border-primary/70 group-hover:shadow-md group-hover:shadow-primary/5 focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-ring/50"
         >
-            <div aria-hidden="true" class="flex h-24 items-start gap-1.5 overflow-hidden bg-blush/60 px-3 pt-3">
+            <div
+                aria-hidden="true"
+                class="flex h-24 items-start gap-1.5 overflow-hidden border-b border-foreground/10 bg-foreground/10 px-3 pt-3 dark:bg-muted"
+            >
                 <div
                     v-for="list in previewLists"
                     :key="list.id"
@@ -64,7 +67,7 @@ const previewLists = computed(() =>
                 </div>
                 <p
                     v-if="hasListPreview && !previewLists.length"
-                    class="-mt-3 flex-1 self-center text-center text-xs text-blush-foreground"
+                    class="-mt-3 flex-1 self-center text-center text-xs text-muted-foreground"
                 >
                     Empty board
                 </p>

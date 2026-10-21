@@ -266,7 +266,7 @@ function onRequestFailed(response?: { status: number }) {
                             </Tooltip>
                         </TooltipProvider>
                         <button
-                            class="w-full cursor-pointer rounded-xl border border-border/60 bg-card px-3 py-2.5 text-left text-sm text-card-foreground shadow-xs transition-[border-color,box-shadow] outline-none hover:border-primary/40 hover:shadow-sm focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                            class="w-full cursor-pointer rounded-xl border border-transparent bg-card px-3 py-2.5 text-left text-sm text-card-foreground shadow-[0_1px_1px_rgb(9_30_66/0.25),0_0_1px_rgb(9_30_66/0.31)] transition-[border-color] duration-200 outline-none hover:border-primary/60 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:shadow-[0_1px_1px_rgb(0_0_0/0.5),0_0_1px_rgb(0_0_0/0.6)] dark:hover:border-primary/60"
                             type="button"
                             @click="emit('openCard', element)"
                         >

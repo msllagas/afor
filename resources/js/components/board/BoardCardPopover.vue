@@ -29,7 +29,7 @@ const inputId = computed(() => `board-name-${props.workspaceId}`);
                 type="button"
                 :class="
                     cn(
-                        'group flex w-full cursor-pointer items-center justify-center border-2 border-dashed border-primary/40 bg-card/80 text-sm font-medium text-foreground/80 shadow-xs transition-colors duration-200 outline-none hover:border-primary/70 hover:bg-blush hover:text-blush-foreground focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-ring/50 data-[state=open]:border-primary/70 data-[state=open]:bg-blush data-[state=open]:text-blush-foreground dark:border-primary/50 dark:bg-card/60 dark:text-foreground/85 dark:hover:border-primary/80 dark:data-[state=open]:border-primary/80',
+                        'group flex w-full cursor-pointer items-center justify-center border-2 border-dashed border-foreground/25 bg-card/80 text-sm font-medium text-foreground/80 shadow-xs transition-colors duration-200 outline-none hover:border-foreground/50 hover:bg-accent hover:text-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 data-[state=open]:border-foreground/50 data-[state=open]:bg-accent data-[state=open]:text-foreground dark:border-foreground/30 dark:bg-card/60 dark:text-foreground/85 dark:hover:border-foreground/55 dark:hover:bg-accent dark:hover:text-foreground dark:data-[state=open]:border-foreground/55 dark:data-[state=open]:bg-accent dark:data-[state=open]:text-foreground',
                         variant === 'tile'
                             ? 'h-full min-h-36 flex-col gap-3 rounded-2xl'
                             : 'min-h-11 gap-3 rounded-xl px-3',
@@ -40,7 +40,7 @@ const inputId = computed(() => `board-name-${props.workspaceId}`);
                 <span
                     :class="variant === 'tile' ? 'size-10 rounded-xl' : 'size-7 rounded-lg'"
                     aria-hidden="true"
-                    class="flex shrink-0 items-center justify-center bg-primary/15 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground group-data-[state=open]:bg-primary group-data-[state=open]:text-primary-foreground"
+                    class="flex shrink-0 items-center justify-center bg-foreground/10 text-foreground/75 transition-colors group-hover:bg-foreground/15 group-hover:text-foreground group-data-[state=open]:bg-foreground/15 group-data-[state=open]:text-foreground"
                 >
                     <Plus :class="variant === 'tile' ? 'size-5' : 'size-4'" />
                 </span>
@@ -62,7 +62,9 @@ const inputId = computed(() => `board-name-${props.workspaceId}`);
                     <Input :id="inputId" class="block w-full" name="name" placeholder="Launch week" required />
                     <InputError :message="errors.name" />
                 </div>
-                <Button :disabled="processing" class="w-full" data-test="add-board-button">Create board</Button>
+                <Button :disabled="processing" class="w-full cursor-pointer" data-test="add-board-button"
+                    >Create board</Button
+                >
             </Form>
         </PopoverContent>
     </Popover>
