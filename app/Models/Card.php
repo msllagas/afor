@@ -68,12 +68,13 @@ class Card extends Model
 
     /**
      * Archived cards can be restored for a while, then they are removed for good.
+     * Pruning adds withTrashed() itself, so trashed cards are matched without onlyTrashed().
      *
      * @return Builder<static>
      */
     public function prunable(): Builder
     {
-        return static::onlyTrashed()
+        return static::query()
             ->where('deleted_at', '<=', now()->subDays(config('limits.archive_retention_days')));
     }
 
